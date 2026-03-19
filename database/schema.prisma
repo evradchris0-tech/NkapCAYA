@@ -1,0 +1,711 @@
+// ============================================================
+// CAYA — Schéma Prisma (MySQL 8.0)
+// Source de vérité du modèle de données
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────
+
+enum BureauRole {
+  SUPER_ADMIN
+  PRESIDENT
+  VICE_PRESIDENT
+  TRESORIER
+  TRESORIER_ADJOINT
+  SECRETAIRE_GENERAL
+  SECRETAIRE_ADJOINT
+  COMMISSAIRE_AUX_COMPTES
+  MEMBRE
+}
+
+enum FiscalYearStatus {
+  PENDING
+  ACTIVE
+  CASSATION
+  CLOSED
+  ARCHIVED
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  EXCLUDED
+}
+
+enum EnrollmentType {
+  NEW
+  RETURNING
+  MID_YEAR
+}
+
+enum SessionStatus {
+  DRAFT
+  OPEN
+  REVIEWING
+  CLOSED
+}
+
+enum TransactionType {
+  INSCRIPTION
+  SECOURS
+  COTISATION
+  POT
+  RBT_PRINCIPAL
+  RBT_INTEREST
+  EPARGNE
+  PROJET
+  AUTRES
+}
+
+enum LoanStatus {
+  PENDING
+  ACTIVE
+  PARTIALLY_REPAID
+  CLOSED
+}
+
+enum BeneficiaryStatus {
+  UNASSIGNED
+  ASSIGNED
+  DELIVERED
+}
+
+enum PoolParticipantType {
+  RESCUE_FUND
+  BUREAU
+}
+
+enum SavingsEntryType {
+  DEPOSIT
+  INTEREST_CREDIT
+}
+
+enum InterestPoolMethod {
+  THEORETICAL
+  ACTUAL
+}
+
+enum RescueEventType {
+  MEMBER_DEATH
+  RELATIVE_DEATH
+  MARRIAGE
+  BIRTH
+  ILLNESS
+  PROMOTION
+}
+
+// ─────────────────────────────────────────────────────────
+// MODULE 01 — AUTH & RBAC
+// ─────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid()) @db.VarChar(10)
+  username     String    @unique @db.VarChar(50)
+  phone        String    @unique @db.VarChar(20)
+  passwordHash String    @db.VarChar(255)
+  role         BureauRole @default(MEMBRE)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lastLoginAt  DateTime?
+
+  profile       MemberProfile?
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.VarChar(36)
+  userId    String    @db.VarChar(10)
+  tokenHash String    @unique @db.VarChar(255)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  userAgent String?   @db.VarChar(500)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, revokedAt])
+  @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.VarChar(36)
+  actorId    String   @db.VarChar(10)
+  action     String   @db.VarChar(100)
+  entityType String   @db.VarChar(50)
+  entityId   String   @db.VarChar(36)
+  before     Json?
+  after      Json?
+  reason     String?  @db.Text
+  ipAddress  String?  @db.VarChar(45)
+  createdAt  DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────────────────
+// MODULE 02 — CONFIGURATION
+// ─────────────────────────────────────────────────────────
+
+model TontineConfig {
+  id                       String   @id @default("caya") @db.VarChar(10)
+  name                     String   @db.VarChar(255)
+  acronym                  String   @db.VarChar(20)
+  foundedYear              Int
+  motto                    String?  @db.VarChar(500)
+  headquartersCity         String?  @db.VarChar(255)
+  registrationNumber       String?  @db.VarChar(100)
+  // Parts
+  shareUnitAmount          Decimal  @default(100000) @db.Decimal(15, 2)
+  halfShareAmount          Decimal  @default(50000) @db.Decimal(15, 2)
+  potMonthlyAmount         Decimal  @default(3000) @db.Decimal(15, 2)
+  maxSharesPerMember       Int      @default(10)
+  // Épargne
+  mandatoryInitialSavings  Decimal  @default(100000) @db.Decimal(15, 2)
+  // Prêts
+  loanMonthlyRate          Decimal  @default(0.04) @db.Decimal(5, 4)
+  minLoanAmount            Decimal  @default(10000) @db.Decimal(15, 2)
+  maxLoanAmount            Decimal  @default(1000000) @db.Decimal(15, 2)
+  maxLoanMultiplier        Int      @default(5)
+  minSavingsToLoan         Decimal  @default(100000) @db.Decimal(15, 2)
+  maxConcurrentLoans       Int      @default(2)
+  // Secours
+  rescueFundTarget         Decimal  @default(50000) @db.Decimal(15, 2)
+  rescueFundMinBalance     Decimal  @default(25000) @db.Decimal(15, 2)
+  // Inscription
+  registrationFeeNew       Decimal  @db.Decimal(15, 2)
+  registrationFeeReturning Decimal  @db.Decimal(15, 2)
+  // Méta
+  updatedAt                DateTime @updatedAt
+  updatedById              String   @db.VarChar(10)
+
+  @@map("tontine_config")
+}
+
+model FiscalYearConfig {
+  id                       String             @id @default(uuid()) @db.VarChar(36)
+  fiscalYearId             String             @unique @db.VarChar(36)
+  snapshotAt               DateTime           @default(now())
+  snapshotById             String             @db.VarChar(10)
+  // Règles gelées
+  shareUnitAmount          Decimal            @db.Decimal(15, 2)
+  loanMonthlyRate          Decimal            @db.Decimal(5, 4)
+  maxLoanMultiplier        Int
+  minSavingsToLoan         Decimal            @db.Decimal(15, 2)
+  maxConcurrentLoans       Int
+  rescueFundTarget         Decimal            @db.Decimal(15, 2)
+  rescueFundMinBalance     Decimal            @db.Decimal(15, 2)
+  registrationFeeNew       Decimal            @db.Decimal(15, 2)
+  registrationFeeReturning Decimal            @db.Decimal(15, 2)
+  interestPoolMethod       InterestPoolMethod @default(THEORETICAL)
+  // Exception SUPER_ADMIN
+  forcedModifiedAt         DateTime?
+  forcedModifiedById       String?            @db.VarChar(10)
+  forcedModifiedReason     String?            @db.Text
+
+  fiscalYear FiscalYear @relation(fields: [fiscalYearId], references: [id])
+
+  @@map("fiscal_year_configs")
+}
+
+model RescueEventAmount {
+  eventType    RescueEventType @id
+  amount       Decimal         @db.Decimal(15, 2)
+  label        String          @db.VarChar(255)
+  updatedById  String          @db.VarChar(10)
+  updatedAt    DateTime        @updatedAt
+
+  @@map("rescue_event_amounts")
+}
+
+// ─────────────────────────────────────────────────────────
+// MODULE 03 — MEMBRES
+// ─────────────────────────────────────────────────────────
+
+model MemberProfile {
+  id                 String  @id @default(uuid()) @db.VarChar(36)
+  memberCode         String  @unique @db.VarChar(10)
+  userId             String  @unique @db.VarChar(10)
+  firstName          String  @db.VarChar(100)
+  lastName           String  @db.VarChar(100)
+  phone1             String  @db.VarChar(20)
+  phone2             String? @db.VarChar(20)
+  attachmentPhoto    Bytes?
+  neighborhood       String  @db.VarChar(255)
+  locationDetail     String? @db.Text
+  mobileMoneyType    String? @db.VarChar(50)
+  mobileMoneyNumber  String? @db.VarChar(20)
+  sponsorId          String? @db.VarChar(36)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user             User               @relation(fields: [userId], references: [id])
+  sponsor          MemberProfile?     @relation("Sponsorship", fields: [sponsorId], references: [id])
+  sponsored        MemberProfile[]    @relation("Sponsorship")
+  emergencyContacts EmergencyContact[]
+  memberships      Membership[]
+
+  @@map("member_profiles")
+}
+
+model EmergencyContact {
+  id        String  @id @default(uuid()) @db.VarChar(36)
+  profileId String  @db.VarChar(36)
+  fullName  String  @db.VarChar(255)
+  phone     String  @db.VarChar(20)
+  relation  String? @db.VarChar(100)
+
+  profile MemberProfile @relation(fields: [profileId], references: [id])
+
+  @@map("emergency_contacts")
+}
+
+// ─────────────────────────────────────────────────────────
+// MODULE 04 — EXERCICE FISCAL
+// ─────────────────────────────────────────────────────────
+
+model FiscalYear {
+  id            String           @id @default(uuid()) @db.VarChar(36)
+  label         String           @unique @db.VarChar(20)
+  startDate     DateTime         @db.Date
+  endDate       DateTime         @db.Date
+  cassationDate DateTime         @db.Date
+  loanDueDate   DateTime         @db.Date
+  status        FiscalYearStatus @default(PENDING)
+  openedAt      DateTime?
+  openedById    String?          @db.VarChar(10)
+  closedAt      DateTime?
+  closedById    String?          @db.VarChar(10)
+  notes         String?          @db.Text
+
+  config             FiscalYearConfig?
+  memberships        Membership[]
+  sessions           MonthlySession[]
+  loans              LoanAccount[]
+  rescueFundLedger   RescueFundLedger?
+  beneficiarySchedule BeneficiarySchedule?
+  cassationRecord    CassationRecord?
+  poolParticipants   PoolParticipant[]
+
+  @@map("fiscal_years")
+}
+
+model Membership {
+  id                  String         @id @default(uuid()) @db.VarChar(36)
+  profileId           String         @db.VarChar(36)
+  fiscalYearId        String         @db.VarChar(36)
+  status              MemberStatus   @default(ACTIVE)
+  joinedAt            DateTime       @db.Date
+  joinedAtMonth       Int
+  enrollmentType      EnrollmentType
+  catchUpAmount       Decimal        @default(0) @db.Decimal(15, 2)
+  catchUpPaid         Boolean        @default(false)
+  registrationFeePaid Boolean        @default(false)
+  rescueContribPaid   Boolean        @default(false)
+  initialSavingsPaid  Boolean        @default(false)
+
+  profile         MemberProfile       @relation(fields: [profileId], references: [id])
+  fiscalYear      FiscalYear          @relation(fields: [fiscalYearId], references: [id])
+  shareCommitment ShareCommitment?
+  savingsLedger   SavingsLedger?
+  rescuePosition  RescueFundPosition?
+  loans           LoanAccount[]
+  sessionEntries  SessionEntry[]
+  beneficiarySlots BeneficiarySlot[]
+  interestAllocations InterestAllocation[]
+
+  @@unique([profileId, fiscalYearId])
+  @@map("memberships")
+}
+
+model ShareCommitment {
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  membershipId String    @unique @db.VarChar(36)
+  sharesCount  Decimal   @db.Decimal(4, 2)
+  monthlyAmount Decimal  @db.Decimal(15, 2)
+  isLocked     Boolean   @default(false)
+  lockedAt     DateTime?
+  lockedById   String?   @db.VarChar(10)
+
+  membership Membership @relation(fields: [membershipId], references: [id])
+
+  @@map("share_commitments")
+}
+
+// ─────────────────────────────────────────────────────────
+// MODULE 05 — SESSIONS & TRANSACTIONS
+// ─────────────────────────────────────────────────────────
+
+model MonthlySession {
+  id              String        @id @default(uuid()) @db.VarChar(36)
+  fiscalYearId    String        @db.VarChar(36)
+  sessionNumber   Int
+  meetingDate     DateTime      @db.Date
+  location        String?       @db.VarChar(500)
+  hostMembershipId String?      @db.VarChar(36)
+  status          SessionStatus @default(DRAFT)
+  openedAt        DateTime?
+  openedById      String?       @db.VarChar(10)
+  closedAt        DateTime?
+  closedById      String?       @db.VarChar(10)
+  // Totaux snapshot
+  totalInscription  Decimal @default(0) @db.Decimal(15, 2)
+  totalSecours      Decimal @default(0) @db.Decimal(15, 2)
+  totalCotisation   Decimal @default(0) @db.Decimal(15, 2)
+  totalPot          Decimal @default(0) @db.Decimal(15, 2)
+  totalRbtPrincipal Decimal @default(0) @db.Decimal(15, 2)
+  totalRbtInterest  Decimal @default(0) @db.Decimal(15, 2)
+  totalEpargne      Decimal @default(0) @db.Decimal(15, 2)
+  totalProjet       Decimal @default(0) @db.Decimal(15, 2)
+  totalAutres       Decimal @default(0) @db.Decimal(15, 2)
+
+  fiscalYear              FiscalYear                   @relation(fields: [fiscalYearId], references: [id])
+  entries                 SessionEntry[]
+  interestDistribution    InterestDistributionSnapshot?
+  beneficiarySlots        BeneficiarySlot[]
+  monthlyLoanAccruals     MonthlyLoanAccrual[]
+
+  @@unique([fiscalYearId, sessionNumber])
+  @@map("monthly_sessions")
+}
+
+model SessionEntry {
+  id               String          @id @default(uuid()) @db.VarChar(36)
+  reference        String          @unique @db.VarChar(30)
+  sessionId        String?         @db.VarChar(36)
+  membershipId     String          @db.VarChar(36)
+  type             TransactionType
+  amount           Decimal         @db.Decimal(15, 2)
+  loanId           String?         @db.VarChar(36)
+  isOutOfSession   Boolean         @default(false)
+  outOfSessionAt   DateTime?
+  outOfSessionRef  String?         @db.VarChar(100)
+  isImported       Boolean         @default(false)
+  notes            String?         @db.Text
+  recordedById     String          @db.VarChar(10)
+  recordedAt       DateTime        @default(now())
+
+  session    MonthlySession? @relation(fields: [sessionId], references: [id])
+  membership Membership      @relation(fields: [membershipId], references: [id])
+  loan       LoanAccount?    @relation(fields: [loanId], references: [id])
+  savingsEntry SavingsEntry?
+
+  @@index([membershipId, type])
+  @@index([sessionId])
+  @@map("session_entries")
+}
+
+// ─────────────────────────────────────────────────────────
+// MODULE 06 — ÉPARGNE & INTÉRÊTS
+// ─────────────────────────────────────────────────────────
+
+model SavingsLedger {
+  id                    String   @id @default(uuid()) @db.VarChar(36)
+  membershipId          String   @unique @db.VarChar(36)
+  balance               Decimal  @default(0) @db.Decimal(15, 2)
+  principalBalance      Decimal  @default(0) @db.Decimal(15, 2)
+  totalInterestReceived Decimal  @default(0) @db.Decimal(15, 2)
+  lastUpdatedAt         DateTime @updatedAt
+
+  membership Membership    @relation(fields: [membershipId], references: [id])
+  entries    SavingsEntry[]
+
+  @@map("savings_ledgers")
+}
+
+model SavingsEntry {
+  id             String           @id @default(uuid()) @db.VarChar(36)
+  ledgerId       String           @db.VarChar(36)
+  sessionId      String?          @db.VarChar(36)
+  sessionEntryId String?          @unique @db.VarChar(36)
+  month          Int
+  amount         Decimal          @db.Decimal(15, 2)
+  type           SavingsEntryType
+  balanceAfter   Decimal          @db.Decimal(15, 2)
+  createdAt      DateTime         @default(now())
+
+  ledger       SavingsLedger  @relation(fields: [ledgerId], references: [id])
+  sessionEntry SessionEntry?  @relation(fields: [sessionEntryId], references: [id])
+
+  @@map("savings_entries")
+}
+
+model PoolParticipant {
+  id                    String              @id @default(uuid()) @db.VarChar(36)
+  fiscalYearId          String              @db.VarChar(36)
+  type                  PoolParticipantType
+  label                 String              @db.VarChar(100)
+  initialBalance        Decimal             @db.Decimal(15, 2)
+  currentBalance        Decimal             @default(0) @db.Decimal(15, 2)
+  totalInterestReceived Decimal             @default(0) @db.Decimal(15, 2)
+
+  fiscalYear FiscalYear @relation(fields: [fiscalYearId], references: [id])
+  cassationShares PoolParticipantCassationShare[]
+
+  @@unique([fiscalYearId, type])
+  @@map("pool_participants")
+}
+
+model InterestDistributionSnapshot {
+  id               String   @id @default(uuid()) @db.VarChar(36)
+  sessionId        String   @unique @db.VarChar(36)
+  totalInterestPool Decimal @db.Decimal(15, 2)
+  totalSavingsBase Decimal  @db.Decimal(15, 2)
+  distributedAt    DateTime @default(now())
+  executedById     String   @db.VarChar(10)
+
+  session     MonthlySession      @relation(fields: [sessionId], references: [id])
+  allocations InterestAllocation[]
+
+  @@map("interest_distribution_snapshots")
+}
+
+model InterestAllocation {
+  id               String  @id @default(uuid()) @db.VarChar(36)
+  snapshotId       String  @db.VarChar(36)
+  membershipId     String  @db.VarChar(36)
+  savingsBalance   Decimal @db.Decimal(15, 2)
+  allocationAmount Decimal @db.Decimal(15, 2)
+
+  snapshot   InterestDistributionSnapshot @relation(fields: [snapshotId], references: [id])
+  membership Membership                   @relation(fields: [membershipId], references: [id])
+
+  @@unique([snapshotId, membershipId])
+  @@map("interest_allocations")
+}
+
+// ─────────────────────────────────────────────────────────
+// MODULE 07 — PRÊTS
+// ─────────────────────────────────────────────────────────
+
+model LoanAccount {
+  id                   String     @id @default(uuid()) @db.VarChar(36)
+  membershipId         String     @db.VarChar(36)
+  fiscalYearId         String     @db.VarChar(36)
+  principalAmount      Decimal    @db.Decimal(15, 2)
+  monthlyRate          Decimal    @default(0.04) @db.Decimal(5, 4)
+  disbursedAt          DateTime?  @db.Date
+  disbursedById        String?    @db.VarChar(10)
+  dueBeforeDate        DateTime   @db.Date
+  status               LoanStatus @default(PENDING)
+  outstandingBalance   Decimal    @default(0) @db.Decimal(15, 2)
+  totalInterestAccrued Decimal    @default(0) @db.Decimal(15, 2)
+  totalRepaid          Decimal    @default(0) @db.Decimal(15, 2)
+  requestedAt          DateTime   @default(now())
+  requestNotes         String?    @db.Text
+
+  membership       Membership           @relation(fields: [membershipId], references: [id])
+  fiscalYear       FiscalYear           @relation(fields: [fiscalYearId], references: [id])
+  monthlyAccruals  MonthlyLoanAccrual[]
+  repayments       LoanRepayment[]
+  sessionEntries   SessionEntry[]
+  carryoverRecord  CarryoverLoanRecord?
+
+  @@index([membershipId, status])
+  @@map("loan_accounts")
+}
+
+model MonthlyLoanAccrual {
+  id                  String  @id @default(uuid()) @db.VarChar(36)
+  loanId              String  @db.VarChar(36)
+  sessionId           String  @db.VarChar(36)
+  month               Int
+  balanceAtMonthStart Decimal @db.Decimal(15, 2)
+  interestAccrued     Decimal @db.Decimal(15, 2)
+  balanceWithInterest Decimal @db.Decimal(15, 2)
+  repaymentReceived   Decimal @default(0) @db.Decimal(15, 2)
+  balanceAtMonthEnd   Decimal @db.Decimal(15, 2)
+
+  loan    LoanAccount    @relation(fields: [loanId], references: [id])
+  session MonthlySession @relation(fields: [sessionId], references: [id])
+
+  @@unique([loanId, sessionId])
+  @@index([sessionId])
+  @@map("monthly_loan_accruals")
+}
+
+model LoanRepayment {
+  id             String   @id @default(uuid()) @db.VarChar(36)
+  loanId         String   @db.VarChar(36)
+  sessionId      String   @db.VarChar(36)
+  amount         Decimal  @db.Decimal(15, 2)
+  principalPart  Decimal  @db.Decimal(15, 2)
+  interestPart   Decimal  @db.Decimal(15, 2)
+  balanceAfter   Decimal  @db.Decimal(15, 2)
+  recordedAt     DateTime @default(now())
+
+  loan LoanAccount @relation(fields: [loanId], references: [id])
+
+  @@map("loan_repayments")
+}
+
+model CarryoverLoanRecord {
+  id               String   @id @default(uuid()) @db.VarChar(36)
+  originalLoanId   String   @unique @db.VarChar(36)
+  newFiscalYearId  String   @db.VarChar(36)
+  carryoverAmount  Decimal  @db.Decimal(15, 2)
+  reason           String?  @db.Text
+  approvedById     String   @db.VarChar(10)
+  createdAt        DateTime @default(now())
+
+  originalLoan LoanAccount @relation(fields: [originalLoanId], references: [id])
+
+  @@map("carryover_loan_records")
+}
+
+// ─────────────────────────────────────────────────────────
+// MODULE 08 — CAISSE DE SECOURS
+// ─────────────────────────────────────────────────────────
+
+model RescueFundLedger {
+  id               String  @id @default(uuid()) @db.VarChar(36)
+  fiscalYearId     String  @unique @db.VarChar(36)
+  totalBalance     Decimal @default(0) @db.Decimal(15, 2)
+  targetPerMember  Decimal @default(50000) @db.Decimal(15, 2)
+  minimumPerMember Decimal @default(25000) @db.Decimal(15, 2)
+  memberCount      Int
+
+  fiscalYear FiscalYear           @relation(fields: [fiscalYearId], references: [id])
+  events     RescueFundEvent[]
+  positions  RescueFundPosition[]
+
+  @@map("rescue_fund_ledgers")
+}
+
+model RescueFundEvent {
+  id             String          @id @default(uuid()) @db.VarChar(36)
+  ledgerId       String          @db.VarChar(36)
+  beneficiaryId  String          @db.VarChar(36)
+  eventType      RescueEventType
+  amount         Decimal         @db.Decimal(15, 2)
+  authorizedById String          @db.VarChar(10)
+  eventDate      DateTime        @db.Date
+  description    String?         @db.Text
+  createdAt      DateTime        @default(now())
+
+  ledger RescueFundLedger @relation(fields: [ledgerId], references: [id])
+
+  @@map("rescue_fund_events")
+}
+
+model RescueFundPosition {
+  id           String  @id @default(uuid()) @db.VarChar(36)
+  membershipId String  @unique @db.VarChar(36)
+  ledgerId     String  @db.VarChar(36)
+  paidAmount   Decimal @default(0) @db.Decimal(15, 2)
+  balance      Decimal @default(0) @db.Decimal(15, 2)
+  refillDebt   Decimal @default(0) @db.Decimal(15, 2)
+
+  membership Membership       @relation(fields: [membershipId], references: [id])
+  ledger     RescueFundLedger @relation(fields: [ledgerId], references: [id])
+
+  @@map("rescue_fund_positions")
+}
+
+// ─────────────────────────────────────────────────────────
+// MODULE 09 — BÉNÉFICIAIRES
+// ─────────────────────────────────────────────────────────
+
+model BeneficiarySchedule {
+  id           String   @id @default(uuid()) @db.VarChar(36)
+  fiscalYearId String   @unique @db.VarChar(36)
+  createdAt    DateTime @default(now())
+
+  fiscalYear FiscalYear        @relation(fields: [fiscalYearId], references: [id])
+  slots      BeneficiarySlot[]
+
+  @@map("beneficiary_schedules")
+}
+
+model BeneficiarySlot {
+  id              String            @id @default(uuid()) @db.VarChar(36)
+  scheduleId      String            @db.VarChar(36)
+  sessionId       String            @db.VarChar(36)
+  month           Int
+  slotIndex       Int
+  membershipId    String?           @db.VarChar(36)
+  amountDelivered Decimal           @default(0) @db.Decimal(15, 2)
+  designatedById  String?           @db.VarChar(10)
+  designatedAt    DateTime?
+  status          BeneficiaryStatus @default(UNASSIGNED)
+  deliveredAt     DateTime?
+  notes           String?           @db.Text
+
+  schedule   BeneficiarySchedule @relation(fields: [scheduleId], references: [id])
+  session    MonthlySession      @relation(fields: [sessionId], references: [id])
+  membership Membership?         @relation(fields: [membershipId], references: [id])
+
+  @@unique([sessionId, slotIndex])
+  @@unique([sessionId, membershipId])
+  @@map("beneficiary_slots")
+}
+
+// ─────────────────────────────────────────────────────────
+// MODULE 10 — CASSATION
+// ─────────────────────────────────────────────────────────
+
+model CassationRecord {
+  id                    String   @id @default(uuid()) @db.VarChar(36)
+  fiscalYearId          String   @unique @db.VarChar(36)
+  executedAt            DateTime @default(now())
+  executedById          String   @db.VarChar(10)
+  totalSavingsReturned  Decimal  @db.Decimal(15, 2)
+  totalInterestReturned Decimal  @db.Decimal(15, 2)
+  totalDistributed      Decimal  @db.Decimal(15, 2)
+  memberCount           Int
+  notes                 String?  @db.Text
+
+  fiscalYear        FiscalYear                      @relation(fields: [fiscalYearId], references: [id])
+  redistributions   CassationRedistribution[]
+  participantShares PoolParticipantCassationShare[]
+
+  @@map("cassation_records")
+}
+
+model CassationRedistribution {
+  id             String  @id @default(uuid()) @db.VarChar(36)
+  cassationId    String  @db.VarChar(36)
+  membershipId   String  @db.VarChar(36)
+  savingsAmount  Decimal @db.Decimal(15, 2)
+  interestAmount Decimal @db.Decimal(15, 2)
+  totalReturned  Decimal @db.Decimal(15, 2)
+
+  cassation CassationRecord @relation(fields: [cassationId], references: [id])
+
+  @@unique([cassationId, membershipId])
+  @@map("cassation_redistributions")
+}
+
+model PoolParticipantCassationShare {
+  id              String              @id @default(uuid()) @db.VarChar(36)
+  cassationId     String              @db.VarChar(36)
+  participantId   String              @db.VarChar(36)
+  participantType PoolParticipantType
+  principalAmount Decimal             @db.Decimal(15, 2)
+  interestEarned  Decimal             @db.Decimal(15, 2)
+  totalDistributed Decimal            @db.Decimal(15, 2)
+
+  cassation   CassationRecord @relation(fields: [cassationId], references: [id])
+  participant PoolParticipant @relation(fields: [participantId], references: [id])
+
+  @@unique([cassationId, participantType])
+  @@map("pool_participant_cassation_shares")
+}

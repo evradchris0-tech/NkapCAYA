@@ -1,0 +1,152 @@
+name: CI — NkapCAYA
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  # ─────────────────────────────────────────────────
+  # JOB 1 — Lint & Build API NestJS
+  # ─────────────────────────────────────────────────
+  api-lint-build:
+    name: API — Lint & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint API
+        run: pnpm --filter api lint
+
+      - name: Build API
+        run: pnpm --filter api build
+
+  # ─────────────────────────────────────────────────
+  # JOB 2 — Tests unitaires API
+  # ─────────────────────────────────────────────────
+  api-tests:
+    name: API — Tests Unitaires
+    runs-on: ubuntu-latest
+    needs: api-lint-build
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: caya_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    env:
+      DATABASE_URL: mysql://root:root@localhost:3306/caya_test
+      JWT_SECRET: test-secret
+      JWT_REFRESH_SECRET: test-refresh-secret
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
+      - name: Run Migrations (test)
+        run: pnpm --filter api exec prisma migrate deploy
+
+      - name: Run Unit Tests
+        run: pnpm --filter api test --coverage
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4
+        with:
+          directory: ./apps/api/coverage
+          flags: api
+
+  # ─────────────────────────────────────────────────
+  # JOB 3 — Lint & Build Web Next.js
+  # ─────────────────────────────────────────────────
+  web-lint-build:
+    name: Web — Lint & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint Web
+        run: pnpm --filter web lint
+
+      - name: Build Web
+        run: pnpm --filter web build
+
+  # ─────────────────────────────────────────────────
+  # JOB 4 — Flutter Mobile (analyse statique)
+  # ─────────────────────────────────────────────────
+  mobile-analyze:
+    name: Mobile — Flutter Analyze
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: stable
+
+      - name: Install Flutter dependencies
+        working-directory: apps/mobile
+        run: flutter pub get
+
+      - name: Analyze Flutter code
+        working-directory: apps/mobile
+        run: flutter analyze
+
+      - name: Run Flutter tests
+        working-directory: apps/mobile
+        run: flutter test
