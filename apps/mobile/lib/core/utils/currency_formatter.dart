@@ -36,7 +36,8 @@ class CurrencyFormatter {
   /// Parses a formatted string back to a number.
   static num? parse(String value) {
     try {
-      final cleaned = value.replaceAll(RegExp(r'[^\d,.]'), '').replaceAll(',', '.');
+      final cleaned =
+          value.replaceAll(RegExp(r'[^\d,.]'), '').replaceAll(',', '.');
       return num.parse(cleaned);
     } catch (_) {
       return null;

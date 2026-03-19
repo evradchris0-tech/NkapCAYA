@@ -11,19 +11,19 @@ export class FiscalYearService {
     private readonly fiscalYearRepository: FiscalYearRepository,
   ) {}
 
-  async create(dto: CreateFiscalYearDto) {
+  async create(_dto: CreateFiscalYearDto) {
     throw new Error('Not implemented');
   }
 
-  async activate(id: string) {
+  async activate(_id: string) {
     throw new Error('Not implemented');
   }
 
-  async addMember(fiscalYearId: string, dto: AddMemberDto) {
+  async addMember(_fiscalYearId: string, _dto: AddMemberDto) {
     throw new Error('Not implemented');
   }
 
-  async getMemberships(fiscalYearId: string) {
+  async getMemberships(_fiscalYearId: string) {
     throw new Error('Not implemented');
   }
 }

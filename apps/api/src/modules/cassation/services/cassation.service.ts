@@ -9,15 +9,15 @@ export class CassationService {
     private readonly cassationRepository: CassationRepository,
   ) {}
 
-  async executeCassation(fiscalYearId: string) {
+  async executeCassation(_fiscalYearId: string) {
     throw new Error('Not implemented');
   }
 
-  async generateRedistributions(cassationRecordId: string) {
+  async generateRedistributions(_cassationRecordId: string) {
     throw new Error('Not implemented');
   }
 
-  async findById(id: string) {
+  async findById(_id: string) {
     throw new Error('Not implemented');
   }
 }

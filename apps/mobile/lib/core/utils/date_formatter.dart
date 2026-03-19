@@ -5,7 +5,10 @@ class DateFormatter {
 
   static final DateFormat _displayFormat = DateFormat('dd MMMM yyyy', 'fr_FR');
   static final DateFormat _shortFormat = DateFormat('dd/MM/yyyy', 'fr_FR');
-  static final DateFormat _dateTimeFormat = DateFormat('dd/MM/yyyy HH:mm', 'fr_FR');
+  static final DateFormat _dateTimeFormat = DateFormat(
+    'dd/MM/yyyy HH:mm',
+    'fr_FR',
+  );
   static final DateFormat _apiFormat = DateFormat('yyyy-MM-dd');
   static final DateFormat _monthYearFormat = DateFormat('MMMM yyyy', 'fr_FR');
 

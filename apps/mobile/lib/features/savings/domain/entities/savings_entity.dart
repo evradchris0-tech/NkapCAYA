@@ -35,5 +35,7 @@ class SavingsTransactionEntity {
     required this.createdAt,
   });
 
-  bool get isCredit => type == SavingsTransactionType.deposit || type == SavingsTransactionType.interest;
+  bool get isCredit =>
+      type == SavingsTransactionType.deposit ||
+      type == SavingsTransactionType.interest;
 }

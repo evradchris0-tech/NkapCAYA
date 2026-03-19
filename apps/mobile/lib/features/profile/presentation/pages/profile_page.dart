@@ -44,8 +44,10 @@ class ProfilePage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Informations personnelles',
-                          style: Theme.of(context).textTheme.titleMedium),
+                      Text(
+                        'Informations personnelles',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       const SizedBox(height: 12),
                       Card(
                         child: Column(
@@ -79,30 +81,39 @@ class ProfilePage extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      Text('Paramètres', style: Theme.of(context).textTheme.titleMedium),
+                      Text(
+                        'Paramètres',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       const SizedBox(height: 12),
                       Card(
                         child: Column(
                           children: [
                             ListTile(
-                              leading: const Icon(Icons.notifications_outlined,
-                                  color: AppColors.cayaBlue),
+                              leading: const Icon(
+                                Icons.notifications_outlined,
+                                color: AppColors.cayaBlue,
+                              ),
                               title: const Text('Notifications'),
                               trailing: const Icon(Icons.chevron_right),
                               onTap: () {},
                             ),
                             const Divider(height: 1, indent: 56),
                             ListTile(
-                              leading:
-                                  const Icon(Icons.lock_outline, color: AppColors.cayaBlue),
+                              leading: const Icon(
+                                Icons.lock_outline,
+                                color: AppColors.cayaBlue,
+                              ),
                               title: const Text('Changer le mot de passe'),
                               trailing: const Icon(Icons.chevron_right),
                               onTap: () {},
                             ),
                             const Divider(height: 1, indent: 56),
                             ListTile(
-                              leading: const Icon(Icons.help_outline,
-                                  color: AppColors.cayaBlue),
+                              leading: const Icon(
+                                Icons.help_outline,
+                                color: AppColors.cayaBlue,
+                              ),
                               title: const Text('Aide & Support'),
                               trailing: const Icon(Icons.chevron_right),
                               onTap: () {},
@@ -152,15 +163,24 @@ class _InfoTile extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoTile({required this.icon, required this.label, required this.value});
+  const _InfoTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(icon, color: AppColors.cayaBlue, size: 22),
-      title: Text(label,
-          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-      subtitle: Text(value, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+      title: Text(
+        label,
+        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+      ),
+      subtitle: Text(
+        value,
+        style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }

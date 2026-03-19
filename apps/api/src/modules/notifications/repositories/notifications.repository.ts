@@ -5,7 +5,7 @@ import { PrismaService } from '@database/prisma.service';
 export class NotificationsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async logNotification(data: any) {
+  async logNotification(_data: unknown) {
     throw new Error('Not implemented');
   }
 
@@ -13,11 +13,11 @@ export class NotificationsRepository {
     throw new Error('Not implemented');
   }
 
-  async findTemplateById(id: string) {
+  async findTemplateById(_id: string) {
     throw new Error('Not implemented');
   }
 
-  async createScheduledReminder(data: any) {
+  async createScheduledReminder(_data: unknown) {
     throw new Error('Not implemented');
   }
 
@@ -25,7 +25,7 @@ export class NotificationsRepository {
     throw new Error('Not implemented');
   }
 
-  async markReminderSent(id: string) {
+  async markReminderSent(_id: string) {
     throw new Error('Not implemented');
   }
 }

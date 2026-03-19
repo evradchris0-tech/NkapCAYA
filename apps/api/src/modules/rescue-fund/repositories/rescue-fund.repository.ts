@@ -9,23 +9,23 @@ export class RescueFundRepository {
     throw new Error('Not implemented');
   }
 
-  async createEvent(data: any) {
+  async createEvent(_data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async findEvents(fiscalYearId?: string) {
+  async findEvents(_fiscalYearId?: string) {
     throw new Error('Not implemented');
   }
 
-  async findPositionByMembership(membershipId: string) {
+  async findPositionByMembership(_membershipId: string) {
     throw new Error('Not implemented');
   }
 
-  async upsertPosition(data: any) {
+  async upsertPosition(_data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async updateLedgerBalance(delta: number) {
+  async updateLedgerBalance(_delta: number) {
     throw new Error('Not implemented');
   }
 }

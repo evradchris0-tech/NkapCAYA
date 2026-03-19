@@ -5,27 +5,27 @@ import { PrismaService } from '@database/prisma.service';
 export class BeneficiariesRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findScheduleByFiscalYear(fiscalYearId: string) {
+  async findScheduleByFiscalYear(_fiscalYearId: string) {
     throw new Error('Not implemented');
   }
 
-  async findSlotById(id: string) {
+  async findSlotById(_id: string) {
     throw new Error('Not implemented');
   }
 
-  async findSlotsBySchedule(scheduleId: string) {
+  async findSlotsBySchedule(_scheduleId: string) {
     throw new Error('Not implemented');
   }
 
-  async updateSlot(id: string, data: any) {
+  async updateSlot(_id: string, _data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async createSchedule(data: any) {
+  async createSchedule(_data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async createSlot(data: any) {
+  async createSlot(_data: unknown) {
     throw new Error('Not implemented');
   }
 }

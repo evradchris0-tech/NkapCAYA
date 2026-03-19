@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { Loan, LoanRepayment, PaginatedResponse } from '@types/api.types';
+import type { Loan, LoanRepayment, PaginatedResponse } from '@/types/api.types';
 
 export interface CreateLoanPayload {
   memberId: string;

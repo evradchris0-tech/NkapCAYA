@@ -12,8 +12,12 @@ class ApiClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: ApiConstants.baseUrl,
-        connectTimeout: const Duration(milliseconds: ApiConstants.connectTimeoutMs),
-        receiveTimeout: const Duration(milliseconds: ApiConstants.receiveTimeoutMs),
+        connectTimeout: const Duration(
+          milliseconds: ApiConstants.connectTimeoutMs,
+        ),
+        receiveTimeout: const Duration(
+          milliseconds: ApiConstants.receiveTimeoutMs,
+        ),
         sendTimeout: const Duration(milliseconds: ApiConstants.sendTimeoutMs),
         headers: {
           'Content-Type': 'application/json',
@@ -23,11 +27,7 @@ class ApiClient {
     );
     _dio.interceptors.addAll([
       _AuthInterceptor(_storage, _dio),
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        error: true,
-      ),
+      LogInterceptor(requestBody: true, responseBody: true, error: true),
     ]);
   }
 
@@ -39,7 +39,11 @@ class ApiClient {
     Options? options,
   }) async {
     try {
-      return await _dio.get<T>(path, queryParameters: queryParameters, options: options);
+      return await _dio.get<T>(
+        path,
+        queryParameters: queryParameters,
+        options: options,
+      );
     } on DioException catch (e) {
       throw _handleDioException(e);
     }
@@ -52,7 +56,12 @@ class ApiClient {
     Options? options,
   }) async {
     try {
-      return await _dio.post<T>(path, data: data, queryParameters: queryParameters, options: options);
+      return await _dio.post<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
     } on DioException catch (e) {
       throw _handleDioException(e);
     }
@@ -147,14 +156,22 @@ class _AuthInterceptor extends Interceptor {
 
   _AuthInterceptor(this._storage, this._dio) {
     // Dio séparé sans interceptor pour le refresh — évite les boucles infinies
-    _refreshDio = Dio(BaseOptions(
-      baseUrl: ApiConstants.baseUrl,
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-    ));
+    _refreshDio = Dio(
+      BaseOptions(
+        baseUrl: ApiConstants.baseUrl,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
   }
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     final token = await _storage.read(key: ApiConstants.accessTokenKey);
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
@@ -192,9 +209,15 @@ class _AuthInterceptor extends Interceptor {
       final newAccess = tokens['access'] as String?;
       final newRefresh = tokens['refresh'] as String?;
       if (newAccess != null) {
-        await _storage.write(key: ApiConstants.accessTokenKey, value: newAccess);
+        await _storage.write(
+          key: ApiConstants.accessTokenKey,
+          value: newAccess,
+        );
         if (newRefresh != null) {
-          await _storage.write(key: ApiConstants.refreshTokenKey, value: newRefresh);
+          await _storage.write(
+            key: ApiConstants.refreshTokenKey,
+            value: newRefresh,
+          );
         }
         return true;
       }

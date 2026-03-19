@@ -4,6 +4,7 @@ import { SavingsService } from '../services/savings.service';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { BureauRole } from '@prisma/client';
 
 @ApiTags('savings')
 @ApiBearerAuth()
@@ -19,7 +20,7 @@ export class SavingsController {
   }
 
   @Post('distribute/:sessionId')
-  @Roles('SUPER_ADMIN', 'PRESIDENT')
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT)
   @ApiOperation({ summary: 'Distribute interests for a session' })
   distributeInterests(@Param('sessionId') sessionId: string) {
     return this.savingsService.distributeInterests(sessionId);

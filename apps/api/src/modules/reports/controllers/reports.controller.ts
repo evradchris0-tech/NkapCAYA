@@ -10,6 +10,7 @@ import { ReportsService } from '../services/reports.service';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { BureauRole } from '@prisma/client';
 
 @ApiTags('reports')
 @ApiBearerAuth()
@@ -19,7 +20,7 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('annual-summary')
-  @Roles('SUPER_ADMIN', 'PRESIDENT')
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT)
   @ApiOperation({ summary: 'Generate annual summary report' })
   @ApiQuery({ name: 'fiscalYearId', required: true })
   @ApiQuery({ name: 'format', required: false, enum: ['json', 'pdf', 'excel'] })

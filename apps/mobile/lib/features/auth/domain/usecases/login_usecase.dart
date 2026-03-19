@@ -14,6 +14,9 @@ class LoginUseCase {
   const LoginUseCase(this._repository);
 
   Future<UserEntity> call(LoginParams params) {
-    return _repository.login(identifier: params.identifier, password: params.password);
+    return _repository.login(
+      identifier: params.identifier,
+      password: params.password,
+    );
   }
 }

@@ -5,7 +5,9 @@ import '../../data/repositories/savings_repository_impl.dart';
 import '../../domain/entities/savings_entity.dart';
 import '../../domain/usecases/get_savings_balance_usecase.dart';
 
-final _savingsRemoteDataSourceProvider = Provider<SavingsRemoteDataSource>((ref) {
+final _savingsRemoteDataSourceProvider = Provider<SavingsRemoteDataSource>((
+  ref,
+) {
   return SavingsRemoteDataSourceImpl(apiClient: ApiClient());
 });
 
@@ -14,7 +16,9 @@ final _savingsRepositoryProvider = Provider<SavingsRepositoryImpl>((ref) {
 });
 
 final savingsBalanceProvider = FutureProvider<SavingsEntity>((ref) async {
-  final useCase = GetSavingsBalanceUseCase(ref.watch(_savingsRepositoryProvider));
+  final useCase = GetSavingsBalanceUseCase(
+    ref.watch(_savingsRepositoryProvider),
+  );
   return useCase();
 });
 

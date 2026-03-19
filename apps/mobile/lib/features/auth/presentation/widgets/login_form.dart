@@ -76,13 +76,18 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               labelText: 'Mot de passe',
               prefixIcon: const Icon(Icons.lock_outline),
               suffixIcon: IconButton(
-                icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                ),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
             ),
             validator: (v) {
               if (v == null || v.isEmpty) return 'Mot de passe requis';
-              if (v.length < 8) return 'Minimum 8 caractères';
+              if (v.length < 6) return 'Minimum 6 caractères';
               return null;
             },
           ),

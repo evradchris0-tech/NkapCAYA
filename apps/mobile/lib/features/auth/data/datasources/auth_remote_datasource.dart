@@ -38,7 +38,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
 
     await _storage.write(key: ApiConstants.accessTokenKey, value: token.access);
-    await _storage.write(key: ApiConstants.refreshTokenKey, value: token.refresh);
+    await _storage.write(
+      key: ApiConstants.refreshTokenKey,
+      value: token.refresh,
+    );
 
     return (token: token, user: user);
   }
@@ -58,7 +61,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> fetchCurrentUser() async {
-    final response = await _apiClient.get<Map<String, dynamic>>(ApiConstants.myProfile);
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      ApiConstants.myProfile,
+    );
     return UserModel.fromJson(response.data!);
   }
 }

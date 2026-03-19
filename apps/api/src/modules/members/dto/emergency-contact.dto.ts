@@ -11,7 +11,7 @@ export class EmergencyContactDto {
   @ApiProperty({ example: '237699001122', description: 'Numéro de téléphone' })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\+?[0-9]{8,20}$/, { message: 'phone doit être un numéro valide' })
+  @Matches(/^\+?[0-9]{8,19}$/, { message: 'phone doit être un numéro valide' })
   phone: string;
 
   @ApiPropertyOptional({ example: 'Épouse', description: 'Lien de parenté' })

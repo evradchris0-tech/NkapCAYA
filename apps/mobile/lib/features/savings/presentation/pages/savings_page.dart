@@ -30,7 +30,8 @@ class SavingsPage extends ConsumerWidget {
             children: [
               // Balance card
               balanceAsync.when(
-                loading: () => const SizedBox(height: 120, child: LoadingWidget()),
+                loading: () =>
+                    const SizedBox(height: 120, child: LoadingWidget()),
                 error: (e, _) => CayaErrorWidget(
                   message: e.toString(),
                   onRetry: () => ref.invalidate(savingsBalanceProvider),
@@ -51,7 +52,10 @@ class SavingsPage extends ConsumerWidget {
                     children: [
                       const Text(
                         'Solde épargne',
-                        style: TextStyle(color: AppColors.cayaGoldLight, fontSize: 13),
+                        style: TextStyle(
+                          color: AppColors.cayaGoldLight,
+                          fontSize: 13,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       AmountDisplay(
@@ -82,16 +86,21 @@ class SavingsPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              Text('Historique', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Historique',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 12),
               Card(
                 child: transactionsAsync.when(
-                  loading: () => const SizedBox(height: 200, child: LoadingWidget()),
+                  loading: () =>
+                      const SizedBox(height: 200, child: LoadingWidget()),
                   error: (e, _) => CayaErrorWidget(
                     message: e.toString(),
                     onRetry: () => ref.invalidate(savingsTransactionsProvider),
                   ),
-                  data: (transactions) => SavingsHistoryList(transactions: transactions),
+                  data: (transactions) =>
+                      SavingsHistoryList(transactions: transactions),
                 ),
               ),
             ],
@@ -129,7 +138,11 @@ class _StatChip extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 2),
-          AmountDisplay(amount: amount, amountFontSize: 14, amountColor: AppColors.white),
+          AmountDisplay(
+            amount: amount,
+            amountFontSize: 14,
+            amountColor: AppColors.white,
+          ),
         ],
       ),
     );

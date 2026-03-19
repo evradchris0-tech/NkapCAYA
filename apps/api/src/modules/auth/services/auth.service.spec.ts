@@ -7,6 +7,7 @@ import { createHash } from 'crypto';
 import { AuthService } from './auth.service';
 import { UserRepository } from '../repositories/user.repository';
 import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
+import { User, RefreshToken } from '@prisma/client';
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -33,8 +34,6 @@ describe('AuthService', () => {
   let service: AuthService;
   let userRepo: jest.Mocked<UserRepository>;
   let refreshTokenRepo: jest.Mocked<RefreshTokenRepository>;
-  let jwtService: jest.Mocked<JwtService>;
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -83,7 +82,6 @@ describe('AuthService', () => {
     service = module.get<AuthService>(AuthService);
     userRepo = module.get(UserRepository);
     refreshTokenRepo = module.get(RefreshTokenRepository);
-    jwtService = module.get(JwtService);
   });
 
   it('should be defined', () => {
@@ -94,9 +92,9 @@ describe('AuthService', () => {
 
   describe('T01 — login avec username valide', () => {
     it('should return tokens and user on valid username login', async () => {
-      userRepo.findByIdentifier.mockResolvedValue(mockUser as any);
+      userRepo.findByIdentifier.mockResolvedValue(mockUser as unknown as User);
       jest.spyOn(bcrypt, 'compare').mockImplementation(async () => true);
-      refreshTokenRepo.create.mockResolvedValue({} as any);
+      refreshTokenRepo.create.mockResolvedValue({} as unknown as RefreshToken);
 
       const result = await service.login({
         identifier: 'tresorier01',
@@ -108,7 +106,7 @@ describe('AuthService', () => {
       expect(result.user.id).toBe(mockUser.id);
       expect(result.user.username).toBe('tresorier01');
       expect(result.user.role).toBe('TRESORIER');
-      expect((result.user as any).passwordHash).toBeUndefined();
+      expect((result.user as unknown as Record<string, unknown>).passwordHash).toBeUndefined();
       expect(userRepo.updateLastLogin).toHaveBeenCalledWith(mockUser.id);
     });
   });
@@ -117,9 +115,9 @@ describe('AuthService', () => {
 
   describe('T02 — login avec phone valide', () => {
     it('should return tokens and user on valid phone login', async () => {
-      userRepo.findByIdentifier.mockResolvedValue(mockUser as any);
+      userRepo.findByIdentifier.mockResolvedValue(mockUser as unknown as User);
       jest.spyOn(bcrypt, 'compare').mockImplementation(async () => true);
-      refreshTokenRepo.create.mockResolvedValue({} as any);
+      refreshTokenRepo.create.mockResolvedValue({} as unknown as RefreshToken);
 
       const result = await service.login({
         identifier: '237699000000',
@@ -148,7 +146,7 @@ describe('AuthService', () => {
 
   describe('T04 — login avec mot de passe incorrect', () => {
     it('should throw UnauthorizedException for wrong password', async () => {
-      userRepo.findByIdentifier.mockResolvedValue(mockUser as any);
+      userRepo.findByIdentifier.mockResolvedValue(mockUser as unknown as User);
       jest.spyOn(bcrypt, 'compare').mockImplementation(async () => false);
 
       await expect(
@@ -161,7 +159,7 @@ describe('AuthService', () => {
 
   describe('T05 — login sur compte désactivé', () => {
     it('should throw ForbiddenException for inactive account', async () => {
-      userRepo.findByIdentifier.mockResolvedValue(mockInactiveUser as any);
+      userRepo.findByIdentifier.mockResolvedValue(mockInactiveUser as unknown as User);
 
       await expect(
         service.login({ identifier: 'tresorier01', password: 'any' }),
@@ -183,9 +181,9 @@ describe('AuthService', () => {
         createdAt: new Date(),
         userAgent: null,
         user: { id: mockUser.id, role: 'TRESORIER', isActive: true },
-      } as any);
+      } as unknown as RefreshToken & { user: { id: string; role: string; isActive: boolean } });
       refreshTokenRepo.revokeByHash.mockResolvedValue(undefined);
-      refreshTokenRepo.create.mockResolvedValue({} as any);
+      refreshTokenRepo.create.mockResolvedValue({} as unknown as RefreshToken);
 
       const result = await service.refreshToken(rawToken);
 
@@ -238,7 +236,7 @@ describe('AuthService', () => {
 
   describe('T10 — getMe retourne profil sans passwordHash', () => {
     it('should return user profile without sensitive fields', async () => {
-      userRepo.findById.mockResolvedValue(mockUser as any);
+      userRepo.findById.mockResolvedValue(mockUser as unknown as User);
 
       const result = await service.getMe(mockUser.id);
 
@@ -247,7 +245,7 @@ describe('AuthService', () => {
       expect(result.phone).toBe(mockUser.phone);
       expect(result.role).toBe(mockUser.role);
       expect(result.isActive).toBe(true);
-      expect((result as any).passwordHash).toBeUndefined();
+      expect((result as unknown as Record<string, unknown>).passwordHash).toBeUndefined();
     });
 
     it('should throw UnauthorizedException if user not found', async () => {

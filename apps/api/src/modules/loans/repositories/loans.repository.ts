@@ -5,31 +5,31 @@ import { PrismaService } from '@database/prisma.service';
 export class LoansRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: any) {
+  async create(_data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async findById(id: string) {
+  async findById(_id: string) {
     throw new Error('Not implemented');
   }
 
-  async findByMembership(membershipId: string) {
+  async findByMembership(_membershipId: string) {
     throw new Error('Not implemented');
   }
 
-  async updateStatus(id: string, status: string) {
+  async updateStatus(_id: string, _status: string) {
     throw new Error('Not implemented');
   }
 
-  async updateBalance(id: string, data: any) {
+  async updateBalance(_id: string, _data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async createRepayment(data: any) {
+  async createRepayment(_data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async createMonthlyAccrual(data: any) {
+  async createMonthlyAccrual(_data: unknown) {
     throw new Error('Not implemented');
   }
 
@@ -37,7 +37,7 @@ export class LoansRepository {
     throw new Error('Not implemented');
   }
 
-  async createCarryoverRecord(data: any) {
+  async createCarryoverRecord(_data: unknown) {
     throw new Error('Not implemented');
   }
 }

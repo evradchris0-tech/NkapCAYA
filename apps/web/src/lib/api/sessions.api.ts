@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { Session, Transaction, PaginatedResponse } from '@types/api.types';
+import type { Session, Transaction, PaginatedResponse } from '@/types/api.types';
 
 export interface CreateSessionPayload {
   month: number;

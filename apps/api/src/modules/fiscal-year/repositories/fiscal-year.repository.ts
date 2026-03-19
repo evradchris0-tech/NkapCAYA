@@ -5,11 +5,11 @@ import { PrismaService } from '@database/prisma.service';
 export class FiscalYearRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: any) {
+  async create(_data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async findById(id: string) {
+  async findById(_id: string) {
     throw new Error('Not implemented');
   }
 
@@ -17,19 +17,19 @@ export class FiscalYearRepository {
     throw new Error('Not implemented');
   }
 
-  async updateStatus(id: string, status: string) {
+  async updateStatus(_id: string, _status: string) {
     throw new Error('Not implemented');
   }
 
-  async findMemberships(fiscalYearId: string) {
+  async findMemberships(_fiscalYearId: string) {
     throw new Error('Not implemented');
   }
 
-  async createMembership(data: any) {
+  async createMembership(_data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async createShareCommitment(data: any) {
+  async createShareCommitment(_data: unknown) {
     throw new Error('Not implemented');
   }
 }

@@ -1,8 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { MembersService } from './members.service';
-import { MembersRepository } from '../repositories/members.repository';
+import { MembersRepository, MemberProfileWithUser, MemberProfileSummary } from '../repositories/members.repository';
 import { PrismaService } from '@database/prisma.service';
+import { CreateMemberDto } from '../dto/create-member.dto';
+import { UpdateMemberDto } from '../dto/update-member.dto';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -84,14 +86,14 @@ describe('MembersService', () => {
   describe('T01 — createMember crée User + MemberProfile atomiquement', () => {
     it('should return profile and temporaryPassword', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
-      (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) =>
+      (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) =>
         fn({
           user: { create: jest.fn().mockResolvedValue({ id: 'u_test0001' }) },
           memberProfile: { create: jest.fn().mockResolvedValue(mockProfile) },
         }),
       );
 
-      const result = await service.createMember(mockCreateDto as any);
+      const result = await service.createMember(mockCreateDto as unknown as CreateMemberDto);
 
       expect(result.profile).toBeDefined();
       expect(result.profile.firstName).toBe('Jean-Pierre');
@@ -107,7 +109,7 @@ describe('MembersService', () => {
       // Premier findUnique = vérification phone → existe déjà
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({ id: 'existing', phone: '237699001122' });
 
-      await expect(service.createMember(mockCreateDto as any)).rejects.toThrow(ConflictException);
+      await expect(service.createMember(mockCreateDto as unknown as CreateMemberDto)).rejects.toThrow(ConflictException);
     });
   });
 
@@ -115,7 +117,7 @@ describe('MembersService', () => {
 
   describe('T03 — findAll retourne la liste', () => {
     it('should return array of profiles', async () => {
-      repo.findAll.mockResolvedValue([mockProfile as any]);
+      repo.findAll.mockResolvedValue([mockProfile as unknown as MemberProfileSummary]);
 
       const result = await service.findAll();
 
@@ -128,7 +130,7 @@ describe('MembersService', () => {
 
   describe('T04 — findById existant', () => {
     it('should return full profile', async () => {
-      repo.findById.mockResolvedValue(mockProfile as any);
+      repo.findById.mockResolvedValue(mockProfile as unknown as MemberProfileWithUser);
 
       const result = await service.findById('profile-uuid-1');
 
@@ -151,16 +153,16 @@ describe('MembersService', () => {
 
   describe('T06 — updateProfile modifie les champs via transaction', () => {
     it('should call prisma.$transaction and return updated profile', async () => {
-      repo.findById.mockResolvedValue(mockProfile as any);
+      repo.findById.mockResolvedValue(mockProfile as unknown as MemberProfileWithUser);
       const mockMemberProfileUpdate = jest.fn().mockResolvedValue(mockProfile);
-      (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) =>
+      (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) =>
         fn({
           memberProfile: { update: mockMemberProfileUpdate },
           user: { update: jest.fn().mockResolvedValue({}) },
         }),
       );
 
-      await service.updateProfile('profile-uuid-1', { neighborhood: 'Melen' } as any);
+      await service.updateProfile('profile-uuid-1', { neighborhood: 'Melen' } as unknown as UpdateMemberDto);
 
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(mockMemberProfileUpdate).toHaveBeenCalledWith(
@@ -176,17 +178,17 @@ describe('MembersService', () => {
 
   describe('T06b — updateProfile sync User.phone quand phone1 change', () => {
     it('should update User.phone in the same transaction', async () => {
-      repo.findById.mockResolvedValue(mockProfile as any);
+      repo.findById.mockResolvedValue(mockProfile as unknown as MemberProfileWithUser);
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null); // pas de conflit
       const mockUserUpdate = jest.fn().mockResolvedValue({});
-      (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) =>
+      (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) =>
         fn({
           memberProfile: { update: jest.fn().mockResolvedValue(mockProfile) },
           user: { update: mockUserUpdate },
         }),
       );
 
-      await service.updateProfile('profile-uuid-1', { phone1: '237699999999' } as any);
+      await service.updateProfile('profile-uuid-1', { phone1: '237699999999' } as unknown as UpdateMemberDto);
 
       expect(mockUserUpdate).toHaveBeenCalledWith({
         where: { id: 'u_test0001' },
@@ -199,7 +201,7 @@ describe('MembersService', () => {
 
   describe('T07 — deactivate désactive le compte User', () => {
     it('should set user.isActive = false', async () => {
-      repo.findById.mockResolvedValue(mockProfile as any);
+      repo.findById.mockResolvedValue(mockProfile as unknown as MemberProfileWithUser);
       (prisma.user.update as jest.Mock).mockResolvedValue({});
 
       await service.deactivate('profile-uuid-1');
@@ -215,7 +217,7 @@ describe('MembersService', () => {
 
   describe('T08 — getMemberships retourne la liste des adhésions', () => {
     it('should return memberships for a profile', async () => {
-      repo.findById.mockResolvedValue(mockProfile as any);
+      repo.findById.mockResolvedValue(mockProfile as unknown as MemberProfileWithUser);
       repo.findMembershipsByProfileId.mockResolvedValue([]);
 
       const result = await service.getMemberships('profile-uuid-1');

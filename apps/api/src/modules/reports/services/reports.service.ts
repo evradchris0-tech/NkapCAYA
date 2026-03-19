@@ -9,23 +9,23 @@ export class ReportsService {
     private readonly reportsRepository: ReportsRepository,
   ) {}
 
-  async generateAnnualSummary(fiscalYearId: string, format?: string) {
+  async generateAnnualSummary(_fiscalYearId: string, _format?: string) {
     throw new Error('Not implemented');
   }
 
-  async generateMemberReport(memberId: string, fiscalYearId?: string, format?: string) {
+  async generateMemberReport(_memberId: string, _fiscalYearId?: string, _format?: string) {
     throw new Error('Not implemented');
   }
 
-  async generateSessionReport(sessionId: string, format?: string) {
+  async generateSessionReport(_sessionId: string, _format?: string) {
     throw new Error('Not implemented');
   }
 
-  async exportPDF(data: any, template: string): Promise<Buffer> {
+  async exportPDF(_data: unknown, _template: string): Promise<Buffer> {
     throw new Error('Not implemented');
   }
 
-  async exportExcel(data: any, sheetName: string): Promise<Buffer> {
+  async exportExcel(_data: unknown, _sheetName: string): Promise<Buffer> {
     throw new Error('Not implemented');
   }
 }

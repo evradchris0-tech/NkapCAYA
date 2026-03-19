@@ -33,8 +33,8 @@ class SavingsHistoryList extends StatelessWidget {
         final isCredit = tx.isCredit;
         return ListTile(
           leading: CircleAvatar(
-            backgroundColor:
-                (isCredit ? AppColors.success : AppColors.error).withValues(alpha: 0.1),
+            backgroundColor: (isCredit ? AppColors.success : AppColors.error)
+                .withValues(alpha: 0.1),
             child: Icon(
               isCredit ? Icons.arrow_downward : Icons.arrow_upward,
               color: isCredit ? AppColors.success : AppColors.error,
@@ -47,7 +47,10 @@ class SavingsHistoryList extends StatelessWidget {
           ),
           subtitle: Text(
             DateFormatter.formatRelative(tx.createdAt),
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
           ),
           trailing: Text(
             '${isCredit ? '+' : '-'} ${CurrencyFormatter.format(tx.amount)}',

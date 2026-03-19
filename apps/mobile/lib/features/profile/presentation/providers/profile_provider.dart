@@ -5,7 +5,9 @@ import '../../data/repositories/profile_repository_impl.dart';
 import '../../domain/entities/member_entity.dart';
 import '../../domain/usecases/get_my_profile_usecase.dart';
 
-final _profileRemoteDataSourceProvider = Provider<ProfileRemoteDataSource>((ref) {
+final _profileRemoteDataSourceProvider = Provider<ProfileRemoteDataSource>((
+  ref,
+) {
   return ProfileRemoteDataSourceImpl(apiClient: ApiClient());
 });
 

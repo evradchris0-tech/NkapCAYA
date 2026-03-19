@@ -10,19 +10,19 @@ export class SessionsService {
     private readonly sessionsRepository: SessionsRepository,
   ) {}
 
-  async openSession(sessionId: string) {
+  async openSession(_sessionId: string) {
     throw new Error('Not implemented');
   }
 
-  async recordEntries(sessionId: string, dto: RecordEntriesDto) {
+  async recordEntries(_sessionId: string, _dto: RecordEntriesDto) {
     throw new Error('Not implemented');
   }
 
-  async closeSession(sessionId: string) {
+  async closeSession(_sessionId: string) {
     throw new Error('Not implemented');
   }
 
-  async generateReference(sessionId: string, membershipId: string): Promise<string> {
+  async generateReference(_sessionId: string, _membershipId: string): Promise<string> {
     throw new Error('Not implemented');
   }
 }

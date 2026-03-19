@@ -53,7 +53,10 @@ class ProfileHeader extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             member.memberCode,
-            style: const TextStyle(color: AppColors.cayaGoldLight, fontSize: 13),
+            style: const TextStyle(
+              color: AppColors.cayaGoldLight,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 4),
           _StatusBadge(status: member.status),
@@ -134,13 +137,20 @@ class _Stat extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(value,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  color: AppColors.white, fontWeight: FontWeight.w600, fontSize: 12)),
-          Text(label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white60, fontSize: 10)),
+          Text(
+            value,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white60, fontSize: 10),
+          ),
         ],
       ),
     );

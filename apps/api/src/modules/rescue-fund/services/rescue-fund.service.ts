@@ -14,11 +14,11 @@ export class RescueFundService {
     throw new Error('Not implemented');
   }
 
-  async recordEvent(dto: CreateRescueFundEventDto) {
+  async recordEvent(_dto: CreateRescueFundEventDto) {
     throw new Error('Not implemented');
   }
 
-  async getPositions(membershipId: string) {
+  async getPositions(_membershipId: string) {
     throw new Error('Not implemented');
   }
 }

@@ -11,19 +11,19 @@ export class LoansService {
     private readonly loansRepository: LoansRepository,
   ) {}
 
-  async requestLoan(dto: RequestLoanDto) {
+  async requestLoan(_dto: RequestLoanDto) {
     throw new Error('Not implemented');
   }
 
-  async disburse(loanId: string) {
+  async disburse(_loanId: string) {
     throw new Error('Not implemented');
   }
 
-  async applyRepayment(loanId: string, dto: ApplyRepaymentDto) {
+  async applyRepayment(_loanId: string, _dto: ApplyRepaymentDto) {
     throw new Error('Not implemented');
   }
 
-  async computeMonthlyAccrual(loanId: string, sessionId: string) {
+  async computeMonthlyAccrual(_loanId: string, _sessionId: string) {
     throw new Error('Not implemented');
   }
 }

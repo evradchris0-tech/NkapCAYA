@@ -20,7 +20,12 @@ class SavingsChart extends StatelessWidget {
     if (data.isEmpty) {
       return const SizedBox(
         height: 180,
-        child: Center(child: Text('Aucune donnée', style: TextStyle(color: AppColors.textSecondary))),
+        child: Center(
+          child: Text(
+            'Aucune donnée',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
       );
     }
 
@@ -33,18 +38,28 @@ class SavingsChart extends StatelessWidget {
           gridData: const FlGridData(show: false),
           borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            leftTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (value, meta) {
                   final index = value.toInt();
-                  if (index < 0 || index >= data.length) return const SizedBox.shrink();
+                  if (index < 0 || index >= data.length)
+                    return const SizedBox.shrink();
                   return Text(
                     data[index].month,
-                    style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textSecondary,
+                    ),
                   );
                 },
               ),
@@ -58,7 +73,9 @@ class SavingsChart extends StatelessWidget {
                   toY: data[index].amount,
                   color: AppColors.cayaBlue,
                   width: 20,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(6),
+                  ),
                 ),
               ],
             );

@@ -65,9 +65,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
-      body: Center(
-        child: Text('Page introuvable : ${state.error}'),
-      ),
+      body: Center(child: Text('Page introuvable : ${state.error}')),
     ),
   );
 });
@@ -95,11 +93,26 @@ class _MainScaffold extends StatelessWidget {
         currentIndex: currentIndex < 0 ? 0 : currentIndex,
         onTap: (index) => context.go(_tabs[index]),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Accueil'),
-          BottomNavigationBarItem(icon: Icon(Icons.savings_outlined), label: 'Épargne'),
-          BottomNavigationBarItem(icon: Icon(Icons.account_balance_outlined), label: 'Prêts'),
-          BottomNavigationBarItem(icon: Icon(Icons.volunteer_activism_outlined), label: 'Secours'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: 'Accueil',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.savings_outlined),
+            label: 'Épargne',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_balance_outlined),
+            label: 'Prêts',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.volunteer_activism_outlined),
+            label: 'Secours',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Profil',
+          ),
         ],
       ),
     );

@@ -5,31 +5,31 @@ import { PrismaService } from '@database/prisma.service';
 export class SessionsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string) {
+  async findById(_id: string) {
     throw new Error('Not implemented');
   }
 
-  async findByFiscalYear(fiscalYearId: string) {
+  async findByFiscalYear(_fiscalYearId: string) {
     throw new Error('Not implemented');
   }
 
-  async updateStatus(id: string, status: string) {
+  async updateStatus(_id: string, _status: string) {
     throw new Error('Not implemented');
   }
 
-  async createEntry(data: any) {
+  async createEntry(_data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async findEntries(sessionId: string) {
+  async findEntries(_sessionId: string) {
     throw new Error('Not implemented');
   }
 
-  async createTransactionSequence(data: any) {
+  async createTransactionSequence(_data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async getNextSequenceNumber(sessionId: string): Promise<number> {
+  async getNextSequenceNumber(_sessionId: string): Promise<number> {
     throw new Error('Not implemented');
   }
 }

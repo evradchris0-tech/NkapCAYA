@@ -10,15 +10,15 @@ export class BeneficiariesService {
     private readonly beneficiariesRepository: BeneficiariesRepository,
   ) {}
 
-  async getSchedule(fiscalYearId: string) {
+  async getSchedule(_fiscalYearId: string) {
     throw new Error('Not implemented');
   }
 
-  async assignSlot(slotId: string, dto: AssignSlotDto) {
+  async assignSlot(_slotId: string, _dto: AssignSlotDto) {
     throw new Error('Not implemented');
   }
 
-  async markDelivered(slotId: string) {
+  async markDelivered(_slotId: string) {
     throw new Error('Not implemented');
   }
 }

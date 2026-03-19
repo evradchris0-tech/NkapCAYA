@@ -12,6 +12,7 @@ import { CreateRescueFundEventDto } from '../dto/create-rescue-fund-event.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { BureauRole } from '@prisma/client';
 
 @ApiTags('rescue-fund')
 @ApiBearerAuth()
@@ -27,7 +28,7 @@ export class RescueFundController {
   }
 
   @Post('events')
-  @Roles('SUPER_ADMIN', 'PRESIDENT')
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT)
   @ApiOperation({ summary: 'Record a rescue fund event (disbursement or contribution)' })
   recordEvent(@Body() dto: CreateRescueFundEventDto) {
     return this.rescueFundService.recordEvent(dto);

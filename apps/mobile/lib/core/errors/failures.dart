@@ -9,7 +9,9 @@ abstract class Failure {
 }
 
 class NetworkFailure extends Failure {
-  const NetworkFailure({super.message = 'Erreur réseau. Vérifiez votre connexion.'});
+  const NetworkFailure({
+    super.message = 'Erreur réseau. Vérifiez votre connexion.',
+  });
 }
 
 class ServerFailure extends Failure {
@@ -17,8 +19,9 @@ class ServerFailure extends Failure {
 }
 
 class UnauthorizedFailure extends Failure {
-  const UnauthorizedFailure({super.message = 'Session expirée. Veuillez vous reconnecter.'})
-      : super(statusCode: 401);
+  const UnauthorizedFailure({
+    super.message = 'Session expirée. Veuillez vous reconnecter.',
+  }) : super(statusCode: 401);
 }
 
 class NotFoundFailure extends Failure {

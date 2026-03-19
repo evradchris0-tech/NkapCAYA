@@ -14,11 +14,11 @@ export class ConfigService {
     throw new Error('Not implemented');
   }
 
-  async updateConfig(dto: UpdateConfigDto) {
+  async updateConfig(_dto: UpdateConfigDto) {
     throw new Error('Not implemented');
   }
 
-  async snapshotForFiscalYear(fiscalYearId: string) {
+  async snapshotForFiscalYear(_fiscalYearId: string) {
     throw new Error('Not implemented');
   }
 }

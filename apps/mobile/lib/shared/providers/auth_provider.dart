@@ -5,17 +5,9 @@ class AuthState {
   final String? userId;
   final String? role;
 
-  const AuthState({
-    this.isAuthenticated = false,
-    this.userId,
-    this.role,
-  });
+  const AuthState({this.isAuthenticated = false, this.userId, this.role});
 
-  AuthState copyWith({
-    bool? isAuthenticated,
-    String? userId,
-    String? role,
-  }) {
+  AuthState copyWith({bool? isAuthenticated, String? userId, String? role}) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       userId: userId ?? this.userId,
@@ -36,6 +28,8 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 }
 
-final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((ref) {
+final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((
+  ref,
+) {
   return AuthStateNotifier();
 });

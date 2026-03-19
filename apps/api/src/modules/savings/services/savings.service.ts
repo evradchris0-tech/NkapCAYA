@@ -9,11 +9,11 @@ export class SavingsService {
     private readonly savingsRepository: SavingsRepository,
   ) {}
 
-  async getBalance(membershipId: string) {
+  async getBalance(_membershipId: string) {
     throw new Error('Not implemented');
   }
 
-  async distributeInterests(sessionId: string) {
+  async distributeInterests(_sessionId: string) {
     throw new Error('Not implemented');
   }
 }

@@ -5,31 +5,31 @@ import { PrismaService } from '@database/prisma.service';
 export class CassationRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: any) {
+  async create(_data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async findById(id: string) {
+  async findById(_id: string) {
     throw new Error('Not implemented');
   }
 
-  async findByFiscalYear(fiscalYearId: string) {
+  async findByFiscalYear(_fiscalYearId: string) {
     throw new Error('Not implemented');
   }
 
-  async createRedistribution(data: any) {
+  async createRedistribution(_data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async findRedistributions(cassationRecordId: string) {
+  async findRedistributions(_cassationRecordId: string) {
     throw new Error('Not implemented');
   }
 
-  async createPoolParticipantShare(data: any) {
+  async createPoolParticipantShare(_data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async updateStatus(id: string, status: string) {
+  async updateStatus(_id: string, _status: string) {
     throw new Error('Not implemented');
   }
 }

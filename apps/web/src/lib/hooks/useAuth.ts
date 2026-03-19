@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@lib/api/auth.api';
-import type { AuthUser } from '@types/api.types';
+import type { AuthUser } from '@/types/api.types';
 
 interface LoginPayload {
   identifier: string;

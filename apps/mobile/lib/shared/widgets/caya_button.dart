@@ -27,7 +27,10 @@ class CayaButton extends StatelessWidget {
         ? const SizedBox(
             width: 22,
             height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.white,
+            ),
           )
         : Row(
             mainAxisSize: MainAxisSize.min,
@@ -43,7 +46,10 @@ class CayaButton extends StatelessWidget {
     Widget button;
     switch (variant) {
       case CayaButtonVariant.primary:
-        button = ElevatedButton(onPressed: isLoading ? null : onPressed, child: child);
+        button = ElevatedButton(
+          onPressed: isLoading ? null : onPressed,
+          child: child,
+        );
       case CayaButtonVariant.secondary:
         button = ElevatedButton(
           onPressed: isLoading ? null : onPressed,
@@ -54,9 +60,15 @@ class CayaButton extends StatelessWidget {
           child: child,
         );
       case CayaButtonVariant.outlined:
-        button = OutlinedButton(onPressed: isLoading ? null : onPressed, child: child);
+        button = OutlinedButton(
+          onPressed: isLoading ? null : onPressed,
+          child: child,
+        );
       case CayaButtonVariant.text:
-        button = TextButton(onPressed: isLoading ? null : onPressed, child: child);
+        button = TextButton(
+          onPressed: isLoading ? null : onPressed,
+          child: child,
+        );
     }
 
     if (width != null) {

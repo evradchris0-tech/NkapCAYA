@@ -13,6 +13,7 @@ import { ApplyRepaymentDto } from '../dto/apply-repayment.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { BureauRole } from '@prisma/client';
 
 @ApiTags('loans')
 @ApiBearerAuth()
@@ -28,14 +29,14 @@ export class LoansController {
   }
 
   @Patch(':id/disburse')
-  @Roles('SUPER_ADMIN', 'PRESIDENT', 'TRESORIER')
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT, BureauRole.TRESORIER)
   @ApiOperation({ summary: 'Disburse an approved loan' })
   disburse(@Param('id') id: string) {
     return this.loansService.disburse(id);
   }
 
   @Post(':id/repay')
-  @Roles('SUPER_ADMIN', 'PRESIDENT', 'TRESORIER')
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT, BureauRole.TRESORIER)
   @ApiOperation({ summary: 'Apply a repayment to a loan' })
   applyRepayment(@Param('id') id: string, @Body() dto: ApplyRepaymentDto) {
     return this.loansService.applyRepayment(id, dto);

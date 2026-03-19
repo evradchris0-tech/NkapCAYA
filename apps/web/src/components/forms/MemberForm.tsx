@@ -9,9 +9,14 @@ import Button from '@components/ui/Button';
 const memberSchema = z.object({
   firstName: z.string().min(2, 'Prénom requis'),
   lastName: z.string().min(2, 'Nom requis'),
-  phone: z.string().min(9, 'Téléphone invalide'),
-  email: z.string().email('Email invalide').optional().or(z.literal('')),
-  joinDate: z.string().min(1, 'Date d\'adhésion requise'),
+  phone1: z.string().min(9, 'Téléphone invalide'),
+  phone2: z.string().optional().or(z.literal('')),
+  neighborhood: z.string().min(2, 'Quartier requis'),
+  locationDetail: z.string().optional().or(z.literal('')),
+  mobileMoneyType: z.string().optional().or(z.literal('')),
+  mobileMoneyNumber: z.string().optional().or(z.literal('')),
+  sponsorId: z.string().optional().or(z.literal('')),
+  username: z.string().optional().or(z.literal('')),
 });
 
 type MemberFormValues = z.infer<typeof memberSchema>;
@@ -54,26 +59,55 @@ export default function MemberForm({ defaultValues, onSuccess }: MemberFormProps
       </div>
 
       <Input
-        label="Téléphone"
+        label="Téléphone principal"
         type="tel"
         placeholder="+237 6XX XXX XXX"
-        {...register('phone')}
-        error={errors.phone?.message}
+        {...register('phone1')}
+        error={errors.phone1?.message}
       />
 
       <Input
-        label="Email (optionnel)"
-        type="email"
-        placeholder="jean@exemple.com"
-        {...register('email')}
-        error={errors.email?.message}
+        label="Téléphone secondaire (optionnel)"
+        type="tel"
+        placeholder="+237 6XX XXX XXX"
+        {...register('phone2')}
+        error={errors.phone2?.message}
       />
 
       <Input
-        label="Date d'adhésion"
-        type="date"
-        {...register('joinDate')}
-        error={errors.joinDate?.message}
+        label="Quartier"
+        placeholder="Bastos, Yaoundé"
+        {...register('neighborhood')}
+        error={errors.neighborhood?.message}
+      />
+
+      <Input
+        label="Détail localisation (optionnel)"
+        placeholder="Près du marché central"
+        {...register('locationDetail')}
+        error={errors.locationDetail?.message}
+      />
+
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label="Type Mobile Money (optionnel)"
+          placeholder="MTN, Orange..."
+          {...register('mobileMoneyType')}
+          error={errors.mobileMoneyType?.message}
+        />
+        <Input
+          label="Numéro Mobile Money (optionnel)"
+          placeholder="6XX XXX XXX"
+          {...register('mobileMoneyNumber')}
+          error={errors.mobileMoneyNumber?.message}
+        />
+      </div>
+
+      <Input
+        label="Username (optionnel)"
+        placeholder="jdupont"
+        {...register('username')}
+        error={errors.username?.message}
       />
 
       <Button type="submit" isLoading={isSubmitting} className="w-full">

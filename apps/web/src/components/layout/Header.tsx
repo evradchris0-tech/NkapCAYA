@@ -12,7 +12,7 @@ export default function Header() {
       <div className="flex items-center gap-4">
         {user && (
           <span className="text-sm text-gray-600">
-            {user.firstName} {user.lastName}
+            {user.username}
           </span>
         )}
         <button

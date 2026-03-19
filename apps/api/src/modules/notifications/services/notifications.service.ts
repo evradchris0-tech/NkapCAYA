@@ -21,15 +21,15 @@ export class NotificationsService {
     }
   }
 
-  async sendWhatsApp(phone: string, message: string, templateId?: string) {
+  async sendWhatsApp(_phone: string, _message: string, _templateId?: string) {
     throw new Error('Not implemented');
   }
 
-  async sendSMS(phone: string, message: string) {
+  async sendSMS(_phone: string, _message: string) {
     throw new Error('Not implemented');
   }
 
-  async scheduleReminder(dto: {
+  async scheduleReminder(_dto: {
     recipientPhone: string;
     message: string;
     channel: string;

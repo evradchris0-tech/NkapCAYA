@@ -5,27 +5,27 @@ import { PrismaService } from '@database/prisma.service';
 export class ReportsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAnnualSummaryData(fiscalYearId: string) {
+  async getAnnualSummaryData(_fiscalYearId: string) {
     throw new Error('Not implemented');
   }
 
-  async getMemberReportData(memberId: string, fiscalYearId?: string) {
+  async getMemberReportData(_memberId: string, _fiscalYearId?: string) {
     throw new Error('Not implemented');
   }
 
-  async getSessionReportData(sessionId: string) {
+  async getSessionReportData(_sessionId: string) {
     throw new Error('Not implemented');
   }
 
-  async getSavingsSummary(fiscalYearId: string) {
+  async getSavingsSummary(_fiscalYearId: string) {
     throw new Error('Not implemented');
   }
 
-  async getLoansSummary(fiscalYearId: string) {
+  async getLoansSummary(_fiscalYearId: string) {
     throw new Error('Not implemented');
   }
 
-  async getRescueFundSummary(fiscalYearId: string) {
+  async getRescueFundSummary(_fiscalYearId: string) {
     throw new Error('Not implemented');
   }
 }

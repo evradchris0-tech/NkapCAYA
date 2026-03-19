@@ -29,8 +29,11 @@ class DashboardPage extends ConsumerWidget {
           children: [
             const Text('Tableau de bord', style: TextStyle(fontSize: 18)),
             Text(
-              auth.memberCode ?? '',
-              style: const TextStyle(fontSize: 12, color: AppColors.cayaGoldLight),
+              auth.role ?? '',
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.cayaGoldLight,
+              ),
             ),
           ],
         ),
@@ -129,7 +132,9 @@ class DashboardPage extends ConsumerWidget {
                 leading: CircleAvatar(
                   backgroundColor: item.$4.withValues(alpha: 0.12),
                   child: Icon(
-                    item.$4 == AppColors.success ? Icons.arrow_upward : Icons.arrow_downward,
+                    item.$4 == AppColors.success
+                        ? Icons.arrow_upward
+                        : Icons.arrow_downward,
                     color: item.$4,
                     size: 18,
                   ),

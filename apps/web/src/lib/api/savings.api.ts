@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { SavingsSummary, InterestEntry } from '@types/api.types';
+import type { SavingsSummary, InterestEntry } from '@/types/api.types';
 
 export const savingsApi = {
   getSummary: () =>

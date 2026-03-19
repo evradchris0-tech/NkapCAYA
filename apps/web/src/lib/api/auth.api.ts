@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { AuthResponse, LoginPayload, TokensResponse, AuthUser } from '@types/api.types';
+import type { AuthResponse, LoginPayload, TokensResponse, AuthUser } from '@/types/api.types';
 
 export const authApi = {
   login: (payload: LoginPayload) =>

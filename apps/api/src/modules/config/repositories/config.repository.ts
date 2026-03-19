@@ -9,15 +9,15 @@ export class ConfigRepository {
     throw new Error('Not implemented');
   }
 
-  async upsertTontineConfig(data: any) {
+  async upsertTontineConfig(_data: unknown) {
     throw new Error('Not implemented');
   }
 
-  async findFiscalYearConfig(fiscalYearId: string) {
+  async findFiscalYearConfig(_fiscalYearId: string) {
     throw new Error('Not implemented');
   }
 
-  async createFiscalYearConfig(data: any) {
+  async createFiscalYearConfig(_data: unknown) {
     throw new Error('Not implemented');
   }
 

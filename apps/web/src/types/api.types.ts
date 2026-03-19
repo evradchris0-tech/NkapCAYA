@@ -1,5 +1,4 @@
 import type {
-  MemberStatus,
   TransactionType,
   LoanStatus,
   SessionStatus,
@@ -56,14 +55,25 @@ export interface TokensResponse {
 
 export interface Member {
   id: string;
+  memberCode: string;
   firstName: string;
   lastName: string;
-  phone: string;
-  status: MemberStatus;
-  joinDate: string;
-  totalSavings: number;
+  phone1: string;
+  phone2: string | null;
+  neighborhood: string;
+  locationDetail: string | null;
+  mobileMoneyType: string | null;
+  mobileMoneyNumber: string | null;
+  sponsorId: string | null;
   createdAt: string;
   updatedAt: string;
+  user: {
+    id: string;
+    username: string;
+    phone: string;
+    role: string;
+    isActive: boolean;
+  };
 }
 
 // ── Session ───────────────────────────────────────────────────────────────────

@@ -15,7 +15,11 @@ class LoginPage extends StatelessWidget {
             children: [
               // Header
               const SizedBox(height: 60),
-              const Icon(Icons.account_balance, size: 64, color: AppColors.cayaGold),
+              const Icon(
+                Icons.account_balance,
+                size: 64,
+                color: AppColors.cayaGold,
+              ),
               const SizedBox(height: 16),
               const Text(
                 'CAYA',
@@ -29,10 +33,7 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 8),
               const Text(
                 'Club des Amis de Yaoundé',
-                style: TextStyle(
-                  color: AppColors.cayaGoldLight,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: AppColors.cayaGoldLight, fontSize: 14),
               ),
               const SizedBox(height: 48),
               // Form card
@@ -55,14 +56,18 @@ class LoginPage extends StatelessWidget {
                   children: [
                     Text(
                       'Connexion',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: AppColors.cayaBlue,
-                          ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall
+                          ?.copyWith(color: AppColors.cayaBlue),
                     ),
                     const SizedBox(height: 8),
                     const Text(
                       'Connectez-vous à votre espace membre',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                     const SizedBox(height: 28),
                     const LoginForm(),

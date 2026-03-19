@@ -13,6 +13,7 @@ import { AssignSlotDto } from '../dto/assign-slot.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { BureauRole } from '@prisma/client';
 
 @ApiTags('beneficiaries')
 @ApiBearerAuth()
@@ -28,14 +29,14 @@ export class BeneficiariesController {
   }
 
   @Post('slots/:id/assign')
-  @Roles('SUPER_ADMIN', 'PRESIDENT')
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT)
   @ApiOperation({ summary: 'Assign a membership to a beneficiary slot' })
   assignSlot(@Param('id') id: string, @Body() dto: AssignSlotDto) {
     return this.beneficiariesService.assignSlot(id, dto);
   }
 
   @Patch('slots/:id/deliver')
-  @Roles('SUPER_ADMIN', 'PRESIDENT', 'TRESORIER')
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT, BureauRole.TRESORIER)
   @ApiOperation({ summary: 'Mark a beneficiary slot as delivered' })
   markDelivered(@Param('id') id: string) {
     return this.beneficiariesService.markDelivered(id);

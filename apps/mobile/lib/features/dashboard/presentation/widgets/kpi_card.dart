@@ -56,12 +56,19 @@ class KpiCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              AmountDisplay(amount: amount, amountFontSize: 20, amountColor: iconColor),
+              AmountDisplay(
+                amount: amount,
+                amountFontSize: 20,
+                amountColor: iconColor,
+              ),
               if (subtitle != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   subtitle!,
-                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ],

@@ -44,13 +44,19 @@ class LoanCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   loan.purpose!,
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
                 ),
               ],
               const SizedBox(height: 12),
               Row(
                 children: [
-                  _InfoChip(label: 'Durée', value: '${loan.durationMonths} mois'),
+                  _InfoChip(
+                    label: 'Durée',
+                    value: '${loan.durationMonths} mois',
+                  ),
                   const SizedBox(width: 16),
                   _InfoChip(
                     label: 'Taux',
@@ -72,11 +78,17 @@ class LoanCard extends StatelessWidget {
                   children: [
                     Text(
                       'Restant : ${CurrencyFormatter.format(loan.remainingBalance)}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     Text(
                       '${(progressValue * 100).toStringAsFixed(0)}% remboursé',
-                      style: const TextStyle(fontSize: 12, color: AppColors.success),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.success,
+                      ),
                     ),
                   ],
                 ),
@@ -130,7 +142,11 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         _label(status),
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -164,8 +180,14 @@ class _InfoChip extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
       ],
     );
   }

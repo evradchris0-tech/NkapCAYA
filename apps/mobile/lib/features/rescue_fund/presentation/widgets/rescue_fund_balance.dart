@@ -36,7 +36,10 @@ class RescueFundBalance extends StatelessWidget {
               SizedBox(width: 8),
               Text(
                 'Fonds de Secours',
-                style: TextStyle(color: AppColors.white, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -79,9 +82,16 @@ class _FundStat extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 11)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white60, fontSize: 11),
+          ),
           const SizedBox(height: 2),
-          AmountDisplay(amount: amount, amountFontSize: 14, amountColor: AppColors.white),
+          AmountDisplay(
+            amount: amount,
+            amountFontSize: 14,
+            amountColor: AppColors.white,
+          ),
         ],
       ),
     );

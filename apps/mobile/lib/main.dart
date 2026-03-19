@@ -5,11 +5,7 @@ import 'core/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    const ProviderScope(
-      child: CayaApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: CayaApp()));
 }
 
 class CayaApp extends ConsumerWidget {

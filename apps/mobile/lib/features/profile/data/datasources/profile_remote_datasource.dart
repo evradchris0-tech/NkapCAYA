@@ -15,8 +15,9 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
   @override
   Future<MemberModel> getMyProfile() async {
-    final response =
-        await _apiClient.get<Map<String, dynamic>>(ApiConstants.myProfile);
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      ApiConstants.myProfile,
+    );
     return MemberModel.fromJson(response.data!);
   }
 

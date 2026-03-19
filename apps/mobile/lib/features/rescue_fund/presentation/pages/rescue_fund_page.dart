@@ -40,21 +40,24 @@ class RescueFundPage extends StatelessWidget {
                         icon: Icons.percent,
                         color: AppColors.cayaBlue,
                         title: 'Contribution automatique',
-                        subtitle: '2% de chaque cotisation est versé au fonds de secours.',
+                        subtitle:
+                            '2% de chaque cotisation est versé au fonds de secours.',
                       ),
                       const SizedBox(height: 12),
                       _InfoItem(
                         icon: Icons.medical_services_outlined,
                         color: AppColors.success,
                         title: 'Cas éligibles',
-                        subtitle: 'Décès, maladie grave, catastrophe naturelle.',
+                        subtitle:
+                            'Décès, maladie grave, catastrophe naturelle.',
                       ),
                       const SizedBox(height: 12),
                       _InfoItem(
                         icon: Icons.how_to_vote_outlined,
                         color: AppColors.warning,
                         title: 'Validation',
-                        subtitle: "Chaque demande est soumise au vote du bureau.",
+                        subtitle:
+                            "Chaque demande est soumise au vote du bureau.",
                       ),
                     ],
                   ),
@@ -62,7 +65,10 @@ class RescueFundPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               // Contribution history
-              Text('Mes contributions', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Mes contributions',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 12),
               Card(
                 child: Column(
@@ -114,11 +120,21 @@ class _InfoItem extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(subtitle,
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
             ],
           ),
         ),
@@ -138,7 +154,11 @@ class _ContributionItem extends StatelessWidget {
     return ListTile(
       leading: const CircleAvatar(
         backgroundColor: Color(0xFFE8F5E9),
-        child: Icon(Icons.volunteer_activism_outlined, color: AppColors.success, size: 18),
+        child: Icon(
+          Icons.volunteer_activism_outlined,
+          color: AppColors.success,
+          size: 18,
+        ),
       ),
       title: Text('Contribution — $date', style: const TextStyle(fontSize: 14)),
       trailing: Text(

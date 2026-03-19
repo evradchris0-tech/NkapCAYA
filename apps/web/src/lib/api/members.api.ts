@@ -1,12 +1,17 @@
 import apiClient from './client';
-import type { Member, PaginatedResponse } from '@types/api.types';
+import type { Member, PaginatedResponse } from '@/types/api.types';
 
 export interface CreateMemberPayload {
   firstName: string;
   lastName: string;
-  phone: string;
-  email?: string;
-  joinDate: string;
+  phone1: string;
+  phone2?: string;
+  neighborhood: string;
+  locationDetail?: string;
+  mobileMoneyType?: string;
+  mobileMoneyNumber?: string;
+  sponsorId?: string;
+  username?: string;
 }
 
 export const membersApi = {

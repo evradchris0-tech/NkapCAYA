@@ -79,10 +79,15 @@ class AuthNotifier extends StateNotifier<AuthNotifierState> {
         _globalAuthState = globalAuthState,
         super(const AuthNotifierState());
 
-  Future<void> login({required String identifier, required String password}) async {
+  Future<void> login({
+    required String identifier,
+    required String password,
+  }) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
-      final user = await _loginUseCase(LoginParams(identifier: identifier, password: password));
+      final user = await _loginUseCase(
+        LoginParams(identifier: identifier, password: password),
+      );
       _globalAuthState.setAuthenticated(userId: user.id, role: user.role);
       state = state.copyWith(status: AuthStatus.success, user: user);
     } catch (e) {
@@ -100,7 +105,8 @@ class AuthNotifier extends StateNotifier<AuthNotifierState> {
   }
 }
 
-final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthNotifierState>((ref) {
+final authNotifierProvider =
+    StateNotifierProvider<AuthNotifier, AuthNotifierState>((ref) {
   return AuthNotifier(
     loginUseCase: ref.watch(_loginUseCaseProvider),
     logoutUseCase: ref.watch(_logoutUseCaseProvider),

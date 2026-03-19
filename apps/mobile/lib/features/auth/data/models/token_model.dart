@@ -12,9 +12,6 @@ class TokenModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'access': access,
-      'refresh': refresh,
-    };
+    return {'access': access, 'refresh': refresh};
   }
 }

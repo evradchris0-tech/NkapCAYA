@@ -4,7 +4,10 @@ import '../models/savings_model.dart';
 
 abstract class SavingsRemoteDataSource {
   Future<SavingsModel> getBalance();
-  Future<List<SavingsTransactionModel>> getTransactions({int page = 1, int pageSize = 20});
+  Future<List<SavingsTransactionModel>> getTransactions({
+    int page = 1,
+    int pageSize = 20,
+  });
 }
 
 class SavingsRemoteDataSourceImpl implements SavingsRemoteDataSource {
@@ -15,7 +18,9 @@ class SavingsRemoteDataSourceImpl implements SavingsRemoteDataSource {
 
   @override
   Future<SavingsModel> getBalance() async {
-    final response = await _apiClient.get<Map<String, dynamic>>(ApiConstants.savingsBalance);
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      ApiConstants.savingsBalance,
+    );
     return SavingsModel.fromJson(response.data!);
   }
 

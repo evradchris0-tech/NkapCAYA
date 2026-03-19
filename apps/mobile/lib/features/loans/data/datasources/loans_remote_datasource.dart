@@ -15,8 +15,9 @@ class LoansRemoteDataSourceImpl implements LoansRemoteDataSource {
 
   @override
   Future<List<LoanModel>> getMyLoans() async {
-    final response =
-        await _apiClient.get<Map<String, dynamic>>(ApiConstants.myLoans);
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      ApiConstants.myLoans,
+    );
     final results = response.data!['results'] as List<dynamic>;
     return results
         .map((e) => LoanModel.fromJson(e as Map<String, dynamic>))
@@ -25,8 +26,9 @@ class LoansRemoteDataSourceImpl implements LoansRemoteDataSource {
 
   @override
   Future<LoanModel> getLoanById(String id) async {
-    final response =
-        await _apiClient.get<Map<String, dynamic>>('${ApiConstants.myLoans}$id/');
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '${ApiConstants.myLoans}$id/',
+    );
     return LoanModel.fromJson(response.data!);
   }
 }
