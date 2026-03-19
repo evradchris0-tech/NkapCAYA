@@ -1,19 +1,27 @@
 name: CD — NkapCAYA
 
 on:
-  push:
-    branches:
-      - develop   # → déploiement staging automatique
-      - main      # → déploiement production (avec approbation)
+  # Déclenchement manuel depuis GitHub Actions → Run workflow
+  # Passer en push automatique une fois les environments et secrets configurés :
+  #   push:
+  #     branches: [develop, main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environnement cible'
+        required: true
+        default: 'staging'
+        type: choice
+        options: [staging, production]
 
 jobs:
   # ─────────────────────────────────────────────────
-  # STAGING — déclenché sur develop
+  # STAGING
   # ─────────────────────────────────────────────────
   deploy-staging:
     name: Deploy → Staging
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
+    if: github.event.inputs.environment == 'staging'
     environment:
       name: staging
       url: https://api-staging.caya.cm
@@ -22,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v3
         with:
           version: 8
 
@@ -45,25 +53,17 @@ jobs:
           JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.STAGING_JWT_REFRESH_SECRET }}
 
-      - name: Run Migrations (staging)
+      - name: Run Migrations
         run: pnpm exec prisma migrate deploy --schema=database/schema.prisma
         env:
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
 
-      # ── Adapter selon votre hébergeur ─────────────
-      # Exemple : Railway
-      # - name: Deploy to Railway
-      #   uses: bervproject/railway-deploy@v1.1.0
-      #   with:
-      #     railway-token: ${{ secrets.RAILWAY_TOKEN }}
-      #     service: caya-api-staging
-
-      # Exemple : Render
+      # ── Adapter selon votre hébergeur ──────────────────────────────────────
+      # Exemple Render :
       # - name: Deploy to Render
-      #   run: |
-      #     curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}
-
-      # Exemple : VPS via SSH
+      #   run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}
+      #
+      # Exemple VPS via SSH :
       # - name: Deploy to VPS
       #   uses: appleboy/ssh-action@v1
       #   with:
@@ -71,35 +71,28 @@ jobs:
       #     username: ${{ secrets.STAGING_USER }}
       #     key: ${{ secrets.STAGING_SSH_KEY }}
       #     script: |
-      #       cd /srv/caya
-      #       git pull origin develop
-      #       pnpm install --frozen-lockfile
-      #       pnpm db:generate
-      #       pnpm --filter api build
-      #       pm2 restart caya-api
+      #       cd /srv/caya && git pull && pnpm install --frozen-lockfile
+      #       pnpm db:generate && pnpm --filter api build && pm2 restart caya-api
 
-      - name: Notify deploy success
-        if: success()
-        run: echo "✅ Staging deployed — commit ${{ github.sha }}"
+      - name: Notify
+        run: echo "✅ Staging deployed — ${{ github.sha }}"
 
   # ─────────────────────────────────────────────────
-  # PRODUCTION — déclenché sur main (avec approbation)
+  # PRODUCTION
   # ─────────────────────────────────────────────────
   deploy-production:
     name: Deploy → Production
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.event.inputs.environment == 'production'
     environment:
       name: production
       url: https://api.caya.cm
-    # L'environnement "production" doit être configuré sur GitHub
-    # avec des "Required reviewers" pour forcer l'approbation manuelle
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v3
         with:
           version: 8
 
@@ -122,14 +115,10 @@ jobs:
           JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.PROD_JWT_REFRESH_SECRET }}
 
-      - name: Run Migrations (production)
+      - name: Run Migrations
         run: pnpm exec prisma migrate deploy --schema=database/schema.prisma
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
 
-      # ── Adapter selon votre hébergeur ─────────────
-      # (mêmes options que staging, avec les secrets PROD)
-
-      - name: Notify deploy success
-        if: success()
-        run: echo "🚀 Production deployed — commit ${{ github.sha }}"
+      - name: Notify
+        run: echo "🚀 Production deployed — ${{ github.sha }}"

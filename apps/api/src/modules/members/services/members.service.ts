@@ -3,7 +3,7 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { customAlphabet } from 'nanoid';
+import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '@database/prisma.service';
 import { MembersRepository, MemberProfileWithUser, MemberProfileSummary } from '../repositories/members.repository';
@@ -11,7 +11,12 @@ import { CreateMemberDto } from '../dto/create-member.dto';
 import { UpdateMemberDto } from '../dto/update-member.dto';
 import { EmergencyContactDto } from '../dto/emergency-contact.dto';
 
-const generateCode = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6);
+const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function generateCode(length = 6): string {
+  return Array.from(randomBytes(length))
+    .map((b) => ALPHABET[b % ALPHABET.length])
+    .join('');
+}
 
 interface CreateMemberResult {
   profile: MemberProfileWithUser;
