@@ -18,7 +18,7 @@
     "lint": "pnpm -r lint",
     "db:migrate": "prisma migrate dev --schema=database/schema.prisma",
     "db:generate": "prisma generate --schema=database/schema.prisma",
-    "db:seed": "ts-node database/seeds/index.ts",
+    "db:seed": "ts-node --project tsconfig.seed.json database/seeds/index.ts",
     "db:studio": "prisma studio --schema=database/schema.prisma"
   },
   "devDependencies": {

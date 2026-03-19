@@ -3,6 +3,7 @@ import { NotFoundException, ConflictException } from '@nestjs/common';
 import { MembersService } from './members.service';
 import { MembersRepository, MemberProfileWithUser, MemberProfileSummary } from '../repositories/members.repository';
 import { PrismaService } from '@database/prisma.service';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 import { CreateMemberDto } from '../dto/create-member.dto';
 import { UpdateMemberDto } from '../dto/update-member.dto';
 
@@ -66,8 +67,15 @@ describe('MembersService', () => {
               findUnique: jest.fn(),
               update: jest.fn(),
             },
+            memberProfile: {
+              findFirst: jest.fn().mockResolvedValue(null),
+            },
             $transaction: jest.fn(),
           },
+        },
+        {
+          provide: NotificationsService,
+          useValue: { sendCredentialsSms: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();

@@ -1,0 +1,10 @@
+{
+  "extends": "./apps/api/tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "paths": {}
+  },
+  "include": ["database/**/*.ts"]
+}

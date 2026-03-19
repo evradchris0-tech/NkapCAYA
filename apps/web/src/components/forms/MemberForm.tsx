@@ -1,10 +1,12 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Input from '@components/ui/Input';
 import Button from '@components/ui/Button';
+import { membersApi } from '@lib/api/members.api';
 
 const memberSchema = z.object({
   firstName: z.string().min(2, 'Prénom requis'),
@@ -27,18 +29,33 @@ interface MemberFormProps {
 }
 
 export default function MemberForm({ defaultValues, onSuccess }: MemberFormProps) {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<MemberFormValues>({
     resolver: zodResolver(memberSchema),
     defaultValues,
   });
 
-  const onSubmit = async (_data: MemberFormValues) => {
-    // TODO: appel members.api.ts
-    onSuccess?.();
+  const onSubmit = async (data: MemberFormValues) => {
+    try {
+      await membersApi.create({
+        ...data,
+        phone2: data.phone2 || undefined,
+        locationDetail: data.locationDetail || undefined,
+        mobileMoneyType: data.mobileMoneyType || undefined,
+        mobileMoneyNumber: data.mobileMoneyNumber || undefined,
+        sponsorId: data.sponsorId || undefined,
+        username: data.username || undefined,
+      });
+      onSuccess?.();
+      router.push('/members');
+    } catch {
+      setError('root', { message: 'Erreur lors de la création du membre.' });
+    }
   };
 
   return (
@@ -109,6 +126,10 @@ export default function MemberForm({ defaultValues, onSuccess }: MemberFormProps
         {...register('username')}
         error={errors.username?.message}
       />
+
+      {errors.root && (
+        <p className="text-red-500 text-sm">{errors.root.message}</p>
+      )}
 
       <Button type="submit" isLoading={isSubmitting} className="w-full">
         Enregistrer le membre

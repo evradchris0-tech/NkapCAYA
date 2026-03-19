@@ -10,6 +10,7 @@ import { MembersRepository, MemberProfileWithUser, MemberProfileSummary } from '
 import { CreateMemberDto } from '../dto/create-member.dto';
 import { UpdateMemberDto } from '../dto/update-member.dto';
 import { EmergencyContactDto } from '../dto/emergency-contact.dto';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 
 const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 function generateCode(length = 6): string {
@@ -28,32 +29,42 @@ export class MembersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly membersRepository: MembersRepository,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createMember(dto: CreateMemberDto): Promise<CreateMemberResult> {
-    // Vérifier l'unicité du phone1 (= User.phone)
+    // ── Unicité phone1 (= User.phone, @unique en DB) ──────────────────────────
     const existingUser = await this.prisma.user.findUnique({ where: { phone: dto.phone1 } });
     if (existingUser) {
-      throw new ConflictException('Ce numéro de téléphone est déjà associé à un compte');
+      throw new ConflictException(`Le numéro ${dto.phone1} est déjà associé à un compte`);
     }
 
-    // Générer memberCode unique
+    // ── Unicité phone2 : ne doit pas être déjà utilisé comme phone1 ou phone2 ─
+    if (dto.phone2) {
+      const phone2Conflict = await this.prisma.memberProfile.findFirst({
+        where: { OR: [{ phone1: dto.phone2 }, { phone2: dto.phone2 }] },
+      });
+      const phone2AsUser = await this.prisma.user.findUnique({ where: { phone: dto.phone2 } });
+      if (phone2Conflict || phone2AsUser) {
+        throw new ConflictException(`Le numéro secondaire ${dto.phone2} est déjà utilisé`);
+      }
+    }
+
+    // ── Génération memberCode unique ──────────────────────────────────────────
     const memberCode = await this.generateUniqueMemberCode();
 
-    // Username par défaut = phone1
+    // ── Username par défaut = phone1 ─────────────────────────────────────────
     const username = dto.username ?? dto.phone1;
-
-    // Vérifier unicité du username
     const existingUsername = await this.prisma.user.findUnique({ where: { username } });
     if (existingUsername) {
-      throw new ConflictException('Ce username est déjà utilisé');
+      throw new ConflictException(`Le username "${username}" est déjà utilisé`);
     }
 
-    // Mot de passe temporaire
+    // ── Mot de passe temporaire unique par membre ─────────────────────────────
     const temporaryPassword = `Caya@${memberCode}`;
     const passwordHash = await bcrypt.hash(temporaryPassword, 12);
 
-    // Transaction atomique : User + MemberProfile
+    // ── Transaction atomique : User + MemberProfile ───────────────────────────
     const profile = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
@@ -86,6 +97,14 @@ export class MembersService {
       });
 
       return created;
+    });
+
+    // ── Envoi SMS credentials (non-bloquant : n'annule pas la création) ───────
+    await this.notificationsService.sendCredentialsSms(dto.phone1, {
+      firstName: dto.firstName,
+      memberCode,
+      username,
+      temporaryPassword,
     });
 
     return {

@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { NotificationsService } from './notifications.service';
 import { NotificationsRepository } from '../repositories/notifications.repository';
 import { PrismaService } from '@database/prisma.service';
@@ -12,14 +13,20 @@ describe('NotificationsService', () => {
       providers: [
         NotificationsService,
         {
+          provide: ConfigService,
+          useValue: {
+            // AT_API_KEY absent → mode dev (log console, pas d'appel HTTP)
+            get: jest.fn().mockImplementation((key: string, defaultVal?: string) => {
+              const values: Record<string, string> = { AT_USERNAME: 'sandbox' };
+              return values[key] ?? defaultVal ?? undefined;
+            }),
+          },
+        },
+        {
           provide: NotificationsRepository,
           useValue: {
             logNotification: jest.fn(),
             findTemplates: jest.fn(),
-            findTemplateById: jest.fn(),
-            createScheduledReminder: jest.fn(),
-            findPendingReminders: jest.fn(),
-            markReminderSent: jest.fn(),
           },
         },
         { provide: PrismaService, useValue: {} },
@@ -33,46 +40,66 @@ describe('NotificationsService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('sendWhatsApp()', () => {
-    it('should send a WhatsApp message', async () => {
-      await expect(service.sendWhatsApp('+237690000000', 'Test message')).rejects.toThrow('Not implemented');
-    });
-  });
+  // ── sendSMS — mode dev (pas de AT_API_KEY) ───────────────────────────────
 
   describe('sendSMS()', () => {
-    it('should send an SMS', async () => {
-      await expect(service.sendSMS('+237690000000', 'Test message')).rejects.toThrow('Not implemented');
+    it('should log to console in dev mode (no AT_API_KEY)', async () => {
+      // En mode dev, sendSMS doit résoudre sans lancer d'exception
+      await expect(service.sendSMS('+237699000001', 'Test message')).resolves.toBeUndefined();
     });
   });
 
-  describe('scheduleReminder()', () => {
-    it('should schedule a reminder', async () => {
-      await expect(
-        service.scheduleReminder({
-          recipientPhone: '+237690000000',
-          message: 'Rappel cotisation',
-          channel: 'WHATSAPP',
-          scheduledAt: new Date(),
-        }),
-      ).rejects.toThrow('Not implemented');
+  // ── sendCredentialsSms ────────────────────────────────────────────────────
+
+  describe('sendCredentialsSms()', () => {
+    it('should compose and send credentials message', async () => {
+      const spy = jest.spyOn(service, 'sendSMS').mockResolvedValue(undefined);
+
+      await service.sendCredentialsSms('+237699000001', {
+        firstName: 'Jean',
+        memberCode: 'MB123456',
+        username: '237699000001',
+        temporaryPassword: 'Caya@MB123456',
+      });
+
+      expect(spy).toHaveBeenCalledWith(
+        '+237699000001',
+        expect.stringContaining('MB123456'),
+      );
     });
   });
 
-  describe('getTemplates()', () => {
-    it('should return available notification templates', async () => {
-      await expect(service.getTemplates()).rejects.toThrow('Not implemented');
-    });
-  });
+  // ── send() dispatch ───────────────────────────────────────────────────────
 
   describe('send()', () => {
-    it('should dispatch to the correct channel', async () => {
+    it('should dispatch SMS to sendSMS()', async () => {
+      const spy = jest.spyOn(service, 'sendSMS').mockResolvedValue(undefined);
+
+      await service.send({
+        channel: NotificationChannel.SMS,
+        recipientPhone: '+237699000001',
+        message: 'Test dispatch',
+      });
+
+      expect(spy).toHaveBeenCalledWith('+237699000001', 'Test dispatch');
+    });
+
+    it('should throw for unsupported channel', async () => {
       await expect(
         service.send({
-          channel: NotificationChannel.SMS,
-          recipientPhone: '+237690000000',
+          channel: 'PIGEON' as NotificationChannel,
+          recipientPhone: '+237699000001',
           message: 'Test',
         }),
-      ).rejects.toThrow('Not implemented');
+      ).rejects.toThrow();
+    });
+  });
+
+  // ── sendWhatsApp — non encore implémenté ─────────────────────────────────
+
+  describe('sendWhatsApp()', () => {
+    it('should throw not implemented', async () => {
+      await expect(service.sendWhatsApp('+237690000000', 'Test')).rejects.toThrow();
     });
   });
 });
