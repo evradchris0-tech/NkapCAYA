@@ -1,21 +1,22 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, Matches, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class EmergencyContactDto {
-  @ApiProperty({ description: 'Emergency contact full name' })
+  @ApiProperty({ example: 'Marie MBARGA', description: 'Nom complet du contact' })
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
   fullName: string;
 
-  @ApiProperty({ description: 'Relationship to member' })
+  @ApiProperty({ example: '237699001122', description: 'Numéro de téléphone' })
   @IsString()
-  relationship: string;
-
-  @ApiProperty({ description: 'Phone number' })
-  @IsString()
+  @IsNotEmpty()
+  @Matches(/^\+?[0-9]{8,20}$/, { message: 'phone doit être un numéro valide' })
   phone: string;
 
-  @ApiPropertyOptional({ description: 'Alternative phone number' })
+  @ApiPropertyOptional({ example: 'Épouse', description: 'Lien de parenté' })
   @IsOptional()
   @IsString()
-  alternativePhone?: string;
+  @MaxLength(100)
+  relation?: string;
 }
