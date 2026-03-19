@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FiscalYearService } from './fiscal-year.service';
 import { FiscalYearRepository } from '../repositories/fiscal-year.repository';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@database/prisma.service';
 
 describe('FiscalYearService', () => {
   let service: FiscalYearService;

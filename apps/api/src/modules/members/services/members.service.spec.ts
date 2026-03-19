@@ -104,7 +104,8 @@ describe('MembersService', () => {
 
   describe('T02 — createMember avec phone1 déjà utilisé', () => {
     it('should throw ConflictException', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: 'existing' });
+      // Premier findUnique = vérification phone → existe déjà
+      (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({ id: 'existing', phone: '237699001122' });
 
       await expect(service.createMember(mockCreateDto as any)).rejects.toThrow(ConflictException);
     });
@@ -148,17 +149,49 @@ describe('MembersService', () => {
 
   // ── T06 — updateProfile ───────────────────────────────────────────────────
 
-  describe('T06 — updateProfile modifie les champs', () => {
-    it('should call repo.update and return updated profile', async () => {
+  describe('T06 — updateProfile modifie les champs via transaction', () => {
+    it('should call prisma.$transaction and return updated profile', async () => {
       repo.findById.mockResolvedValue(mockProfile as any);
-      repo.update.mockResolvedValue(mockProfile as any);
+      const mockMemberProfileUpdate = jest.fn().mockResolvedValue(mockProfile);
+      (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) =>
+        fn({
+          memberProfile: { update: mockMemberProfileUpdate },
+          user: { update: jest.fn().mockResolvedValue({}) },
+        }),
+      );
 
       await service.updateProfile('profile-uuid-1', { neighborhood: 'Melen' } as any);
 
-      expect(repo.update).toHaveBeenCalledWith(
-        'profile-uuid-1',
-        expect.objectContaining({ neighborhood: 'Melen' }),
+      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(mockMemberProfileUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'profile-uuid-1' },
+          data: expect.objectContaining({ neighborhood: 'Melen' }),
+        }),
       );
+    });
+  });
+
+  // ── T06b — updateProfile synchronise User.phone si phone1 change ────────
+
+  describe('T06b — updateProfile sync User.phone quand phone1 change', () => {
+    it('should update User.phone in the same transaction', async () => {
+      repo.findById.mockResolvedValue(mockProfile as any);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null); // pas de conflit
+      const mockUserUpdate = jest.fn().mockResolvedValue({});
+      (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) =>
+        fn({
+          memberProfile: { update: jest.fn().mockResolvedValue(mockProfile) },
+          user: { update: mockUserUpdate },
+        }),
+      );
+
+      await service.updateProfile('profile-uuid-1', { phone1: '237699999999' } as any);
+
+      expect(mockUserUpdate).toHaveBeenCalledWith({
+        where: { id: 'u_test0001' },
+        data: { phone: '237699999999' },
+      });
     });
   });
 

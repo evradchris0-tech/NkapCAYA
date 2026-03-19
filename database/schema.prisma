@@ -110,7 +110,7 @@ enum RescueEventType {
 // ─────────────────────────────────────────────────────────
 
 model User {
-  id           String    @id @default(uuid()) @db.VarChar(10)
+  id           String    @id @default(uuid()) @db.VarChar(36)
   username     String    @unique @db.VarChar(50)
   phone        String    @unique @db.VarChar(20)
   passwordHash String    @db.VarChar(255)
@@ -129,7 +129,7 @@ model User {
 
 model RefreshToken {
   id        String    @id @default(uuid()) @db.VarChar(36)
-  userId    String    @db.VarChar(10)
+  userId    String    @db.VarChar(36)
   tokenHash String    @unique @db.VarChar(255)
   expiresAt DateTime
   revokedAt DateTime?
@@ -144,7 +144,7 @@ model RefreshToken {
 
 model AuditLog {
   id         String   @id @default(uuid()) @db.VarChar(36)
-  actorId    String   @db.VarChar(10)
+  actorId    String   @db.VarChar(36)
   action     String   @db.VarChar(100)
   entityType String   @db.VarChar(50)
   entityId   String   @db.VarChar(36)
@@ -195,7 +195,7 @@ model TontineConfig {
   registrationFeeReturning Decimal  @db.Decimal(15, 2)
   // Méta
   updatedAt                DateTime @updatedAt
-  updatedById              String   @db.VarChar(10)
+  updatedById              String   @db.VarChar(36)
 
   @@map("tontine_config")
 }
@@ -204,7 +204,7 @@ model FiscalYearConfig {
   id                       String             @id @default(uuid()) @db.VarChar(36)
   fiscalYearId             String             @unique @db.VarChar(36)
   snapshotAt               DateTime           @default(now())
-  snapshotById             String             @db.VarChar(10)
+  snapshotById             String             @db.VarChar(36)
   // Règles gelées
   shareUnitAmount          Decimal            @db.Decimal(15, 2)
   loanMonthlyRate          Decimal            @db.Decimal(5, 4)
@@ -218,7 +218,7 @@ model FiscalYearConfig {
   interestPoolMethod       InterestPoolMethod @default(THEORETICAL)
   // Exception SUPER_ADMIN
   forcedModifiedAt         DateTime?
-  forcedModifiedById       String?            @db.VarChar(10)
+  forcedModifiedById       String?            @db.VarChar(36)
   forcedModifiedReason     String?            @db.Text
 
   fiscalYear FiscalYear @relation(fields: [fiscalYearId], references: [id])
@@ -230,7 +230,7 @@ model RescueEventAmount {
   eventType    RescueEventType @id
   amount       Decimal         @db.Decimal(15, 2)
   label        String          @db.VarChar(255)
-  updatedById  String          @db.VarChar(10)
+  updatedById  String          @db.VarChar(36)
   updatedAt    DateTime        @updatedAt
 
   @@map("rescue_event_amounts")
@@ -243,7 +243,7 @@ model RescueEventAmount {
 model MemberProfile {
   id                 String  @id @default(uuid()) @db.VarChar(36)
   memberCode         String  @unique @db.VarChar(10)
-  userId             String  @unique @db.VarChar(10)
+  userId             String  @unique @db.VarChar(36)
   firstName          String  @db.VarChar(100)
   lastName           String  @db.VarChar(100)
   phone1             String  @db.VarChar(20)
@@ -291,9 +291,9 @@ model FiscalYear {
   loanDueDate   DateTime         @db.Date
   status        FiscalYearStatus @default(PENDING)
   openedAt      DateTime?
-  openedById    String?          @db.VarChar(10)
+  openedById    String?          @db.VarChar(36)
   closedAt      DateTime?
-  closedById    String?          @db.VarChar(10)
+  closedById    String?          @db.VarChar(36)
   notes         String?          @db.Text
 
   config             FiscalYearConfig?
@@ -343,7 +343,7 @@ model ShareCommitment {
   monthlyAmount Decimal  @db.Decimal(15, 2)
   isLocked     Boolean   @default(false)
   lockedAt     DateTime?
-  lockedById   String?   @db.VarChar(10)
+  lockedById   String?   @db.VarChar(36)
 
   membership Membership @relation(fields: [membershipId], references: [id])
 
@@ -363,9 +363,9 @@ model MonthlySession {
   hostMembershipId String?      @db.VarChar(36)
   status          SessionStatus @default(DRAFT)
   openedAt        DateTime?
-  openedById      String?       @db.VarChar(10)
+  openedById      String?       @db.VarChar(36)
   closedAt        DateTime?
-  closedById      String?       @db.VarChar(10)
+  closedById      String?       @db.VarChar(36)
   // Totaux snapshot
   totalInscription  Decimal @default(0) @db.Decimal(15, 2)
   totalSecours      Decimal @default(0) @db.Decimal(15, 2)
@@ -400,7 +400,7 @@ model SessionEntry {
   outOfSessionRef  String?         @db.VarChar(100)
   isImported       Boolean         @default(false)
   notes            String?         @db.Text
-  recordedById     String          @db.VarChar(10)
+  recordedById     String          @db.VarChar(36)
   recordedAt       DateTime        @default(now())
 
   session    MonthlySession? @relation(fields: [sessionId], references: [id])
@@ -470,7 +470,7 @@ model InterestDistributionSnapshot {
   totalInterestPool Decimal @db.Decimal(15, 2)
   totalSavingsBase Decimal  @db.Decimal(15, 2)
   distributedAt    DateTime @default(now())
-  executedById     String   @db.VarChar(10)
+  executedById     String   @db.VarChar(36)
 
   session     MonthlySession      @relation(fields: [sessionId], references: [id])
   allocations InterestAllocation[]
@@ -503,7 +503,7 @@ model LoanAccount {
   principalAmount      Decimal    @db.Decimal(15, 2)
   monthlyRate          Decimal    @default(0.04) @db.Decimal(5, 4)
   disbursedAt          DateTime?  @db.Date
-  disbursedById        String?    @db.VarChar(10)
+  disbursedById        String?    @db.VarChar(36)
   dueBeforeDate        DateTime   @db.Date
   status               LoanStatus @default(PENDING)
   outstandingBalance   Decimal    @default(0) @db.Decimal(15, 2)
@@ -563,7 +563,7 @@ model CarryoverLoanRecord {
   newFiscalYearId  String   @db.VarChar(36)
   carryoverAmount  Decimal  @db.Decimal(15, 2)
   reason           String?  @db.Text
-  approvedById     String   @db.VarChar(10)
+  approvedById     String   @db.VarChar(36)
   createdAt        DateTime @default(now())
 
   originalLoan LoanAccount @relation(fields: [originalLoanId], references: [id])
@@ -596,7 +596,7 @@ model RescueFundEvent {
   beneficiaryId  String          @db.VarChar(36)
   eventType      RescueEventType
   amount         Decimal         @db.Decimal(15, 2)
-  authorizedById String          @db.VarChar(10)
+  authorizedById String          @db.VarChar(36)
   eventDate      DateTime        @db.Date
   description    String?         @db.Text
   createdAt      DateTime        @default(now())
@@ -643,7 +643,7 @@ model BeneficiarySlot {
   slotIndex       Int
   membershipId    String?           @db.VarChar(36)
   amountDelivered Decimal           @default(0) @db.Decimal(15, 2)
-  designatedById  String?           @db.VarChar(10)
+  designatedById  String?           @db.VarChar(36)
   designatedAt    DateTime?
   status          BeneficiaryStatus @default(UNASSIGNED)
   deliveredAt     DateTime?
@@ -666,7 +666,7 @@ model CassationRecord {
   id                    String   @id @default(uuid()) @db.VarChar(36)
   fiscalYearId          String   @unique @db.VarChar(36)
   executedAt            DateTime @default(now())
-  executedById          String   @db.VarChar(10)
+  executedById          String   @db.VarChar(36)
   totalSavingsReturned  Decimal  @db.Decimal(15, 2)
   totalInterestReturned Decimal  @db.Decimal(15, 2)
   totalDistributed      Decimal  @db.Decimal(15, 2)

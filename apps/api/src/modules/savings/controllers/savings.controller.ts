@@ -1,9 +1,9 @@
 import { Controller, Get, Post, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SavingsService } from '../services/savings.service';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/roles.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
+import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
+import { RolesGuard } from '@common/guards/roles.guard';
+import { Roles } from '@common/decorators/roles.decorator';
 
 @ApiTags('savings')
 @ApiBearerAuth()
@@ -19,7 +19,7 @@ export class SavingsController {
   }
 
   @Post('distribute/:sessionId')
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles('SUPER_ADMIN', 'PRESIDENT')
   @ApiOperation({ summary: 'Distribute interests for a session' })
   distributeInterests(@Param('sessionId') sessionId: string) {
     return this.savingsService.distributeInterests(sessionId);

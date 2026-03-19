@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { ConfigCayaModule } from './modules/config/config.module';
+import { TontineConfigModule } from './modules/config/config.module';
 import { MembersModule } from './modules/members/members.module';
 import { FiscalYearModule } from './modules/fiscal-year/fiscal-year.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
@@ -20,7 +20,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     DatabaseModule,
     // Modules métier — ordre respectant les dépendances
     AuthModule,
-    ConfigCayaModule,
+    TontineConfigModule,
     MembersModule,
     FiscalYearModule,
     SessionsModule,

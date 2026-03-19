@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@database/prisma.service';
 import { FiscalYearRepository } from '../repositories/fiscal-year.repository';
 import { CreateFiscalYearDto } from '../dto/create-fiscal-year.dto';
 import { AddMemberDto } from '../dto/add-member.dto';

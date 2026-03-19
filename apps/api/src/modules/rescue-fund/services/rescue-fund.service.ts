@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@database/prisma.service';
 import { RescueFundRepository } from '../repositories/rescue-fund.repository';
 import { CreateRescueFundEventDto } from '../dto/create-rescue-fund-event.dto';
 

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RescueFundService } from './rescue-fund.service';
 import { RescueFundRepository } from '../repositories/rescue-fund.repository';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@database/prisma.service';
 import { RescueFundEventType } from '../dto/create-rescue-fund-event.dto';
 
 describe('RescueFundService', () => {

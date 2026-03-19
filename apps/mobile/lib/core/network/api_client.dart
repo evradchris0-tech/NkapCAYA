@@ -142,8 +142,16 @@ class ApiClient {
 class _AuthInterceptor extends Interceptor {
   final FlutterSecureStorage _storage;
   final Dio _dio;
+  late final Dio _refreshDio;
+  bool _isRefreshing = false;
 
-  _AuthInterceptor(this._storage, this._dio);
+  _AuthInterceptor(this._storage, this._dio) {
+    // Dio séparé sans interceptor pour le refresh — évite les boucles infinies
+    _refreshDio = Dio(BaseOptions(
+      baseUrl: ApiConstants.baseUrl,
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+    ));
+  }
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
@@ -156,7 +164,7 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response?.statusCode == 401) {
+    if (err.response?.statusCode == 401 && !_isRefreshing) {
       final refreshed = await _tryRefreshToken();
       if (refreshed) {
         final token = await _storage.read(key: ApiConstants.accessTokenKey);
@@ -170,10 +178,12 @@ class _AuthInterceptor extends Interceptor {
   }
 
   Future<bool> _tryRefreshToken() async {
+    if (_isRefreshing) return false;
+    _isRefreshing = true;
     try {
       final refresh = await _storage.read(key: ApiConstants.refreshTokenKey);
       if (refresh == null) return false;
-      final response = await _dio.post(
+      final response = await _refreshDio.post(
         ApiConstants.tokenRefresh,
         data: {'refreshToken': refresh},
       );
@@ -191,6 +201,8 @@ class _AuthInterceptor extends Interceptor {
       return false;
     } catch (_) {
       return false;
+    } finally {
+      _isRefreshing = false;
     }
   }
 }

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationsService } from './notifications.service';
 import { NotificationsRepository } from '../repositories/notifications.repository';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@database/prisma.service';
 import { NotificationChannel } from '../dto/send-notification.dto';
 
 describe('NotificationsService', () => {

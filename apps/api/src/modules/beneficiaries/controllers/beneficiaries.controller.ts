@@ -10,9 +10,9 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { BeneficiariesService } from '../services/beneficiaries.service';
 import { AssignSlotDto } from '../dto/assign-slot.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/roles.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
+import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
+import { RolesGuard } from '@common/guards/roles.guard';
+import { Roles } from '@common/decorators/roles.decorator';
 
 @ApiTags('beneficiaries')
 @ApiBearerAuth()
@@ -28,14 +28,14 @@ export class BeneficiariesController {
   }
 
   @Post('slots/:id/assign')
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles('SUPER_ADMIN', 'PRESIDENT')
   @ApiOperation({ summary: 'Assign a membership to a beneficiary slot' })
   assignSlot(@Param('id') id: string, @Body() dto: AssignSlotDto) {
     return this.beneficiariesService.assignSlot(id, dto);
   }
 
   @Patch('slots/:id/deliver')
-  @Roles('SUPER_ADMIN', 'ADMIN', 'TREASURER')
+  @Roles('SUPER_ADMIN', 'PRESIDENT', 'TRESORIER')
   @ApiOperation({ summary: 'Mark a beneficiary slot as delivered' })
   markDelivered(@Param('id') id: string) {
     return this.beneficiariesService.markDelivered(id);

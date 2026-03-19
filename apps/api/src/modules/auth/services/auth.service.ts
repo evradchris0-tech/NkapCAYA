@@ -12,7 +12,7 @@ import { LoginDto } from '../dto/login.dto';
 import { UserRepository } from '../repositories/user.repository';
 import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
 
-interface UserSafe {
+export interface UserSafe {
   id: string;
   username: string;
   phone: string;
@@ -21,12 +21,12 @@ interface UserSafe {
   lastLoginAt: Date | null;
 }
 
-interface AuthResponse {
+export interface AuthResponse {
   tokens: { access: string; refresh: string };
   user: UserSafe;
 }
 
-interface TokensResponse {
+export interface TokensResponse {
   tokens: { access: string; refresh: string };
 }
 

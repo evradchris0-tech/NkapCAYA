@@ -28,13 +28,15 @@ export class CreateMemberDto {
   @ApiProperty({ example: '237699001122', description: 'Téléphone principal (aussi utilisé pour le compte)' })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\+?[0-9]{8,20}$/, { message: 'phone1 doit être un numéro valide' })
+  @MaxLength(20)
+  @Matches(/^\+?[0-9]{8,19}$/, { message: 'phone1 doit être un numéro valide (8 à 19 chiffres, + optionnel)' })
   phone1: string;
 
   @ApiPropertyOptional({ example: '237677001122', description: 'Téléphone secondaire' })
   @IsOptional()
   @IsString()
-  @Matches(/^\+?[0-9]{8,20}$/, { message: 'phone2 doit être un numéro valide' })
+  @MaxLength(20)
+  @Matches(/^\+?[0-9]{8,19}$/, { message: 'phone2 doit être un numéro valide (8 à 19 chiffres, + optionnel)' })
   phone2?: string;
 
   // ── Localisation ─────────────────────────────────────────────────────────
@@ -61,7 +63,8 @@ export class CreateMemberDto {
   @ApiPropertyOptional({ example: '237699001122' })
   @IsOptional()
   @IsString()
-  @Matches(/^\+?[0-9]{8,20}$/, { message: 'mobileMoneyNumber doit être un numéro valide' })
+  @MaxLength(20)
+  @Matches(/^\+?[0-9]{8,19}$/, { message: 'mobileMoneyNumber doit être un numéro valide' })
   mobileMoneyNumber?: string;
 
   // ── Parrainage ────────────────────────────────────────────────────────────

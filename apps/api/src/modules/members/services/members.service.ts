@@ -18,7 +18,7 @@ function generateCode(length = 6): string {
     .join('');
 }
 
-interface CreateMemberResult {
+export interface CreateMemberResult {
   profile: MemberProfileWithUser;
   temporaryPassword: string;
 }
@@ -107,22 +107,44 @@ export class MembersService {
   }
 
   async updateProfile(id: string, dto: UpdateMemberDto): Promise<MemberProfileWithUser> {
-    await this.findById(id); // throws 404 si absent
+    const profile = await this.findById(id); // throws 404 si absent
 
-    await this.membersRepository.update(id, {
-      firstName: dto.firstName,
-      lastName: dto.lastName,
-      phone1: dto.phone1,
-      phone2: dto.phone2,
-      neighborhood: dto.neighborhood,
-      locationDetail: dto.locationDetail,
-      mobileMoneyType: dto.mobileMoneyType,
-      mobileMoneyNumber: dto.mobileMoneyNumber,
-      ...(dto.sponsorId !== undefined && {
-        sponsor: dto.sponsorId
-          ? { connect: { id: dto.sponsorId } }
-          : { disconnect: true },
-      }),
+    // Si phone1 change, vérifier unicité et synchroniser User.phone
+    if (dto.phone1 && dto.phone1 !== profile.phone1) {
+      const existingUser = await this.prisma.user.findUnique({ where: { phone: dto.phone1 } });
+      if (existingUser && existingUser.id !== profile.user.id) {
+        throw new ConflictException('Ce numéro de téléphone est déjà associé à un compte');
+      }
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      // Mettre à jour MemberProfile
+      await tx.memberProfile.update({
+        where: { id },
+        data: {
+          firstName: dto.firstName,
+          lastName: dto.lastName,
+          phone1: dto.phone1,
+          phone2: dto.phone2,
+          neighborhood: dto.neighborhood,
+          locationDetail: dto.locationDetail,
+          mobileMoneyType: dto.mobileMoneyType,
+          mobileMoneyNumber: dto.mobileMoneyNumber,
+          ...(dto.sponsorId !== undefined && {
+            sponsor: dto.sponsorId
+              ? { connect: { id: dto.sponsorId } }
+              : { disconnect: true },
+          }),
+        },
+      });
+
+      // Synchroniser User.phone si phone1 a changé
+      if (dto.phone1 && dto.phone1 !== profile.phone1) {
+        await tx.user.update({
+          where: { id: profile.user.id },
+          data: { phone: dto.phone1 },
+        });
+      }
     });
 
     return this.membersRepository.findById(id) as Promise<MemberProfileWithUser>;

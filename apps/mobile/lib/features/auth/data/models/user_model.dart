@@ -7,6 +7,7 @@ class UserModel extends UserEntity {
     required super.phone,
     required super.role,
     required super.isActive,
+    super.lastLoginAt,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -16,6 +17,7 @@ class UserModel extends UserEntity {
       phone: json['phone'] as String,
       role: json['role'] as String? ?? 'MEMBRE',
       isActive: json['isActive'] as bool? ?? true,
+      lastLoginAt: json['lastLoginAt'] as String?,
     );
   }
 
@@ -26,6 +28,7 @@ class UserModel extends UserEntity {
       'phone': phone,
       'role': role,
       'isActive': isActive,
+      'lastLoginAt': lastLoginAt,
     };
   }
 }

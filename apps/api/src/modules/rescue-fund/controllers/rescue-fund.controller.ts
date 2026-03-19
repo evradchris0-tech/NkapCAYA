@@ -9,9 +9,9 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { RescueFundService } from '../services/rescue-fund.service';
 import { CreateRescueFundEventDto } from '../dto/create-rescue-fund-event.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/roles.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
+import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
+import { RolesGuard } from '@common/guards/roles.guard';
+import { Roles } from '@common/decorators/roles.decorator';
 
 @ApiTags('rescue-fund')
 @ApiBearerAuth()
@@ -27,7 +27,7 @@ export class RescueFundController {
   }
 
   @Post('events')
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles('SUPER_ADMIN', 'PRESIDENT')
   @ApiOperation({ summary: 'Record a rescue fund event (disbursement or contribution)' })
   recordEvent(@Body() dto: CreateRescueFundEventDto) {
     return this.rescueFundService.recordEvent(dto);

@@ -8,9 +8,9 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationsService } from '../services/notifications.service';
 import { SendNotificationDto } from '../dto/send-notification.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/roles.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
+import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
+import { RolesGuard } from '@common/guards/roles.guard';
+import { Roles } from '@common/decorators/roles.decorator';
 
 @ApiTags('notifications')
 @ApiBearerAuth()
@@ -20,14 +20,14 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @Post('send')
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles('SUPER_ADMIN', 'PRESIDENT')
   @ApiOperation({ summary: 'Send a notification (internal use)' })
   send(@Body() dto: SendNotificationDto) {
     return this.notificationsService.send(dto);
   }
 
   @Get('templates')
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles('SUPER_ADMIN', 'PRESIDENT')
   @ApiOperation({ summary: 'Get available notification templates' })
   getTemplates() {
     return this.notificationsService.getTemplates();

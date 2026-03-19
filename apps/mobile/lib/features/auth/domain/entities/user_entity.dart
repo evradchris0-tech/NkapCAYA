@@ -4,6 +4,7 @@ class UserEntity {
   final String phone;
   final String role;
   final bool isActive;
+  final String? lastLoginAt;
 
   const UserEntity({
     required this.id,
@@ -11,5 +12,6 @@ class UserEntity {
     required this.phone,
     required this.role,
     required this.isActive,
+    this.lastLoginAt,
   });
 }
