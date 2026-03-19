@@ -1,0 +1,1316 @@
+% ============================================================
+%  CAHIER DES CHARGES — APPLICATION CAYA
+%  Club des Amis de Yaoundé — Dématérialisation Complète
+%  Version 1.0 — Mars 2026
+% ============================================================
+\documentclass[12pt, a4paper]{report}
+
+% ---------- Encodage & Langue ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% ---------- Mise en page ----------
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.8cm, right=2.8cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% ---------- Polices ----------
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ---------- Couleurs & Graphiques ----------
+\usepackage[dvipsnames, table]{xcolor}
+\usepackage{graphicx}
+\usepackage{tikz}
+
+% Palette CAYA
+\definecolor{cayaBlue}{RGB}{0, 71, 130}
+\definecolor{cayaGold}{RGB}{201, 155, 0}
+\definecolor{cayaLight}{RGB}{230, 241, 255}
+\definecolor{cayaGray}{RGB}{245, 245, 245}
+\definecolor{warningRed}{RGB}{200, 40, 40}
+\definecolor{successGreen}{RGB}{30, 130, 60}
+
+% ---------- En-têtes & pieds de page ----------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{cayaBlue}{\textbf{CAYA} — Cahier des Charges}}
+\fancyhead[R]{\small\textcolor{cayaGray!50!black}{v1.0 · Mars 2026}}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+% ---------- Tableaux ----------
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{colortbl}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+
+% ---------- Listes ----------
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=1.5em, itemsep=2pt}
+\setlist[enumerate]{leftmargin=1.5em, itemsep=2pt}
+
+% ---------- Boîtes ----------
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable, skins, listings}
+
+\newtcolorbox{ruleBox}[1]{
+  colback=cayaLight, colframe=cayaBlue,
+  fonttitle=\bfseries\small, title=#1,
+  breakable, boxrule=0.8pt, arc=3pt
+}
+
+\newtcolorbox{invariantBox}[1]{
+  colback=cayaGold!10, colframe=cayaGold!80!black,
+  fonttitle=\bfseries\small\color{cayaGold!80!black},
+  title=Invariant : #1,
+  breakable, boxrule=0.8pt, arc=3pt
+}
+
+\newtcolorbox{warningBox}{
+  colback=warningRed!8, colframe=warningRed,
+  fonttitle=\bfseries\small\color{warningRed},
+  title=Attention,
+  breakable, boxrule=0.8pt, arc=3pt
+}
+
+\newtcolorbox{codeBox}{
+  colback=gray!8, colframe=gray!50,
+  fontupper=\small\ttfamily,
+  breakable, boxrule=0.5pt, arc=2pt
+}
+
+% ---------- Code ----------
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  backgroundcolor=\color{gray!8},
+  frame=single, framerule=0.4pt,
+  breaklines=true,
+  keepspaces=true,
+  showstringspaces=false
+}
+
+% ---------- Hyper-liens ----------
+\usepackage[hidelinks, colorlinks=true,
+  linkcolor=cayaBlue, urlcolor=cayaBlue, citecolor=cayaBlue]{hyperref}
+\usepackage{bookmark}
+
+% ---------- Utilitaires ----------
+\usepackage{ifthen}
+\usepackage{calc}
+\usepackage{xspace}
+\usepackage{soul}         % surlignage
+\usepackage{pifont}       % symboles
+\newcommand{\cmark}{\textcolor{successGreen}{\ding{51}}}
+\newcommand{\xmark}{\textcolor{warningRed}{\ding{55}}}
+
+% ---------- Titre du document ----------
+\title{%
+  \vspace{-1cm}
+  {\Huge\bfseries\color{cayaBlue} Cahier des Charges}\\[0.4cm]
+  {\large\bfseries Application de Gestion\\[0.1cm]
+  \textbf{\color{cayaGold}CLUB DES AMIS DE YAOUNDÉ (CAYA)}}\\[0.3cm]
+  {\normalsize Dématérialisation Complète du Système de Tontine}\\[0.5cm]
+  \rule{0.6\textwidth}{1pt}\\[0.4cm]
+  {\small Version 1.0 \quad|\quad Mars 2026 \quad|\quad Confidentiel}
+}
+\author{}
+\date{}
+
+% ============================================================
+\begin{document}
+% ============================================================
+
+\maketitle
+\thispagestyle{empty}
+
+\vfill
+\begin{center}
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{Projet}    & Application CAYA \\
+    \textbf{Version}   & 1.0 \\
+    \textbf{Date}      & Mars 2026 \\
+    \textbf{Statut}    & En modélisation \\
+    \textbf{Équipe}    & Ingénierie Logicielle \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ============================================================
+\chapter*{Résumé Exécutif}
+\addcontentsline{toc}{chapter}{Résumé Exécutif}
+% ============================================================
+
+Le présent document constitue le cahier des charges complet de l'application de gestion du
+\textbf{Club des Amis de Yaoundé (CAYA)}, une association d'épargne rotative fondée en 2000 à Yaoundé.
+
+\medskip
+Ce cahier formalise la \textbf{dématérialisation intégrale} d'un système de gestion tontine jusqu'ici
+géré manuellement sous tableur Excel. L'objectif est de produire une application robuste, modulaire,
+conçue pour fonctionner sur de multiples exercices fiscaux consécutifs sans perte d'intégrité des données.
+
+\medskip
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{5cm}L{8cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Paramètre}} & \textcolor{white}{\textbf{Valeur}} \\
+  \midrule
+  Nom officiel      & Club des Amis de Yaoundé \\
+  Acronyme          & CAYA \\
+  Fondé en          & 2000 \\
+  Siège             & Yaoundé, Cameroun \\
+  Devise            & Paix – Solidarité – Épanouissement \\
+  Membres actifs    & 32 (exercice 2025-2026) \\
+  Capital courant   & 10 000 000 XAF \\
+  Valeur d'une part & 100 000 XAF \\
+  Taux prêts        & 4\% / mois (encours glissant) \\
+  Exercice type     & 12 mois (Août $\rightarrow$ Juillet) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\chapter{Contexte et Objectifs}
+% ============================================================
+
+\section{Contexte}
+
+Le CAYA est une tontine améliorée regroupant une trentaine de membres. Chaque exercice de 12 mois,
+les membres effectuent des dépôts mensuels (parts, épargne, secours, pot), peuvent contracter des
+prêts auprès de la caisse commune, et perçoivent à la \textit{cassation} leur épargne augmentée
+des intérêts générés par les prêts redistribués proportionnellement.
+
+\medskip
+Jusqu'à ce jour, l'ensemble des calculs financiers — intérêts sur encours, redistribution proportionnelle,
+suivi des remboursements, bilan de cassation — est réalisé manuellement dans un fichier Excel
+multi-feuilles. Cette approche génère des \textbf{incohérences documentées} (écarts de 532 400 XAF
+entre deux versions de calcul, erreurs de recopie manuelle créant des dettes fantômes).
+
+\section{Objectifs du Projet}
+
+\begin{enumerate}[label=\textbf{O\arabic*.}]
+  \item \textbf{Automatisation intégrale} des calculs financiers (intérêts, redistribution, cassation).
+  \item \textbf{Élimination des saisies manuelles redondantes} — toute donnée calculable doit être dérivée.
+  \item \textbf{Traçabilité complète} — chaque opération financière est auditée, horodatée, attribuée.
+  \item \textbf{Pérennité multi-exercices} — le système doit fonctionner de manière continue sur des années.
+  \item \textbf{Gouvernance renforcée} — le contrôle d'accès par rôle garantit que chaque acteur n'effectue
+        que les opérations qui lui sont autorisées.
+  \item \textbf{Exportabilité} — les données doivent être exportables en PDF et Excel pour les réunions.
+\end{enumerate}
+
+\section{Périmètre}
+
+L'application couvre \textbf{une seule tontine} : le CAYA. Elle n'est pas conçue pour gérer plusieurs
+organisations simultanément. La conception est modulaire afin de garantir l'absence de régressions
+lors de l'ajout de fonctionnalités.
+
+% ============================================================
+\chapter{Architecture Générale}
+% ============================================================
+
+\section{Principes Architecturaux}
+
+L'application repose sur les principes suivants :
+
+\begin{itemize}
+  \item \textbf{Domain-Driven Design (DDD)} — les agrégats correspondent aux invariants métier.
+  \item \textbf{Architecture en couches} — Présentation / Application / Domaine / Infrastructure.
+  \item \textbf{CQRS léger} — séparation des opérations de lecture (vues rapides) et d'écriture (commandes métier).
+  \item \textbf{Event sourcing partiel} — l'audit log et les ledgers constituent une trace événementielle immuable.
+  \item \textbf{Conception module par module} — chaque module est développé, testé et validé isolément.
+\end{itemize}
+
+\section{Stack Technique}
+
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{3.5cm}L{4.5cm}L{5cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Couche}} &
+  \textcolor{white}{\textbf{Technologie}} &
+  \textcolor{white}{\textbf{Rôle}} \\
+  \midrule
+  Backend API      & NestJS (TypeScript)   & API REST sécurisée, logique métier \\
+  Base de données  & MySQL 8.0             & Persistance, triggers, procédures stockées \\
+  ORM              & Prisma                & Schéma typé, migrations \\
+  Frontend Web     & Next.js / React       & Interface bureau (Trésorier, Bureau) \\
+  Mobile           & Flutter (Dart)        & Interface membres — iOS \& Android \\
+  Authentification & JWT + Refresh Token   & Auth phone/username, sessions longues \\
+  Notifications    & WhatsApp API + SMS    & Rappels, confirmations \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\section{Décomposition en Modules}
+
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{C{1cm}L{4cm}L{8cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{\#}} &
+  \textcolor{white}{\textbf{Module}} &
+  \textcolor{white}{\textbf{Responsabilité}} \\
+  \midrule
+  01 & Auth \& RBAC           & Authentification, rôles, sessions, audit log \\
+  02 & Configuration          & Paramètres CAYA, snapshot exercice, événements secours \\
+  03 & Membres                & Profils, contacts d'urgence, parrainage \\
+  04 & Exercice Fiscal        & Cycle de vie exercice, adhésions, engagements de parts \\
+  05 & Sessions \& Transactions & Réunions mensuelles, pointage, référencement \\
+  06 & Épargne \& Intérêts    & Ledgers épargne, redistribution mensuelle \\
+  07 & Prêts                  & Octroi, accrual mensuel, remboursements, report \\
+  08 & Caisse de Secours      & Fonds, événements, positions membres \\
+  09 & Bénéficiaires          & Planning de la « bouffe », désignation, livraison \\
+  10 & Cassation \& Rollover  & Clôture d'exercice, redistribution finale, report prêts \\
+  11 & Rapports \& Exports    & PDF, Excel, graphiques, tableau de bord \\
+  12 & Notifications          & WhatsApp, SMS, rappels automatiques \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\chapter{Modèle de Données — Entités et Règles Métier}
+% ============================================================
+
+\section{Module 01 — Authentification et Contrôle d'Accès}
+
+\subsection{Entité \texttt{User}}
+
+\begin{codeBox}
+User {
+  id            : ShortUUID(10)   PK, auto-généré
+  username      : VARCHAR(50)     UNIQUE, NOT NULL
+  phone         : VARCHAR(20)     UNIQUE, NOT NULL
+  passwordHash  : VARCHAR(255)    NOT NULL
+  role          : BureauRole      NOT NULL, DEFAULT MEMBRE
+  isActive      : BOOLEAN         DEFAULT true
+  createdAt     : TIMESTAMP       DEFAULT now()
+  updatedAt     : TIMESTAMP       auto-updated
+  lastLoginAt   : TIMESTAMP       nullable
+}
+\end{codeBox}
+
+\subsection{Entité \texttt{RefreshToken}}
+
+\begin{codeBox}
+RefreshToken {
+  id          : ShortUUID(10)   PK
+  userId      : ShortUUID       FK → User
+  tokenHash   : VARCHAR(255)    UNIQUE
+  expiresAt   : TIMESTAMP
+  revokedAt   : TIMESTAMP       nullable
+  createdAt   : TIMESTAMP
+  userAgent   : VARCHAR(500)    nullable
+}
+\end{codeBox}
+
+\subsection{Énumération \texttt{BureauRole}}
+
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{4.5cm}L{9cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Rôle}} &
+  \textcolor{white}{\textbf{Responsabilités principales}} \\
+  \midrule
+  \texttt{SUPER\_ADMIN}             & Modification config en cours d'exercice, accès total \\
+  \texttt{PRESIDENT}                & Autorisation secours, désignation bénéficiaires, validation sessions \\
+  \texttt{VICE\_PRESIDENT}          & Délégation Président, autorisation secours \\
+  \texttt{TRESORIER}                & Saisie des transactions, déblocage prêts, exécution cassation \\
+  \texttt{TRESORIER\_ADJOINT}       & Assistance Trésorier \\
+  \texttt{SECRETAIRE\_GENERAL}      & Accès audit log, gestion réunions \\
+  \texttt{SECRETAIRE\_ADJOINT}      & Assistance Secrétaire \\
+  \texttt{COMMISSAIRE\_AUX\_COMPTES}& Lecture financière complète, pas de saisie \\
+  \texttt{MEMBRE}                   & Consultation de sa propre fiche uniquement \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{invariantBox}{AUTH-01 à AUTH-04}
+\begin{itemize}
+  \item \textbf{AUTH-01} : Un seul \texttt{User} avec \texttt{role = PRESIDENT} et \texttt{isActive = true}.
+  \item \textbf{AUTH-02} : Un seul \texttt{User} avec \texttt{role = VICE\_PRESIDENT} et \texttt{isActive = true}.
+  \item \textbf{AUTH-03} : \texttt{phone} de \texttt{User} est synchronisé avec \texttt{MemberProfile.phone1}.
+  \item \textbf{AUTH-04} : Tout changement de rôle génère une entrée dans \texttt{AuditLog}.
+\end{itemize}
+\end{invariantBox}
+
+\subsection{Matrice RBAC}
+
+\begin{center}
+\small
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{3.8cm}C{1.5cm}C{1.5cm}C{1.8cm}C{1.8cm}C{1.8cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Permission}} &
+  \textcolor{white}{\textbf{S.Admin}} &
+  \textcolor{white}{\textbf{Prés./VP}} &
+  \textcolor{white}{\textbf{Trés.}} &
+  \textcolor{white}{\textbf{Secr.}} &
+  \textcolor{white}{\textbf{Membre}} \\
+  \midrule
+  Modifier config exercice actif   & \cmark & \xmark & \xmark & \xmark & \xmark \\
+  Lire configuration               & \cmark & \cmark & \cmark & \cmark & \xmark \\
+  Saisir transactions session      & \cmark & \cmark & \cmark & \xmark & \xmark \\
+  Autoriser prêt                   & \cmark & \cmark & \xmark & \xmark & \xmark \\
+  Débloquer prêt (décaissement)    & \cmark & \xmark & \cmark & \xmark & \xmark \\
+  Autoriser secours                & \cmark & \cmark & \xmark & \xmark & \xmark \\
+  Désigner bénéficiaire            & \cmark & \cmark & \xmark & \xmark & \xmark \\
+  Exécuter cassation               & \cmark & \xmark & \cmark & \xmark & \xmark \\
+  Rouvrir session clôturée         & \cmark & \xmark & \xmark & \xmark & \xmark \\
+  Consulter audit log              & \cmark & \cmark & \xmark & \cmark & \xmark \\
+  Consulter sa fiche               & \cmark & \cmark & \cmark & \cmark & \cmark \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% -------------------------------------------------------
+\section{Module 02 — Configuration}
+
+\subsection{Entité \texttt{TontineConfig} (Singleton)}
+
+\begin{codeBox}
+TontineConfig {
+  id                      : VARCHAR    PK DEFAULT 'caya'
+  -- Identité --
+  name                    : VARCHAR(255)
+  acronym                 : VARCHAR(20)
+  foundedYear             : INT
+  motto                   : VARCHAR(500)
+  headquartersCity        : VARCHAR(255)
+  registrationNumber      : VARCHAR(100)  nullable
+  -- Parts --
+  shareUnitAmount         : DECIMAL(15,2)  DEFAULT 100000
+  halfShareAmount         : DECIMAL(15,2)  DEFAULT 50000
+  potMonthlyAmount        : DECIMAL(15,2)  DEFAULT 3000
+  maxSharesPerMember      : INT            DEFAULT 10
+  -- Épargne --
+  mandatoryInitialSavings : DECIMAL(15,2)  DEFAULT 100000
+  -- Prêts --
+  loanMonthlyRate         : DECIMAL(5,4)   DEFAULT 0.04
+  minLoanAmount           : DECIMAL(15,2)  DEFAULT 10000
+  maxLoanAmount           : DECIMAL(15,2)  DEFAULT 1000000
+  maxLoanMultiplier       : INT            DEFAULT 5
+  minSavingsToLoan        : DECIMAL(15,2)  DEFAULT 100000
+  maxConcurrentLoans      : INT            DEFAULT 2
+  -- Secours --
+  rescueFundTarget        : DECIMAL(15,2)  DEFAULT 50000
+  rescueFundMinBalance    : DECIMAL(15,2)  DEFAULT 25000
+  -- Inscription --
+  registrationFeeNew      : DECIMAL(15,2)
+  registrationFeeReturning: DECIMAL(15,2)
+  -- Méta --
+  updatedAt               : TIMESTAMP
+  updatedById             : ShortUUID FK → User
+}
+\end{codeBox}
+
+\subsection{Entité \texttt{FiscalYearConfig} (Snapshot Immuable)}
+
+\begin{codeBox}
+FiscalYearConfig {
+  id                  : ShortUUID(10)  PK
+  fiscalYearId        : ShortUUID      FK → FiscalYear  UNIQUE
+  snapshotAt          : TIMESTAMP
+  snapshotById        : ShortUUID      FK → User
+  -- Copie gelée des règles financières (identique à TontineConfig) --
+  shareUnitAmount     : DECIMAL(15,2)
+  loanMonthlyRate     : DECIMAL(5,4)
+  maxLoanMultiplier   : INT
+  minSavingsToLoan    : DECIMAL(15,2)
+  maxConcurrentLoans  : INT
+  rescueFundTarget    : DECIMAL(15,2)
+  rescueFundMinBalance: DECIMAL(15,2)
+  registrationFeeNew  : DECIMAL(15,2)
+  registrationFeeReturning : DECIMAL(15,2)
+  interestPoolMethod  : InterestPoolMethod
+  -- Exception SUPER_ADMIN uniquement --
+  forcedModifiedAt    : TIMESTAMP    nullable
+  forcedModifiedById  : ShortUUID    nullable
+  forcedModifiedReason: TEXT         nullable
+}
+
+InterestPoolMethod (ENUM) :
+  THEORETICAL  -- encours[m-1] × 0.04, indépendant des paiements
+  ACTUAL       -- ∑ RBT_INTEREST effectivement encaissés ce mois
+\end{codeBox}
+
+\begin{invariantBox}{CONF-01 à CONF-03}
+\begin{itemize}
+  \item \textbf{CONF-01} : \texttt{FiscalYearConfig} est créé lors de l'activation de l'exercice (\texttt{PENDING → ACTIVE})
+        par snapshot de \texttt{TontineConfig} — immuable ensuite.
+  \item \textbf{CONF-02} : Toute modification post-activation requiert \texttt{role = SUPER\_ADMIN}
+        et génère une entrée \texttt{AuditLog} avec \texttt{forcedModifiedReason} obligatoire.
+  \item \textbf{CONF-03} : \texttt{interestPoolMethod} est switchable par exercice, mais uniquement
+        en statut \texttt{PENDING}.
+\end{itemize}
+\end{invariantBox}
+
+\subsection{Montants de Secours par Événement}
+
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{6cm}R{4cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Événement}} &
+  \textcolor{white}{\textbf{Montant (XAF)}} \\
+  \midrule
+  Décès d'un membre              & 300 000 \\
+  Décès d'un parent proche       & 100 000 \\
+  Mariage                        & 200 000 \\
+  Naissance                      & 25 000 \\
+  Maladie grave                  & 50 000 \\
+  Promotion professionnelle      & 50 000 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% -------------------------------------------------------
+\section{Module 03 — Membres}
+
+\subsection{Entité \texttt{MemberProfile}}
+
+\begin{codeBox}
+MemberProfile {
+  id                : ShortUUID(10)  PK
+  memberCode        : VARCHAR(10)    UNIQUE  -- format CAYA-00042
+  userId            : ShortUUID      FK → User  UNIQUE
+  firstName         : VARCHAR(100)   NOT NULL
+  lastName          : VARCHAR(100)   NOT NULL
+  phone1            : VARCHAR(20)    NOT NULL
+  phone2            : VARCHAR(20)    nullable
+  attachmentPhoto   : BYTEA          nullable  -- JPEG compressé < 100 KB
+  neighborhood      : VARCHAR(255)   NOT NULL
+  locationDetail    : TEXT           nullable
+  mobileMoneyType   : VARCHAR(50)    nullable  -- MTN / Orange
+  mobileMoneyNumber : VARCHAR(20)    nullable
+  sponsorId         : ShortUUID      FK → MemberProfile  nullable
+  createdAt         : TIMESTAMP      DEFAULT now()
+  updatedAt         : TIMESTAMP      auto-updated
+}
+\end{codeBox}
+
+\subsection{Entité \texttt{EmergencyContact}}
+
+\begin{codeBox}
+EmergencyContact {
+  id          : ShortUUID(10)  PK
+  profileId   : ShortUUID      FK → MemberProfile
+  fullName    : VARCHAR(255)   NOT NULL
+  phone       : VARCHAR(20)    NOT NULL
+  relation    : VARCHAR(100)   nullable
+}
+\end{codeBox}
+
+% -------------------------------------------------------
+\section{Module 04 — Exercice Fiscal et Adhésions}
+
+\subsection{Entité \texttt{FiscalYear}}
+
+\begin{codeBox}
+FiscalYear {
+  id              : ShortUUID(10)       PK
+  label           : VARCHAR(20)         UNIQUE  -- ex: "2025-2026"
+  startDate       : DATE                NOT NULL
+  endDate         : DATE                NOT NULL
+  cassationDate   : DATE                NOT NULL
+  loanDueDate     : DATE                NOT NULL  -- avant cassationDate
+  status          : FiscalYearStatus    DEFAULT PENDING
+  openedAt        : TIMESTAMP           nullable
+  openedById      : ShortUUID FK → User nullable
+  closedAt        : TIMESTAMP           nullable
+  closedById      : ShortUUID FK → User nullable
+  notes           : TEXT                nullable
+}
+
+FiscalYearStatus (ENUM) : PENDING → ACTIVE → CASSATION → CLOSED → ARCHIVED
+
+CHECK : startDate < loanDueDate < cassationDate ≤ endDate
+TRIGGER : Aucun chevauchement de dates avec un FiscalYear existant
+\end{codeBox}
+
+\subsection{Machine d'États — \texttt{FiscalYear}}
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=2.8cm,
+  state/.style={rectangle, rounded corners=5pt, draw=cayaBlue,
+                fill=cayaLight, minimum width=2.8cm, minimum height=0.9cm,
+                font=\small\bfseries},
+  arrow/.style={->, thick, cayaBlue}
+]
+  \node[state] (P) {PENDING};
+  \node[state, right of=P, xshift=0.5cm] (A) {ACTIVE};
+  \node[state, right of=A, xshift=0.5cm] (C) {CASSATION};
+  \node[state, right of=C, xshift=0.5cm] (CL) {CLOSED};
+  \node[state, below of=CL] (AR) {ARCHIVED};
+
+  \draw[arrow] (P) -- node[above, font=\tiny]{activate()} (A);
+  \draw[arrow] (A) -- node[above, font=\tiny]{openCassation()} (C);
+  \draw[arrow] (C) -- node[above, font=\tiny]{close()} (CL);
+  \draw[arrow] (CL) -- node[right, font=\tiny]{archive()} (AR);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Entité \texttt{Membership}}
+
+\begin{codeBox}
+Membership {
+  id                  : ShortUUID(10)   PK
+  profileId           : ShortUUID       FK → MemberProfile
+  fiscalYearId        : ShortUUID       FK → FiscalYear
+  status              : MemberStatus    DEFAULT ACTIVE
+  joinedAt            : DATE            NOT NULL
+  joinedAtMonth       : INT             NOT NULL  -- mois 1..12
+  enrollmentType      : EnrollmentType
+  catchUpAmount       : DECIMAL(15,2)   DEFAULT 0
+  catchUpPaid         : BOOLEAN         DEFAULT false
+  registrationFeePaid : BOOLEAN         DEFAULT false
+  rescueContribPaid   : BOOLEAN         DEFAULT false
+  initialSavingsPaid  : BOOLEAN         DEFAULT false
+  UNIQUE(profileId, fiscalYearId)
+}
+
+MemberStatus   : ACTIVE | INACTIVE | SUSPENDED | EXCLUDED
+EnrollmentType : NEW | RETURNING | MID_YEAR
+\end{codeBox}
+
+\begin{ruleBox}{Règle d'adhésion tardive (MID\_YEAR)}
+Si un membre rejoint au mois $m$ (avec $m > 2$) :
+$$\texttt{catchUpAmount} = (m - 1) \times (\texttt{sharesCount} \times \texttt{shareUnitAmount} + \texttt{rescueFundContrib}_\text{mensuel})$$
+Ce montant doit être versé en intégralité avant que le membre soit éligible à un prêt.
+\end{ruleBox}
+
+\subsection{Entité \texttt{ShareCommitment}}
+
+\begin{codeBox}
+ShareCommitment {
+  id              : ShortUUID(10)  PK
+  membershipId    : ShortUUID      FK → Membership  UNIQUE
+  sharesCount     : DECIMAL(4,2)   NOT NULL
+  monthlyAmount   : DECIMAL(15,2)  NOT NULL  -- figé à l'inscription
+  isLocked        : BOOLEAN        DEFAULT false
+  lockedAt        : TIMESTAMP      nullable
+  lockedById      : ShortUUID FK → User  nullable
+
+  CHECK : sharesCount % 0.25 = 0
+  CHECK : sharesCount BETWEEN 0.25 AND 10
+}
+\end{codeBox}
+
+% -------------------------------------------------------
+\section{Module 05 — Sessions et Transactions}
+
+\subsection{Entité \texttt{MonthlySession}}
+
+\begin{codeBox}
+MonthlySession {
+  id                : ShortUUID(10)   PK
+  fiscalYearId      : ShortUUID       FK → FiscalYear
+  sessionNumber     : INT             NOT NULL  -- 1..12
+  meetingDate       : DATE            NOT NULL
+  location          : VARCHAR(500)    nullable
+  hostMembershipId  : ShortUUID FK → Membership  nullable
+  status            : SessionStatus   DEFAULT DRAFT
+  openedAt          : TIMESTAMP       nullable
+  openedById        : ShortUUID FK → User  nullable
+  closedAt          : TIMESTAMP       nullable
+  closedById        : ShortUUID FK → User  nullable
+  -- Totaux snapshot --
+  totalInscription  : DECIMAL(15,2)   DEFAULT 0
+  totalSecours      : DECIMAL(15,2)   DEFAULT 0
+  totalCotisation   : DECIMAL(15,2)   DEFAULT 0
+  totalPot          : DECIMAL(15,2)   DEFAULT 0
+  totalRbtPrincipal : DECIMAL(15,2)   DEFAULT 0
+  totalRbtInterest  : DECIMAL(15,2)   DEFAULT 0
+  totalEpargne      : DECIMAL(15,2)   DEFAULT 0
+  totalProjet       : DECIMAL(15,2)   DEFAULT 0
+  totalAutres       : DECIMAL(15,2)   DEFAULT 0
+  UNIQUE(fiscalYearId, sessionNumber)
+}
+
+SessionStatus : DRAFT → OPEN → REVIEWING → CLOSED
+\end{codeBox}
+
+\subsection{Types de Transactions (Entrées)}
+
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{3.5cm}L{4cm}L{5.5cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Type}} &
+  \textcolor{white}{\textbf{Montant}} &
+  \textcolor{white}{\textbf{Description}} \\
+  \midrule
+  \texttt{INSCRIPTION}    & Configurable         & Frais d'adhésion annuels \\
+  \texttt{SECOURS}        & Libre / 50 000 cible & Contribution caisse de secours \\
+  \texttt{COTISATION}     & Parts × valeur part  & Cotisation mensuelle tontine \\
+  \texttt{POT}            & 3 000 fixe           & Frais de collation réunion \\
+  \texttt{RBT\_PRINCIPAL} & Partiel ou total     & Remboursement capital prêt \\
+  \texttt{RBT\_INTEREST}  & Calculé              & Remboursement intérêts prêt \\
+  \texttt{EPARGNE}        & Libre                & Dépôt d'épargne volontaire \\
+  \texttt{PROJET}         & Libre                & Contribution projet spécial \\
+  \texttt{AUTRES}         & Libre                & Versements divers \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Entité \texttt{SessionEntry}}
+
+\begin{codeBox}
+SessionEntry {
+  id                : ShortUUID(10)     PK
+  reference         : VARCHAR(30)       UNIQUE  -- CAYA-2026-03-COT-0042
+  sessionId         : ShortUUID FK → MonthlySession  nullable
+  membershipId      : ShortUUID         FK → Membership
+  type              : TransactionType
+  amount            : DECIMAL(15,2)     CHECK (amount > 0)
+  loanId            : ShortUUID FK → LoanAccount  nullable
+  isOutOfSession    : BOOLEAN           DEFAULT false
+  outOfSessionAt    : TIMESTAMP         nullable
+  outOfSessionRef   : VARCHAR(100)      nullable
+  isImported        : BOOLEAN           DEFAULT false
+  notes             : TEXT              nullable
+  recordedById      : ShortUUID         FK → User
+  recordedAt        : TIMESTAMP         DEFAULT now()
+}
+\end{codeBox}
+
+\begin{invariantBox}{SESS-01 à SESS-04}
+\begin{itemize}
+  \item \textbf{SESS-01} : Une \texttt{SessionEntry} normale (\texttt{isOutOfSession = false}) ne peut être créée
+        ou modifiée que si \texttt{session.status = OPEN}.
+  \item \textbf{SESS-02} : Un remboursement hors-session (\texttt{isOutOfSession = true}) n'accepte que
+        les types \texttt{RBT\_PRINCIPAL} ou \texttt{RBT\_INTEREST} et a \texttt{sessionId = null}.
+  \item \textbf{SESS-03} : Tout remboursement de prêt génère exactement \textbf{deux entrées} (même \texttt{loanId}) :
+        une \texttt{RBT\_INTEREST} et une \texttt{RBT\_PRINCIPAL}.
+  \item \textbf{SESS-04} : La session $n$ ne peut être ouverte que si la session $n-1$ est clôturée (ou $n = 1$).
+\end{itemize}
+\end{invariantBox}
+
+% -------------------------------------------------------
+\section{Module 06 — Épargne et Redistribution des Intérêts}
+
+\subsection{Entité \texttt{SavingsLedger}}
+
+\begin{codeBox}
+SavingsLedger {
+  id                     : ShortUUID(10)  PK
+  membershipId           : ShortUUID      FK → Membership  UNIQUE
+  balance                : DECIMAL(15,2)  DEFAULT 0
+  principalBalance       : DECIMAL(15,2)  DEFAULT 0
+  totalInterestReceived  : DECIMAL(15,2)  DEFAULT 0
+  lastUpdatedAt          : TIMESTAMP
+}
+\end{codeBox}
+
+\subsection{Comptes Institutionnels dans le Pool — \texttt{PoolParticipant}}
+
+\begin{codeBox}
+PoolParticipant {
+  id                     : ShortUUID(10)      PK
+  fiscalYearId           : ShortUUID          FK → FiscalYear
+  type                   : PoolParticipantType
+  label                  : VARCHAR(100)
+  initialBalance         : DECIMAL(15,2)      NOT NULL
+  currentBalance         : DECIMAL(15,2)      DEFAULT 0
+  totalInterestReceived  : DECIMAL(15,2)      DEFAULT 0
+  UNIQUE(fiscalYearId, type)
+}
+
+PoolParticipantType : RESCUE_FUND | BUREAU
+\end{codeBox}
+
+\begin{ruleBox}{Mécanique de Redistribution Mensuelle}
+\textbf{Étape 1 — Calcul du pool total d'épargne :}
+$$\text{totalSavingsPool} = \sum_i \texttt{SavingsLedger}_i.\texttt{balance} + \sum_j \texttt{PoolParticipant}_j.\texttt{currentBalance}$$
+
+\textbf{Étape 2 — Calcul du pool d'intérêts (selon méthode) :}
+
+Si \texttt{THEORETICAL} :
+$$\text{totalInterestPool} = \sum_k \texttt{MonthlyLoanAccrual}_k.\texttt{interestAccrued}$$
+
+Si \texttt{ACTUAL} :
+$$\text{totalInterestPool} = \sum \texttt{SessionEntry}[\texttt{RBT\_INTEREST}].\texttt{amount}$$
+
+\textbf{Étape 3 — Allocation proportionnelle :}
+$$\texttt{allocationAmount}_i = \frac{\texttt{balance}_i}{\text{totalSavingsPool}} \times \text{totalInterestPool}$$
+
+\textbf{Vérification :} $\sum_i \texttt{allocationAmount}_i = \text{totalInterestPool} \pm 1$ (arrondi)
+\end{ruleBox}
+
+% -------------------------------------------------------
+\section{Module 07 — Prêts et Remboursements}
+
+\subsection{Entité \texttt{LoanAccount}}
+
+\begin{codeBox}
+LoanAccount {
+  id                    : ShortUUID(10)  PK
+  membershipId          : ShortUUID      FK → Membership
+  fiscalYearId          : ShortUUID      FK → FiscalYear
+  principalAmount       : DECIMAL(15,2)
+  monthlyRate           : DECIMAL(5,4)   DEFAULT 0.04
+  disbursedAt           : DATE           nullable
+  disbursedById         : ShortUUID FK → User  nullable
+  dueBeforeDate         : DATE           NOT NULL
+  status                : LoanStatus     DEFAULT PENDING
+  outstandingBalance    : DECIMAL(15,2)  DEFAULT 0
+  totalInterestAccrued  : DECIMAL(15,2)  DEFAULT 0
+  totalRepaid           : DECIMAL(15,2)  DEFAULT 0
+  requestedAt           : TIMESTAMP
+  requestNotes          : TEXT           nullable
+}
+
+LoanStatus : PENDING | ACTIVE | PARTIALLY_REPAID | CLOSED
+\end{codeBox}
+
+\subsection{Entité \texttt{MonthlyLoanAccrual} — Calcul de l'Encours Glissant}
+
+\begin{codeBox}
+MonthlyLoanAccrual {
+  id                    : ShortUUID(10)  PK
+  loanId                : ShortUUID      FK → LoanAccount
+  sessionId             : ShortUUID      FK → MonthlySession
+  month                 : INT
+  balanceAtMonthStart   : DECIMAL(15,2)  -- encours[m-1]
+  interestAccrued       : DECIMAL(15,2)  -- = balanceAtMonthStart × 0.04
+  balanceWithInterest   : DECIMAL(15,2)  -- = balanceAtMonthStart × 1.04
+  repaymentReceived     : DECIMAL(15,2)  DEFAULT 0
+  balanceAtMonthEnd     : DECIMAL(15,2)  -- = balanceWithInterest - repayment
+  UNIQUE(loanId, sessionId)
+  CHECK : balanceAtMonthEnd >= 0
+}
+\end{codeBox}
+
+\begin{ruleBox}{Algorithme de Calcul des Intérêts (Encours Glissant)}
+Soit $P_0$ le capital initial emprunté au mois 1 :
+
+\begin{align*}
+  \text{Mois 1} &: \text{encours}_1 = P_0 \\
+  \text{Mois 2} &: \text{dû}_2 = \text{encours}_1 \times 1{,}04 \\
+                &\quad \text{encours}_2 = \text{dû}_2 - R_2 \\
+  \text{Mois } m &: \text{dû}_m = \text{encours}_{m-1} \times 1{,}04 \\
+                 &\quad \text{encours}_m = \text{dû}_m - R_m
+\end{align*}
+
+\textbf{Règle de décomposition d'un remboursement $R$ :}
+\begin{itemize}
+  \item Si $R \geq \text{interestDue}$ : intérêtPart = interestDue ; capitalPart = $R -$ interestDue
+  \item Si $R < \text{interestDue}$ : tout va aux intérêts ; capital inchangé ; solde = $\text{dû} - R$
+\end{itemize}
+\end{ruleBox}
+
+\subsection{Conditions d'Éligibilité à un Prêt}
+
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{6cm}R{6cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Condition}} &
+  \textcolor{white}{\textbf{Valeur}} \\
+  \midrule
+  Épargne minimale requise         & 100 000 XAF \\
+  Ratio prêt / épargne maximum     & 5 (ex: 100k épargne → 500k max) \\
+  Montant minimum                  & 10 000 XAF \\
+  Montant maximum absolu           & 1 000 000 XAF \\
+  Prêts simultanés autorisés       & 2 maximum \\
+  Date d'échéance maximale         & avant cassation \\
+  Pénalité de retard               & aucune \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{invariantBox}{LOAN-01 à LOAN-05}
+\begin{itemize}
+  \item \textbf{LOAN-01} : Imputation FIFO en cas de prêts multiples — les remboursements sont affectés
+        au prêt le plus ancien (\texttt{requestedAt ASC}).
+  \item \textbf{LOAN-02} : Un prêt non soldé à la cassation génère un \texttt{CarryoverLoanRecord}
+        avec \texttt{carryoverAmount = outstandingBalance × 1.04} et une notification dans l'application.
+  \item \textbf{LOAN-03} : Le statut passe \texttt{CLOSED} uniquement si \texttt{outstandingBalance = 0}.
+  \item \textbf{LOAN-04} : Un remboursement inférieur aux intérêts dus est accepté ; les intérêts
+        sont capitalisés dans le solde restant.
+  \item \textbf{LOAN-05} : \texttt{dueBeforeDate < FiscalYear.cassationDate}.
+\end{itemize}
+\end{invariantBox}
+
+% -------------------------------------------------------
+\section{Module 08 — Caisse de Secours}
+
+\subsection{Entités}
+
+\begin{codeBox}
+RescueFundLedger {
+  id                : ShortUUID(10)  PK
+  fiscalYearId      : ShortUUID      FK → FiscalYear  UNIQUE
+  totalBalance      : DECIMAL(15,2)  DEFAULT 0
+  targetPerMember   : DECIMAL(15,2)  DEFAULT 50000
+  minimumPerMember  : DECIMAL(15,2)  DEFAULT 25000
+  memberCount       : INT
+  targetTotal       : DECIMAL(15,2)  -- calculé = target × memberCount
+}
+
+RescueFundEvent {
+  id              : ShortUUID(10)  PK
+  ledgerId        : ShortUUID      FK → RescueFundLedger
+  beneficiaryId   : ShortUUID      FK → Membership
+  eventType       : RescueEventType
+  amount          : DECIMAL(15,2)
+  authorizedById  : ShortUUID      FK → User
+  eventDate       : DATE
+  description     : TEXT           nullable
+  createdAt       : TIMESTAMP
+}
+
+RescueFundPosition {
+  id              : ShortUUID(10)  PK
+  membershipId    : ShortUUID      FK → Membership  UNIQUE
+  ledgerId        : ShortUUID      FK → RescueFundLedger
+  paidAmount      : DECIMAL(15,2)  DEFAULT 0
+  balance         : DECIMAL(15,2)  DEFAULT 0
+  refillDebt      : DECIMAL(15,2)  DEFAULT 0
+}
+\end{codeBox}
+
+\begin{invariantBox}{RES-01 à RES-03}
+\begin{itemize}
+  \item \textbf{RES-01} : Après tout versement de secours, \texttt{totalBalance $\geq$ minimumPerMember × memberCount}.
+  \item \textbf{RES-02} : Le montant d'un événement est fixé par \texttt{RescueEventAmount[eventType]} — non négociable.
+  \item \textbf{RES-03} : L'autorisation d'un versement requiert \texttt{role ∈ \{PRESIDENT, VICE\_PRESIDENT\}}.
+\end{itemize}
+\end{invariantBox}
+
+% -------------------------------------------------------
+\section{Module 09 — Bénéficiaires}
+
+\begin{codeBox}
+BeneficiarySchedule {
+  id            : ShortUUID(10)  PK
+  fiscalYearId  : ShortUUID      FK → FiscalYear  UNIQUE
+  createdAt     : TIMESTAMP
+}
+
+BeneficiarySlot {
+  id               : ShortUUID(10)       PK
+  scheduleId       : ShortUUID           FK → BeneficiarySchedule
+  sessionId        : ShortUUID           FK → MonthlySession
+  month            : INT
+  slotIndex        : INT                 -- permet plusieurs bénéficiaires/session
+  membershipId     : ShortUUID FK → Membership  nullable
+  amountDelivered  : DECIMAL(15,2)       DEFAULT 0
+  designatedById   : ShortUUID FK → User nullable
+  designatedAt     : TIMESTAMP           nullable
+  status           : BeneficiaryStatus   DEFAULT UNASSIGNED
+  deliveredAt      : TIMESTAMP           nullable
+  notes            : TEXT                nullable
+  UNIQUE(sessionId, slotIndex)
+  UNIQUE(sessionId, membershipId)
+}
+
+BeneficiaryStatus : UNASSIGNED | ASSIGNED | DELIVERED
+\end{codeBox}
+
+\begin{ruleBox}{Règles de désignation des bénéficiaires}
+\begin{itemize}
+  \item La désignation est \textbf{manuelle} par \texttt{PRESIDENT} ou \texttt{VICE\_PRESIDENT}.
+  \item Le montant remis est \textbf{saisi manuellement} par le Président/VP.
+  \item Plusieurs slots par session sont autorisés (\texttt{slotIndex} 0, 1, 2\ldots).
+  \item Un membre ne peut pas recevoir deux slots dans la même session.
+  \item Le statut \texttt{DELIVERED} n'est possible que si la session est \texttt{CLOSED}.
+\end{itemize}
+\end{ruleBox}
+
+% -------------------------------------------------------
+\section{Module 10 — Cassation et Rollover}
+
+\begin{codeBox}
+CassationRecord {
+  id                    : ShortUUID(10)  PK
+  fiscalYearId          : ShortUUID      FK → FiscalYear  UNIQUE
+  executedAt            : TIMESTAMP
+  executedById          : ShortUUID      FK → User
+  totalSavingsReturned  : DECIMAL(15,2)
+  totalInterestReturned : DECIMAL(15,2)
+  totalDistributed      : DECIMAL(15,2)
+  memberCount           : INT
+  notes                 : TEXT
+}
+
+CassationRedistribution {
+  id              : ShortUUID(10)  PK
+  cassationId     : ShortUUID      FK → CassationRecord
+  membershipId    : ShortUUID      FK → Membership
+  savingsAmount   : DECIMAL(15,2)
+  interestAmount  : DECIMAL(15,2)
+  totalReturned   : DECIMAL(15,2)
+  UNIQUE(cassationId, membershipId)
+}
+
+CarryoverLoanRecord {
+  id               : ShortUUID(10)  PK
+  originalLoanId   : ShortUUID      FK → LoanAccount  UNIQUE
+  newFiscalYearId  : ShortUUID      FK → FiscalYear
+  carryoverAmount  : DECIMAL(15,2)  -- = outstandingBalance × 1.04
+  reason           : TEXT
+  approvedById     : ShortUUID      FK → User
+  createdAt        : TIMESTAMP
+}
+\end{codeBox}
+
+\begin{ruleBox}{Processus de Cassation (séquence ordonnée)}
+\begin{enumerate}
+  \item Identifier tous les \texttt{LoanAccount} avec \texttt{status ≠ CLOSED}
+        → créer un \texttt{CarryoverLoanRecord} par prêt actif + notification dans l'application.
+  \item Exécuter la distribution d'intérêts de la dernière session.
+  \item Calculer \texttt{CassationRedistribution} pour chaque membre actif.
+  \item Distribuer les soldes \texttt{PoolParticipant} (RESCUE\_FUND + BUREAU).
+  \item Passer \texttt{FiscalYear.status = CLOSED}.
+  \item Créer \texttt{CassationRecord} avec tous les totaux.
+  \item Notifier PRESIDENT et TRESORIER via WhatsApp/SMS.
+  \item Initialiser le \texttt{FiscalYear} N+1 en statut \texttt{PENDING}.
+\end{enumerate}
+\end{ruleBox}
+
+% ============================================================
+\chapter{Fonctionnalités par Module}
+% ============================================================
+
+\section{Gestion des Sessions Mensuelles}
+
+\begin{ruleBox}{Cycle de vie d'une session}
+\textbf{DRAFT} : La session est créée automatiquement lors de l'activation de l'exercice (12 sessions).\\
+\textbf{OPEN} : Le Trésorier ouvre la session le jour de la réunion. Les entrées sont saisies.\\
+\textbf{REVIEWING} : Le Trésorier clôt la saisie pour revue par le Président.\\
+\textbf{CLOSED} : Le Président valide. Données figées. Intérêts distribués automatiquement.
+\end{ruleBox}
+
+\subsection{Saisie des Transactions}
+
+Lors d'une session \texttt{OPEN}, le Trésorier saisit membre par membre :
+\begin{itemize}
+  \item Pour \textbf{chaque entrée}, une référence unique est générée au format :
+        \texttt{CAYA-AAAA-MM-TYPE-NNNN}
+  \item Pour un \textbf{remboursement de prêt}, le système décompose automatiquement le montant
+        en intérêts dus et capital selon la règle de l'encours glissant.
+  \item Les \textbf{remboursements hors-session} (Mobile Money / Orange Money) sont saisis
+        directement sans session ouverte, avec une référence de virement.
+\end{itemize}
+
+\section{Rapports et Exports}
+
+\subsection{Tableau Récapitulatif Annuel (équivalent Rem25)}
+
+Ce rapport correspond exactement à la feuille \textit{Rem25} du fichier Excel, mais entièrement calculé :
+
+\begin{center}
+\small
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{4cm}L{9cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Colonne}} &
+  \textcolor{white}{\textbf{Source de calcul}} \\
+  \midrule
+  N° / Nom          & \texttt{MemberProfile.memberCode + fullName()} \\
+  Inscription       & $\sum$ \texttt{SessionEntry[INSCRIPTION]} \\
+  Secours           & $\sum$ \texttt{SessionEntry[SECOURS]} \\
+  Cotisation        & $\sum$ \texttt{SessionEntry[COTISATION]} \\
+  Pot               & $\sum$ \texttt{SessionEntry[POT]} \\
+  Épargne brute     & $\sum$ \texttt{SavingsEntry[DEPOSIT].amount} \\
+  Intérêts reçus    & \texttt{SavingsLedger.totalInterestReceived} \\
+  NAP (Épargne+Int) & \texttt{SavingsLedger.balance} \\
+  Prêts totaux      & $\sum$ \texttt{LoanAccount.principalAmount} \\
+  Intérêts dus      & $\sum$ \texttt{MonthlyLoanAccrual.interestAccrued} \\
+  Remboursé         & $\sum$ \texttt{LoanRepayment.amount} \\
+  Reste à payer     & \texttt{outstandingBalance × 1.04} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Formats d'Export}
+
+\begin{itemize}
+  \item \textbf{PDF} : En-tête CAYA, logo, tous rapports et fiches individuelles.
+  \item \textbf{Excel (.xlsx)} : Tableau récapitulatif annuel, données mensuelles.
+  \item \textbf{Fiche individuelle} : Vue détaillée d'un membre (PDF + Excel).
+\end{itemize}
+
+% ============================================================
+\chapter{Exigences Non Fonctionnelles}
+% ============================================================
+
+\section{Performance}
+
+\begin{itemize}
+  \item La table \texttt{AuditLog} est \textbf{partitionnée par année} via \texttt{RANGE PARTITIONING}
+        MySQL 8.0 pour maintenir des performances constantes après 5 ans d'utilisation.
+  \item Index obligatoires :
+        \texttt{SessionEntry(membershipId, type)},
+        \texttt{MonthlyLoanAccrual(sessionId)},
+        \texttt{LoanAccount(membershipId, status)}.
+\end{itemize}
+
+\section{Sécurité}
+
+\begin{itemize}
+  \item Authentification par \textbf{phone ou username} (pas d'email). JWT + Refresh Token.
+  \item Toute action sensible (modification config, forçage SUPER\_ADMIN, réouverture session)
+        génère une entrée \textbf{AuditLog immuable} (\textit{append-only}).
+  \item L'audit log n'est lisible que par \texttt{SUPER\_ADMIN}, \texttt{PRESIDENT} et \texttt{SECRETAIRE\_GENERAL}.
+  \item Les photos membres sont stockées en \textbf{BYTEA} (binaire, max 100 KB) — pas d'URLs externes.
+\end{itemize}
+
+\section{Intégrité des Données}
+
+\begin{itemize}
+  \item Toutes les valeurs financières utilisent le type \texttt{DECIMAL(15,2)} — zéro flottant
+        (\textbf{pas} \texttt{FLOAT} ni \texttt{DOUBLE} sous MySQL).
+  \item Le trigger anti-chevauchement d'exercices est implémenté au niveau base de données.
+  \item La table \texttt{TransactionSequence} garantit l'unicité des références de transactions
+        par un verrou atomique (\texttt{SELECT FOR UPDATE}).
+  \item Aucune valeur financière calculable n'est saisie manuellement (principe de vue calculée).
+\end{itemize}
+
+\section{Adaptations spécifiques MySQL 8.0}
+
+MySQL présente plusieurs différences par rapport à PostgreSQL qui impactent l'implémentation :
+
+\begin{center}
+\small
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{3.5cm}L{4.5cm}L{5cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Besoin}} &
+  \textcolor{white}{\textbf{Solution MySQL 8.0}} &
+  \textcolor{white}{\textbf{Note}} \\
+  \midrule
+  Types monétaires        & \texttt{DECIMAL(15,2)}     & Jamais FLOAT ni DOUBLE \\
+  ENUM métier             & \texttt{ENUM(...)}          & Natif MySQL \\
+  JSON (audit before/after)& \texttt{JSON}              & Supporté depuis MySQL 5.7 \\
+  Partitionnement AuditLog & \texttt{RANGE} sur \texttt{YEAR(createdAt)} & Requiert moteur InnoDB \\
+  Trigger BEFORE INSERT   & Trigger MySQL natif         & Anti-chevauchement exercices \\
+  Verrou séquence         & \texttt{SELECT ... FOR UPDATE} & Natif InnoDB \\
+  UUID courts             & \texttt{VARCHAR(10)} + \texttt{UUID()} tronqué ou Nanoid & Généré applicatif \\
+  Vues calculées          & \texttt{CREATE VIEW}        & Rapport Rem25, LoanSummary \\
+  Rollback transactionnel & InnoDB uniquement           & Moteur obligatoire (pas MyISAM) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warningBox}
+  \textbf{Moteur InnoDB obligatoire} sur toutes les tables. MyISAM ne supporte pas les transactions
+  ni les clés étrangères — il ne doit \textbf{jamais} être utilisé dans ce projet.
+  Ajouter \texttt{ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4\_unicode\_ci}
+  sur chaque \texttt{CREATE TABLE}.
+\end{warningBox}
+
+\section{Architecture Flutter (Mobile)}
+
+L'application mobile Flutter couvre les fonctionnalités membres :
+
+\begin{itemize}
+  \item Consultation de la fiche personnelle (épargne, prêts, secours, cotisations).
+  \item Historique des transactions de l'exercice en cours.
+  \item Notifications push (rappels réunion, confirmation paiement, alerte remboursement).
+  \item Visualisation des graphiques d'évolution (épargne + intérêts cumulés).
+  \item Export PDF de la fiche individuelle.
+\end{itemize}
+
+\begin{center}
+\small
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{3.5cm}L{4cm}L{5.5cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Couche Flutter}} &
+  \textcolor{white}{\textbf{Package recommandé}} &
+  \textcolor{white}{\textbf{Usage}} \\
+  \midrule
+  State management  & Riverpod / Bloc     & Gestion état applicatif \\
+  HTTP client       & Dio                 & Appels API NestJS \\
+  Auth tokens       & flutter\_secure\_storage & Stockage JWT sécurisé \\
+  Graphiques        & fl\_chart           & Courbes épargne/intérêts \\
+  PDF export        & pdf + printing      & Fiche membre \\
+  Notifications push& firebase\_messaging & Rappels, confirmations \\
+  Navigation        & go\_router          & Routing déclaratif \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\section{Portabilité et Accessibilité}
+
+\begin{itemize}
+  \item \textbf{Interface web} (Next.js) : Trésorier, Bureau — saisie complète.
+  \item \textbf{Application mobile} (Flutter / Dart) : Membres — consultation, notifications.
+        Une seule codebase compilée nativement pour Android et iOS.
+  \item \textbf{Notifications} : WhatsApp Business API + SMS (3 jours avant réunion,
+        confirmation de paiement, rappel de remboursement).
+\end{itemize}
+
+\section{Évolutivité}
+
+L'architecture modulaire garantit que chaque module peut être développé, testé, et déployé
+indépendamment. La conception intègre les points de variabilité suivants via configuration :
+\begin{itemize}
+  \item Méthode de calcul des intérêts (\texttt{THEORETICAL / ACTUAL}) — switchable par exercice.
+  \item Dates d'exercice — entièrement configurables par le Président.
+  \item Montants de secours — reconfigurables chaque exercice.
+  \item Frais d'inscription — champ distinct nouveau / retour.
+\end{itemize}
+
+% ============================================================
+\chapter{Plan de Développement Modulaire}
+% ============================================================
+
+\section{Ordre de Développement Recommandé}
+
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{C{0.8cm}L{3.5cm}L{4cm}L{4.5cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Sprint}} &
+  \textcolor{white}{\textbf{Module}} &
+  \textcolor{white}{\textbf{Livrable}} &
+  \textcolor{white}{\textbf{Dépendances}} \\
+  \midrule
+  1 & Auth \& RBAC            & Login, rôles, JWT            & Aucune \\
+  2 & Configuration           & Paramètres, snapshot         & Auth \\
+  3 & Membres                 & Profils, codes, photos       & Auth \\
+  4 & Exercice Fiscal         & FiscalYear, Membership       & Config, Membres \\
+  5 & Sessions \& Transactions& Saisie, références, audit    & Exercice \\
+  6 & Épargne \& Intérêts     & Ledgers, redistribution      & Sessions \\
+  7 & Prêts                   & Octroi, accrual, rembt       & Sessions, Épargne \\
+  8 & Caisse de Secours       & Fonds, événements            & Membres, Exercice \\
+  9 & Bénéficiaires           & Planning, désignation        & Sessions \\
+ 10 & Cassation \& Rollover   & Clôture, report prêts        & Tous \\
+ 11 & Rapports \& Exports     & PDF, Excel, graphiques       & Tous \\
+ 12 & Notifications           & WhatsApp, SMS                & Tous \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\section{Critères de Validation par Module}
+
+Chaque module est considéré \textbf{validé} lorsque :
+\begin{enumerate}
+  \item Tous les invariants métier de la section sont couverts par des tests automatisés.
+  \item Aucune valeur financière calculable n'est saisie en dur.
+  \item Le module peut être déployé sans impacter les modules déjà en production.
+  \item Un scénario de bout en bout (happy path + cas limites) est documenté et passant.
+\end{enumerate}
+
+% ============================================================
+\chapter*{Annexes}
+\addcontentsline{toc}{chapter}{Annexes}
+% ============================================================
+
+\section*{A. Glossaire}
+
+\begin{description}
+  \item[Part] Unité de cotisation mensuelle d'un membre (100 000 XAF). Fractions autorisées : demi-part,
+              quart de part. Engagement figé pour toute la durée de l'exercice.
+  \item[Cassation] Clôture de l'exercice : redistribution de l'épargne accumulée et des intérêts générés
+                   à chaque membre proportionnellement à son épargne.
+  \item[Encours] Solde restant dû d'un prêt à un instant donné, après application des intérêts et déduction
+                 des remboursements.
+  \item[Taux glissant] Méthode de calcul des intérêts : chaque mois, l'intérêt est calculé sur l'encours
+                       réel du mois précédent, pas sur le capital initial.
+  \item[Pool d'intérêts] Montant total des intérêts générés par les prêts actifs durant un mois, redistribué
+                          proportionnellement aux épargnants (membres + comptes institutionnels).
+  \item[NAP] \textit{Net À Payer} — montant que la caisse doit restituer à un membre à la cassation :
+             épargne totale $+$ intérêts accumulés.
+  \item[Pot] Cotisation mensuelle de 3 000 XAF par membre pour financer la collation lors de la réunion.
+             Comptabilisé séparément, n'entre pas dans le pool d'épargne.
+  \item[Rattrapage (catch-up)] Montant dû par un membre arrivé en cours d'exercice pour couvrir les
+                               cotisations des mois précédents.
+\end{description}
+
+\section*{B. Récapitulatif des Invariants Métier}
+
+\begin{center}
+\small
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{2cm}L{11cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Code}} &
+  \textcolor{white}{\textbf{Règle}} \\
+  \midrule
+  AUTH-01  & Un seul PRESIDENT actif simultanément \\
+  AUTH-02  & Un seul VICE\_PRESIDENT actif simultanément \\
+  AUTH-03  & phone User synchronisé avec MemberProfile.phone1 \\
+  AUTH-04  & Tout changement de rôle tracé dans AuditLog \\
+  CONF-01  & FiscalYearConfig immuable après activation de l'exercice \\
+  CONF-02  & Modification en cours d'exercice requiert SUPER\_ADMIN + motif \\
+  CONF-03  & interestPoolMethod switchable uniquement en PENDING \\
+  SESS-01  & SessionEntry créée uniquement si session.status = OPEN \\
+  SESS-02  & Remboursement hors-session = RBT\_PRINCIPAL ou RBT\_INTEREST uniquement \\
+  SESS-03  & Remboursement prêt = 2 entries obligatoires (interest + principal) \\
+  SESS-04  & Session N ne s'ouvre que si session N-1 est CLOSED \\
+  LOAN-01  & Imputation remboursements FIFO par ancienneté du prêt \\
+  LOAN-02  & Prêt non soldé à cassation → CarryoverLoanRecord + notification \\
+  LOAN-03  & LoanAccount.status = CLOSED iff outstandingBalance = 0 \\
+  LOAN-04  & Remboursement < intérêts dus → capitalisé dans le solde \\
+  LOAN-05  & dueBeforeDate < FiscalYear.cassationDate \\
+  RES-01   & Solde caisse de secours ≥ minimumPerMember × memberCount après versement \\
+  RES-02   & Montant secours = valeur fixe par type d'événement \\
+  RES-03   & Autorisation secours requiert PRESIDENT ou VICE\_PRESIDENT \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\section*{C. Table de Correspondance Excel → Système}
+
+\begin{center}
+\small
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{3.5cm}L{4cm}L{5.5cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Feuille Excel}} &
+  \textcolor{white}{\textbf{Entité/Vue}} &
+  \textcolor{white}{\textbf{Remarque}} \\
+  \midrule
+  \texttt{ep+int (ancien)}  & \texttt{InterestDistributionSnapshot} & Méthode THEORETICAL \\
+  \texttt{ep+int (2)}       & \texttt{InterestDistributionSnapshot} & Méthode ACTUAL \\
+  \texttt{prets}            & \texttt{LoanAccount} (encours cumulé) & Vue calculée \\
+  \texttt{prets25}          & \texttt{LoanAccount} (nouveaux prêts) & Vue calculée \\
+  \texttt{intérêts25}       & \texttt{MonthlyLoanAccrual}           & Automatisé \\
+  \texttt{intérêts}         & \texttt{MonthlyLoanAccrual}           & Automatisé \\
+  \texttt{Rem25}            & Vue \texttt{LoanSummaryView}          & Zéro saisie manuelle \\
+  \texttt{insc+sec}         & \texttt{SessionEntry} (INSCRIPTION, SECOURS) & Tracé par session \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\vfill
+\begin{center}
+  \textcolor{cayaBlue}{\rule{0.5\textwidth}{0.4pt}}\\[0.3cm]
+  {\small\textit{Document préparé par l'équipe d'Ingénierie Logicielle CAYA}}\\
+  {\small\textcolor{cayaGray!50!black}{Version 1.0 — Mars 2026 — Confidentiel}}
+\end{center}
+
+\end{document}

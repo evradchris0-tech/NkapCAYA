@@ -1,0 +1,1384 @@
+% ============================================================
+%  CAHIER DE CONCEPTION TECHNIQUE — APPLICATION CAYA
+%  Club des Amis de Yaoundé
+%  Version 1.0 — Mars 2026
+% ============================================================
+\documentclass[12pt, a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.8cm, right=2.8cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% Couleurs
+\usepackage[dvipsnames, table]{xcolor}
+\definecolor{cayaBlue}{RGB}{0, 71, 130}
+\definecolor{cayaGold}{RGB}{201, 155, 0}
+\definecolor{cayaLight}{RGB}{230, 241, 255}
+\definecolor{warningRed}{RGB}{200, 40, 40}
+\definecolor{successGreen}{RGB}{30, 130, 60}
+\definecolor{codeGray}{RGB}{248, 248, 248}
+\definecolor{commentGreen}{RGB}{60, 128, 60}
+\definecolor{keyBlue}{RGB}{0, 0, 180}
+
+% En-têtes
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{cayaBlue}{\textbf{CAYA} — Cahier de Conception}}
+\fancyhead[R]{\small\textcolor{gray}{v1.0 · Mars 2026}}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{colortbl}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+
+% Graphiques
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds}
+
+% Listes
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=1.5em, itemsep=2pt}
+\setlist[enumerate]{leftmargin=1.5em, itemsep=2pt}
+
+% Boîtes
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable, skins, listings}
+
+\newtcolorbox{designBox}[1]{
+  colback=cayaLight, colframe=cayaBlue,
+  fonttitle=\bfseries\small, title=#1,
+  breakable, boxrule=0.8pt, arc=3pt
+}
+\newtcolorbox{patternBox}[1]{
+  colback=cayaGold!8, colframe=cayaGold!70!black,
+  fonttitle=\bfseries\small\color{cayaGold!80!black},
+  title=Pattern : #1,
+  breakable, boxrule=0.8pt, arc=3pt
+}
+\newtcolorbox{warningBox}{
+  colback=warningRed!8, colframe=warningRed,
+  fonttitle=\bfseries\small\color{warningRed}, title=Attention,
+  breakable, boxrule=0.8pt, arc=3pt
+}
+\newtcolorbox{apiBox}[1]{
+  colback=gray!6, colframe=gray!40,
+  fonttitle=\bfseries\ttfamily\small, title=#1,
+  breakable, boxrule=0.5pt, arc=2pt
+}
+
+% Code
+\usepackage{listings}
+\lstdefinelanguage{TypeScript}{
+  keywords={class,interface,enum,type,const,let,var,function,return,
+            async,await,extends,implements,import,export,from,new,this,
+            if,else,for,while,switch,case,break,throw,try,catch,finally,
+            true,false,null,undefined,void,string,number,boolean,Promise},
+  keywordstyle=\color{keyBlue}\bfseries,
+  comment=[l]{//}, comment=[s]{/*}{*/},
+  commentstyle=\color{commentGreen}\itshape,
+  stringstyle=\color{warningRed},
+  morestring=[b]',
+  morestring=[b]",
+  morestring=[b]`
+}
+\lstdefinelanguage{SQL}{
+  keywords={CREATE,TABLE,INDEX,VIEW,TRIGGER,PROCEDURE,ALTER,ADD,DROP,
+            SELECT,INSERT,UPDATE,DELETE,FROM,WHERE,JOIN,LEFT,RIGHT,INNER,
+            ON,AS,AND,OR,NOT,IN,IS,NULL,PRIMARY,FOREIGN,KEY,REFERENCES,
+            UNIQUE,DEFAULT,CHECK,CONSTRAINT,ENGINE,CHARSET,COLLATE,
+            PARTITION,RANGE,VALUES,LESS,THAN,MAXVALUE,BEGIN,END,
+            DECLARE,SET,IF,THEN,ELSE,CALL,RETURN,DELIMITER,COMMIT,ROLLBACK},
+  keywordstyle=\color{cayaBlue}\bfseries,
+  comment=[l]{--}, comment=[s]{/*}{*/},
+  commentstyle=\color{commentGreen}\itshape,
+  stringstyle=\color{warningRed},
+  morestring=[b]'
+}
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  backgroundcolor=\color{codeGray},
+  frame=single, framerule=0.4pt,
+  breaklines=true, keepspaces=true,
+  showstringspaces=false,
+  numbers=left, numberstyle=\tiny\color{gray},
+  numbersep=6pt, xleftmargin=12pt
+}
+
+% Liens
+\usepackage[hidelinks, colorlinks=true,
+  linkcolor=cayaBlue, urlcolor=cayaBlue]{hyperref}
+\usepackage{bookmark}
+
+% Symboles
+\usepackage{pifont}
+\newcommand{\cmark}{\textcolor{successGreen}{\ding{51}}}
+\newcommand{\xmark}{\textcolor{warningRed}{\ding{55}}}
+
+% ============================================================
+\title{%
+  \vspace{-1cm}
+  {\Huge\bfseries\color{cayaBlue} Cahier de Conception Technique}\\[0.4cm]
+  {\large\bfseries Application de Gestion\\[0.1cm]
+  \textbf{\color{cayaGold}CLUB DES AMIS DE YAOUNDÉ (CAYA)}}\\[0.3cm]
+  {\normalsize Architecture · Schéma BDD · API REST · Design Patterns}\\[0.5cm]
+  \rule{0.6\textwidth}{1pt}\\[0.4cm]
+  {\small Version 1.0 \quad|\quad Mars 2026 \quad|\quad Confidentiel}
+}
+\author{}
+\date{}
+
+% ============================================================
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\vfill
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{Projet}     & Application CAYA \\
+  \textbf{Phase}      & Conception Technique \\
+  \textbf{Version}    & 1.0 \\
+  \textbf{Prérequis}  & Cahier des Charges CAYA v1.0 \\
+  \textbf{Stack}      & NestJS · MySQL 8.0 · Prisma · Next.js · Flutter \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ============================================================
+\chapter*{Introduction}
+\addcontentsline{toc}{chapter}{Introduction}
+% ============================================================
+
+Ce document formalise les choix de conception technique de l'application CAYA.
+Il constitue le \textbf{contrat de développement} entre l'équipe de conception et l'équipe
+d'implémentation : chaque décision d'architecture, chaque pattern, chaque endpoint et chaque
+table de base de données y est justifié et spécifié.
+
+\medskip
+\begin{designBox}{Documents de référence}
+\begin{itemize}
+  \item Cahier des Charges CAYA v1.0 (March 2026)
+  \item Analyse du fichier Excel \textit{CAYA-Calcul Intérêts.xlsx}
+  \item Questionnaire Product Owner v2.0
+\end{itemize}
+\end{designBox}
+
+% ============================================================
+\chapter{Architecture Logicielle}
+% ============================================================
+
+\section{Vue en Couches}
+
+L'application suit une architecture \textbf{en couches strictes} (Layered Architecture) avec
+séparation nette des responsabilités. Aucune couche ne peut sauter une couche intermédiaire.
+
+\begin{center}
+\begin{tikzpicture}[
+  layer/.style={rectangle, draw=cayaBlue, fill=cayaLight,
+                minimum width=11cm, minimum height=0.9cm,
+                font=\bfseries\small, rounded corners=3pt},
+  arrow/.style={->, thick, cayaBlue}
+]
+  \node[layer] (pres)  at (0,0)    {Couche Présentation — Next.js (Web) · Flutter (Mobile)};
+  \node[layer] (app)   at (0,-1.4) {Couche Application — Controllers · Guards · DTOs · Pipes};
+  \node[layer] (domain)at (0,-2.8) {Couche Domaine — Services · Entités · Invariants · Spécifications};
+  \node[layer] (infra) at (0,-4.2) {Couche Infrastructure — Prisma · MySQL · WhatsApp · SMS};
+
+  \draw[arrow] (pres)   -- (app);
+  \draw[arrow] (app)    -- (domain);
+  \draw[arrow] (domain) -- (infra);
+\end{tikzpicture}
+\end{center}
+
+\section{Architecture Modulaire NestJS}
+
+Chaque module CAYA correspond à un module NestJS autonome avec son propre
+\textit{Controller}, \textit{Service}, \textit{Repository} et \textit{DTOs}.
+
+\begin{lstlisting}[language=bash, caption={Arborescence du projet NestJS}]
+src/
+  app.module.ts
+  modules/
+    auth/
+      auth.module.ts
+      auth.controller.ts       -- POST /auth/login, /refresh, /logout
+      auth.service.ts
+      strategies/              -- JwtStrategy, LocalStrategy
+      guards/                  -- JwtAuthGuard, RolesGuard
+      dto/                     -- LoginDto, RefreshDto
+    config/
+      config.module.ts
+      tontine-config.service.ts
+      fiscal-year-config.service.ts
+    members/
+      members.module.ts
+      members.controller.ts
+      members.service.ts
+      dto/
+    fiscal-year/
+      fiscal-year.module.ts
+      fiscal-year.service.ts
+      membership.service.ts
+    sessions/
+      sessions.module.ts
+      sessions.controller.ts
+      sessions.service.ts
+      transaction-reference.factory.ts
+    savings/
+      savings.module.ts
+      savings.service.ts
+      interest-distribution.service.ts
+      strategies/
+        theoretical-interest.strategy.ts
+        actual-interest.strategy.ts
+    loans/
+      loans.module.ts
+      loans.service.ts
+      loan-eligibility.spec.ts  -- Specification pattern
+      monthly-accrual.service.ts
+      loan-repayment-allocator.ts
+    rescue-fund/
+      rescue-fund.module.ts
+      rescue-fund.service.ts
+    beneficiaries/
+      beneficiaries.module.ts
+      beneficiaries.service.ts
+    cassation/
+      cassation.module.ts
+      cassation.service.ts
+    reports/
+      reports.module.ts
+      pdf-export.service.ts
+      excel-export.service.ts
+    notifications/
+      notifications.module.ts
+      whatsapp.service.ts
+      sms.service.ts
+  shared/
+    prisma/
+      prisma.module.ts
+      prisma.service.ts
+      schema.prisma
+    audit/
+      audit.service.ts
+      audit.interceptor.ts
+    exceptions/
+      domain.exception.ts
+      invariant-violation.exception.ts
+    decorators/
+      roles.decorator.ts
+      current-user.decorator.ts
+\end{lstlisting}
+
+\section{Design Patterns Appliqués}
+
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{3.5cm}L{4cm}L{6cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Pattern}} &
+  \textcolor{white}{\textbf{Où}} &
+  \textcolor{white}{\textbf{Pourquoi}} \\
+  \midrule
+  \textbf{Strategy}        & \texttt{InterestDistributionService} & Switch THEORETICAL/ACTUAL sans if/else \\
+  \textbf{Specification}   & \texttt{LoanEligibilitySpec}         & Valider conditions prêt composables \\
+  \textbf{Repository}      & Prisma services                      & Isoler BDD de la logique métier \\
+  \textbf{Factory}         & \texttt{TransactionReferenceFactory} & Générer refs uniques atomiquement \\
+  \textbf{Unit of Work}    & Prisma \texttt{\$transaction}        & Atomicité multi-tables \\
+  \textbf{Decorator}       & NestJS guards, interceptors          & Cross-cutting (auth, audit) \\
+  \textbf{Observer}        & \texttt{EventEmitter2}               & Découpler cassation → notifications \\
+  \textbf{Singleton}       & \texttt{TontineConfig}               & Une seule config CAYA \\
+  \textbf{Snapshot}        & \texttt{FiscalYearConfig}            & Geler les règles à l'activation \\
+  \textbf{CQRS léger}      & Séparation Controllers/Views         & Lectures rapides sans logique métier \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Pattern Strategy — Distribution des Intérêts}
+
+\begin{lstlisting}[language=TypeScript, caption={Strategy Pattern — InterestDistribution}]
+// Interface Strategy
+interface InterestPoolStrategy {
+  computePool(sessionId: string, prisma: PrismaClient): Promise<Decimal>;
+}
+
+// Stratégie THEORETICAL : encours[m-1] × 0.04
+class TheoreticalInterestStrategy implements InterestPoolStrategy {
+  async computePool(sessionId: string, prisma: PrismaClient): Promise<Decimal> {
+    const result = await prisma.monthlyLoanAccrual.aggregate({
+      where: { sessionId },
+      _sum: { interestAccrued: true },
+    });
+    return result._sum.interestAccrued ?? new Decimal(0);
+  }
+}
+
+// Stratégie ACTUAL : intérêts réellement encaissés
+class ActualInterestStrategy implements InterestPoolStrategy {
+  async computePool(sessionId: string, prisma: PrismaClient): Promise<Decimal> {
+    const result = await prisma.sessionEntry.aggregate({
+      where: { sessionId, type: 'RBT_INTEREST' },
+      _sum: { amount: true },
+    });
+    return result._sum.amount ?? new Decimal(0);
+  }
+}
+
+// Context : choisit la stratégie selon FiscalYearConfig
+class InterestDistributionService {
+  private getStrategy(method: InterestPoolMethod): InterestPoolStrategy {
+    return method === 'THEORETICAL'
+      ? new TheoreticalInterestStrategy()
+      : new ActualInterestStrategy();
+  }
+
+  async distribute(sessionId: string): Promise<DistributionSnapshot> {
+    const config = await this.getFiscalYearConfig(sessionId);
+    const strategy = this.getStrategy(config.interestPoolMethod);
+    const pool = await strategy.computePool(sessionId, this.prisma);
+    // ... redistribution proportionnelle
+  }
+}
+\end{lstlisting}
+
+\subsection{Pattern Specification — Éligibilité Prêt}
+
+\begin{lstlisting}[language=TypeScript, caption={Specification Pattern — LoanEligibility}]
+interface Specification<T> {
+  isSatisfiedBy(candidate: T): boolean;
+  and(other: Specification<T>): Specification<T>;
+}
+
+class MinSavingsSpecification implements Specification<LoanRequest> {
+  isSatisfiedBy(req: LoanRequest): boolean {
+    return req.savingsBalance.gte(req.config.minSavingsToLoan);
+  }
+}
+
+class MaxMultiplierSpecification implements Specification<LoanRequest> {
+  isSatisfiedBy(req: LoanRequest): boolean {
+    return req.amount.lte(
+      req.savingsBalance.mul(req.config.maxLoanMultiplier)
+    );
+  }
+}
+
+class MaxConcurrentLoansSpecification implements Specification<LoanRequest> {
+  isSatisfiedBy(req: LoanRequest): boolean {
+    return req.activeLoansCount < req.config.maxConcurrentLoans;
+  }
+}
+
+// Composition en service
+class LoanEligibilitySpec {
+  private spec = new MinSavingsSpecification()
+    .and(new MaxMultiplierSpecification())
+    .and(new MaxConcurrentLoansSpecification())
+    .and(new AmountRangeSpecification())
+    .and(new DueDateSpecification());
+
+  validate(req: LoanRequest): void {
+    if (!this.spec.isSatisfiedBy(req))
+      throw new InvariantViolationException('LOAN_ELIGIBILITY_FAILED');
+  }
+}
+\end{lstlisting}
+
+% ============================================================
+\chapter{Schéma de Base de Données MySQL}
+% ============================================================
+
+\section{Conventions Générales}
+
+\begin{itemize}
+  \item \textbf{Moteur} : InnoDB sur toutes les tables — \texttt{ENGINE=InnoDB}
+  \item \textbf{Encodage} : \texttt{utf8mb4 COLLATE utf8mb4\_unicode\_ci}
+  \item \textbf{Identifiants} : \texttt{VARCHAR(10)} generé via Nanoid côté applicatif
+  \item \textbf{Monétaire} : \texttt{DECIMAL(15,2)} — jamais FLOAT ni DOUBLE
+  \item \textbf{Dates} : \texttt{TIMESTAMP} pour les horodatages, \texttt{DATE} pour les dates pures
+  \item \textbf{Booléens} : \texttt{TINYINT(1)} (0/1) — standard MySQL
+  \item \textbf{JSON} : type \texttt{JSON} natif MySQL 8.0 pour les champs \texttt{before}/\texttt{after}
+\end{itemize}
+
+\section{DDL Complet — Module Auth}
+
+\begin{lstlisting}[language=SQL, caption={Tables Auth}]
+CREATE TABLE users (
+  id            VARCHAR(10)   NOT NULL,
+  username      VARCHAR(50)   NOT NULL,
+  phone         VARCHAR(20)   NOT NULL,
+  password_hash VARCHAR(255)  NOT NULL,
+  role          ENUM('SUPER_ADMIN','PRESIDENT','VICE_PRESIDENT',
+                     'TRESORIER','TRESORIER_ADJOINT',
+                     'SECRETAIRE_GENERAL','SECRETAIRE_ADJOINT',
+                     'COMMISSAIRE_AUX_COMPTES','MEMBRE')
+                NOT NULL DEFAULT 'MEMBRE',
+  is_active     TINYINT(1)    NOT NULL DEFAULT 1,
+  created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
+                              ON UPDATE CURRENT_TIMESTAMP,
+  last_login_at TIMESTAMP     NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_users_username (username),
+  UNIQUE KEY uq_users_phone    (phone)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE refresh_tokens (
+  id          VARCHAR(10)   NOT NULL,
+  user_id     VARCHAR(10)   NOT NULL,
+  token_hash  VARCHAR(255)  NOT NULL,
+  expires_at  TIMESTAMP     NOT NULL,
+  revoked_at  TIMESTAMP     NULL,
+  created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  user_agent  VARCHAR(500)  NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_refresh_token_hash (token_hash),
+  KEY idx_refresh_user_revoked (user_id, revoked_at),
+  CONSTRAINT fk_rt_user FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Partitionnement AuditLog par année
+CREATE TABLE audit_logs (
+  id          VARCHAR(10)   NOT NULL,
+  actor_id    VARCHAR(10)   NOT NULL,
+  action      VARCHAR(100)  NOT NULL,
+  entity_type VARCHAR(50)   NOT NULL,
+  entity_id   VARCHAR(10)   NOT NULL,
+  before_data JSON          NULL,
+  after_data  JSON          NULL,
+  reason      TEXT          NULL,
+  ip_address  VARCHAR(45)   NULL,
+  created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_year YEAR AS (YEAR(created_at)) STORED,
+  PRIMARY KEY (id, created_year),
+  KEY idx_audit_actor    (actor_id),
+  KEY idx_audit_entity   (entity_type, entity_id),
+  KEY idx_audit_created  (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+PARTITION BY RANGE (created_year) (
+  PARTITION p2025 VALUES LESS THAN (2026),
+  PARTITION p2026 VALUES LESS THAN (2027),
+  PARTITION p2027 VALUES LESS THAN (2028),
+  PARTITION p2028 VALUES LESS THAN (2029),
+  PARTITION p2029 VALUES LESS THAN (2030),
+  PARTITION pmax  VALUES LESS THAN MAXVALUE
+);
+\end{lstlisting}
+
+\section{DDL Complet — Module Configuration}
+
+\begin{lstlisting}[language=SQL, caption={Tables Configuration}]
+CREATE TABLE tontine_config (
+  id                       VARCHAR(10)    NOT NULL DEFAULT 'caya',
+  name                     VARCHAR(255)   NOT NULL,
+  acronym                  VARCHAR(20)    NOT NULL,
+  founded_year             SMALLINT       NOT NULL,
+  motto                    VARCHAR(500)   NULL,
+  headquarters_city        VARCHAR(255)   NULL,
+  registration_number      VARCHAR(100)   NULL,
+  share_unit_amount        DECIMAL(15,2)  NOT NULL DEFAULT 100000.00,
+  half_share_amount        DECIMAL(15,2)  NOT NULL DEFAULT 50000.00,
+  pot_monthly_amount       DECIMAL(15,2)  NOT NULL DEFAULT 3000.00,
+  max_shares_per_member    TINYINT        NOT NULL DEFAULT 10,
+  mandatory_initial_savings DECIMAL(15,2) NOT NULL DEFAULT 100000.00,
+  loan_monthly_rate        DECIMAL(5,4)   NOT NULL DEFAULT 0.0400,
+  min_loan_amount          DECIMAL(15,2)  NOT NULL DEFAULT 10000.00,
+  max_loan_amount          DECIMAL(15,2)  NOT NULL DEFAULT 1000000.00,
+  max_loan_multiplier      TINYINT        NOT NULL DEFAULT 5,
+  min_savings_to_loan      DECIMAL(15,2)  NOT NULL DEFAULT 100000.00,
+  max_concurrent_loans     TINYINT        NOT NULL DEFAULT 2,
+  rescue_fund_target       DECIMAL(15,2)  NOT NULL DEFAULT 50000.00,
+  rescue_fund_min_balance  DECIMAL(15,2)  NOT NULL DEFAULT 25000.00,
+  registration_fee_new     DECIMAL(15,2)  NOT NULL,
+  registration_fee_returning DECIMAL(15,2) NOT NULL,
+  updated_at               TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                          ON UPDATE CURRENT_TIMESTAMP,
+  updated_by_id            VARCHAR(10)    NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_config_updater FOREIGN KEY (updated_by_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE rescue_event_amounts (
+  event_type   ENUM('MEMBER_DEATH','RELATIVE_DEATH','MARRIAGE',
+                    'BIRTH','ILLNESS','PROMOTION') NOT NULL,
+  amount       DECIMAL(15,2)  NOT NULL,
+  label        VARCHAR(255)   NOT NULL,
+  updated_by_id VARCHAR(10)   NULL,
+  updated_at   TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
+                              ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (event_type),
+  CONSTRAINT fk_rea_updater FOREIGN KEY (updated_by_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+\end{lstlisting}
+
+\section{DDL Complet — Membres et Exercice}
+
+\begin{lstlisting}[language=SQL, caption={Tables Membres \& Exercice}]
+CREATE TABLE member_profiles (
+  id                  VARCHAR(10)   NOT NULL,
+  member_code         VARCHAR(10)   NOT NULL,
+  user_id             VARCHAR(10)   NOT NULL,
+  first_name          VARCHAR(100)  NOT NULL,
+  last_name           VARCHAR(100)  NOT NULL,
+  phone1              VARCHAR(20)   NOT NULL,
+  phone2              VARCHAR(20)   NULL,
+  attachment_photo    MEDIUMBLOB    NULL,  -- JPEG < 100KB
+  neighborhood        VARCHAR(255)  NOT NULL,
+  location_detail     TEXT          NULL,
+  mobile_money_type   VARCHAR(50)   NULL,
+  mobile_money_number VARCHAR(20)   NULL,
+  sponsor_id          VARCHAR(10)   NULL,
+  created_at          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                    ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_member_code (member_code),
+  UNIQUE KEY uq_member_user (user_id),
+  KEY idx_member_sponsor (sponsor_id),
+  CONSTRAINT fk_mp_user    FOREIGN KEY (user_id)   REFERENCES users(id),
+  CONSTRAINT fk_mp_sponsor FOREIGN KEY (sponsor_id) REFERENCES member_profiles(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE emergency_contacts (
+  id          VARCHAR(10)   NOT NULL,
+  profile_id  VARCHAR(10)   NOT NULL,
+  full_name   VARCHAR(255)  NOT NULL,
+  phone       VARCHAR(20)   NOT NULL,
+  relation    VARCHAR(100)  NULL,
+  PRIMARY KEY (id),
+  KEY idx_ec_profile (profile_id),
+  CONSTRAINT fk_ec_profile FOREIGN KEY (profile_id)
+    REFERENCES member_profiles(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE fiscal_years (
+  id            VARCHAR(10)  NOT NULL,
+  label         VARCHAR(20)  NOT NULL,
+  start_date    DATE         NOT NULL,
+  end_date      DATE         NOT NULL,
+  cassation_date DATE        NOT NULL,
+  loan_due_date  DATE        NOT NULL,
+  status        ENUM('PENDING','ACTIVE','CASSATION','CLOSED','ARCHIVED')
+                NOT NULL DEFAULT 'PENDING',
+  opened_at     TIMESTAMP    NULL,
+  opened_by_id  VARCHAR(10)  NULL,
+  closed_at     TIMESTAMP    NULL,
+  closed_by_id  VARCHAR(10)  NULL,
+  notes         TEXT         NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_fy_label (label),
+  CONSTRAINT fk_fy_opener FOREIGN KEY (opened_by_id) REFERENCES users(id),
+  CONSTRAINT fk_fy_closer FOREIGN KEY (closed_by_id) REFERENCES users(id),
+  CONSTRAINT chk_fy_dates CHECK (
+    start_date < loan_due_date
+    AND loan_due_date < cassation_date
+    AND cassation_date <= end_date
+  )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Trigger anti-chevauchement d'exercices
+DELIMITER $$
+CREATE TRIGGER trg_fiscal_year_no_overlap
+BEFORE INSERT ON fiscal_years
+FOR EACH ROW
+BEGIN
+  DECLARE overlap_count INT DEFAULT 0;
+  SELECT COUNT(*) INTO overlap_count
+  FROM fiscal_years
+  WHERE status NOT IN ('CLOSED','ARCHIVED')
+    AND (NEW.start_date <= end_date AND NEW.end_date >= start_date);
+  IF overlap_count > 0 THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'FISCAL_YEAR_OVERLAP: dates chevauchent un exercice existant';
+  END IF;
+END$$
+DELIMITER ;
+
+CREATE TABLE fiscal_year_configs (
+  id                      VARCHAR(10)   NOT NULL,
+  fiscal_year_id          VARCHAR(10)   NOT NULL,
+  snapshot_at             TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  snapshot_by_id          VARCHAR(10)   NOT NULL,
+  share_unit_amount       DECIMAL(15,2) NOT NULL,
+  loan_monthly_rate       DECIMAL(5,4)  NOT NULL,
+  max_loan_multiplier     TINYINT       NOT NULL,
+  min_savings_to_loan     DECIMAL(15,2) NOT NULL,
+  max_concurrent_loans    TINYINT       NOT NULL,
+  rescue_fund_target      DECIMAL(15,2) NOT NULL,
+  rescue_fund_min_balance DECIMAL(15,2) NOT NULL,
+  registration_fee_new    DECIMAL(15,2) NOT NULL,
+  registration_fee_returning DECIMAL(15,2) NOT NULL,
+  interest_pool_method    ENUM('THEORETICAL','ACTUAL') NOT NULL DEFAULT 'THEORETICAL',
+  forced_modified_at      TIMESTAMP     NULL,
+  forced_modified_by_id   VARCHAR(10)   NULL,
+  forced_modified_reason  TEXT          NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_fyc_fiscal_year (fiscal_year_id),
+  CONSTRAINT fk_fyc_fy      FOREIGN KEY (fiscal_year_id) REFERENCES fiscal_years(id),
+  CONSTRAINT fk_fyc_creator FOREIGN KEY (snapshot_by_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE memberships (
+  id                    VARCHAR(10)   NOT NULL,
+  profile_id            VARCHAR(10)   NOT NULL,
+  fiscal_year_id        VARCHAR(10)   NOT NULL,
+  status                ENUM('ACTIVE','INACTIVE','SUSPENDED','EXCLUDED')
+                        NOT NULL DEFAULT 'ACTIVE',
+  joined_at             DATE          NOT NULL,
+  joined_at_month       TINYINT       NOT NULL,
+  enrollment_type       ENUM('NEW','RETURNING','MID_YEAR') NOT NULL,
+  catch_up_amount       DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  catch_up_paid         TINYINT(1)    NOT NULL DEFAULT 0,
+  registration_fee_paid TINYINT(1)    NOT NULL DEFAULT 0,
+  rescue_contrib_paid   TINYINT(1)    NOT NULL DEFAULT 0,
+  initial_savings_paid  TINYINT(1)    NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_membership (profile_id, fiscal_year_id),
+  KEY idx_membership_fy (fiscal_year_id),
+  CONSTRAINT fk_ms_profile FOREIGN KEY (profile_id)
+    REFERENCES member_profiles(id),
+  CONSTRAINT fk_ms_fy FOREIGN KEY (fiscal_year_id)
+    REFERENCES fiscal_years(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE share_commitments (
+  id              VARCHAR(10)    NOT NULL,
+  membership_id   VARCHAR(10)    NOT NULL,
+  shares_count    DECIMAL(4,2)   NOT NULL,
+  monthly_amount  DECIMAL(15,2)  NOT NULL,
+  is_locked       TINYINT(1)     NOT NULL DEFAULT 0,
+  locked_at       TIMESTAMP      NULL,
+  locked_by_id    VARCHAR(10)    NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_sc_membership (membership_id),
+  CONSTRAINT fk_sc_membership FOREIGN KEY (membership_id)
+    REFERENCES memberships(id),
+  CONSTRAINT chk_sc_shares CHECK (
+    shares_count >= 0.25
+    AND shares_count <= 10.00
+    AND (shares_count * 100) MOD 25 = 0
+  )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+\end{lstlisting}
+
+\section{DDL — Sessions, Transactions, Épargne, Prêts}
+
+\begin{lstlisting}[language=SQL, caption={Tables Sessions \& Transactions}]
+CREATE TABLE monthly_sessions (
+  id                  VARCHAR(10)   NOT NULL,
+  fiscal_year_id      VARCHAR(10)   NOT NULL,
+  session_number      TINYINT       NOT NULL,
+  meeting_date        DATE          NOT NULL,
+  location            VARCHAR(500)  NULL,
+  host_membership_id  VARCHAR(10)   NULL,
+  status              ENUM('DRAFT','OPEN','REVIEWING','CLOSED')
+                      NOT NULL DEFAULT 'DRAFT',
+  opened_at           TIMESTAMP     NULL,
+  opened_by_id        VARCHAR(10)   NULL,
+  closed_at           TIMESTAMP     NULL,
+  closed_by_id        VARCHAR(10)   NULL,
+  -- Totaux snapshot calculés à la clôture
+  total_inscription   DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  total_secours       DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  total_cotisation    DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  total_pot           DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  total_rbt_principal DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  total_rbt_interest  DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  total_epargne       DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  total_projet        DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  total_autres        DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_session_num (fiscal_year_id, session_number),
+  KEY idx_session_status (fiscal_year_id, status),
+  CONSTRAINT fk_ms_fy     FOREIGN KEY (fiscal_year_id) REFERENCES fiscal_years(id),
+  CONSTRAINT fk_ms_host   FOREIGN KEY (host_membership_id) REFERENCES memberships(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE transaction_sequences (
+  fiscal_year_id   VARCHAR(10)  NOT NULL,
+  session_number   TINYINT      NOT NULL,
+  tx_type          VARCHAR(20)  NOT NULL,
+  last_sequence    INT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (fiscal_year_id, session_number, tx_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE session_entries (
+  id                VARCHAR(10)   NOT NULL,
+  reference         VARCHAR(30)   NOT NULL,
+  session_id        VARCHAR(10)   NULL,
+  membership_id     VARCHAR(10)   NOT NULL,
+  type              ENUM('INSCRIPTION','SECOURS','COTISATION','POT',
+                         'RBT_PRINCIPAL','RBT_INTEREST','EPARGNE',
+                         'PROJET','AUTRES') NOT NULL,
+  amount            DECIMAL(15,2) NOT NULL,
+  loan_id           VARCHAR(10)   NULL,
+  is_out_of_session TINYINT(1)    NOT NULL DEFAULT 0,
+  out_of_session_at TIMESTAMP     NULL,
+  out_of_session_ref VARCHAR(100) NULL,
+  is_imported       TINYINT(1)    NOT NULL DEFAULT 0,
+  notes             TEXT          NULL,
+  recorded_by_id    VARCHAR(10)   NOT NULL,
+  recorded_at       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_se_reference (reference),
+  KEY idx_se_membership_type (membership_id, type),
+  KEY idx_se_session         (session_id),
+  KEY idx_se_loan            (loan_id),
+  CONSTRAINT chk_se_amount CHECK (amount > 0),
+  CONSTRAINT fk_se_session    FOREIGN KEY (session_id) REFERENCES monthly_sessions(id),
+  CONSTRAINT fk_se_membership FOREIGN KEY (membership_id) REFERENCES memberships(id),
+  CONSTRAINT fk_se_recorder   FOREIGN KEY (recorded_by_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Trigger : empêche toute création si session n'est pas OPEN
+DELIMITER $$
+CREATE TRIGGER trg_session_entry_open_check
+BEFORE INSERT ON session_entries
+FOR EACH ROW
+BEGIN
+  IF NEW.is_out_of_session = 0 THEN
+    DECLARE s_status VARCHAR(20);
+    SELECT status INTO s_status FROM monthly_sessions WHERE id = NEW.session_id;
+    IF s_status <> 'OPEN' THEN
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'SESSION_NOT_OPEN: saisie impossible hors statut OPEN';
+    END IF;
+  END IF;
+END$$
+DELIMITER ;
+\end{lstlisting}
+
+\begin{lstlisting}[language=SQL, caption={Tables Épargne}]
+CREATE TABLE savings_ledgers (
+  id                      VARCHAR(10)   NOT NULL,
+  membership_id           VARCHAR(10)   NOT NULL,
+  balance                 DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  principal_balance       DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  total_interest_received DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  last_updated_at         TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                        ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_sl_membership (membership_id),
+  CONSTRAINT fk_sl_membership FOREIGN KEY (membership_id) REFERENCES memberships(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE pool_participants (
+  id                      VARCHAR(10)   NOT NULL,
+  fiscal_year_id          VARCHAR(10)   NOT NULL,
+  type                    ENUM('RESCUE_FUND','BUREAU') NOT NULL,
+  label                   VARCHAR(100)  NOT NULL,
+  initial_balance         DECIMAL(15,2) NOT NULL,
+  current_balance         DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  total_interest_received DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_pp_type (fiscal_year_id, type),
+  CONSTRAINT fk_pp_fy FOREIGN KEY (fiscal_year_id) REFERENCES fiscal_years(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE interest_distribution_snapshots (
+  id                  VARCHAR(10)   NOT NULL,
+  session_id          VARCHAR(10)   NOT NULL,
+  total_interest_pool DECIMAL(15,2) NOT NULL,
+  total_savings_base  DECIMAL(15,2) NOT NULL,
+  distributed_at      TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  executed_by_id      VARCHAR(10)   NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_ids_session (session_id),
+  CONSTRAINT fk_ids_session  FOREIGN KEY (session_id)    REFERENCES monthly_sessions(id),
+  CONSTRAINT fk_ids_executor FOREIGN KEY (executed_by_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+\end{lstlisting}
+
+\begin{lstlisting}[language=SQL, caption={Tables Prêts}]
+CREATE TABLE loan_accounts (
+  id                    VARCHAR(10)   NOT NULL,
+  membership_id         VARCHAR(10)   NOT NULL,
+  fiscal_year_id        VARCHAR(10)   NOT NULL,
+  principal_amount      DECIMAL(15,2) NOT NULL,
+  monthly_rate          DECIMAL(5,4)  NOT NULL DEFAULT 0.0400,
+  disbursed_at          DATE          NULL,
+  disbursed_by_id       VARCHAR(10)   NULL,
+  due_before_date       DATE          NOT NULL,
+  status                ENUM('PENDING','ACTIVE','PARTIALLY_REPAID','CLOSED')
+                        NOT NULL DEFAULT 'PENDING',
+  outstanding_balance   DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  total_interest_accrued DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  total_repaid          DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  requested_at          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  request_notes         TEXT          NULL,
+  PRIMARY KEY (id),
+  KEY idx_la_membership_status (membership_id, status),
+  KEY idx_la_fy (fiscal_year_id),
+  CONSTRAINT fk_la_membership FOREIGN KEY (membership_id) REFERENCES memberships(id),
+  CONSTRAINT fk_la_fy         FOREIGN KEY (fiscal_year_id) REFERENCES fiscal_years(id),
+  CONSTRAINT fk_la_disburser  FOREIGN KEY (disbursed_by_id) REFERENCES users(id),
+  CONSTRAINT chk_la_amount CHECK (
+    principal_amount >= 10000.00 AND principal_amount <= 1000000.00
+  )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE monthly_loan_accruals (
+  id                    VARCHAR(10)   NOT NULL,
+  loan_id               VARCHAR(10)   NOT NULL,
+  session_id            VARCHAR(10)   NOT NULL,
+  month                 TINYINT       NOT NULL,
+  balance_at_month_start DECIMAL(15,2) NOT NULL,
+  interest_accrued      DECIMAL(15,2) NOT NULL,
+  balance_with_interest DECIMAL(15,2) NOT NULL,
+  repayment_received    DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+  balance_at_month_end  DECIMAL(15,2) NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_mla_loan_session (loan_id, session_id),
+  KEY idx_mla_session (session_id),
+  CONSTRAINT fk_mla_loan    FOREIGN KEY (loan_id)    REFERENCES loan_accounts(id),
+  CONSTRAINT fk_mla_session FOREIGN KEY (session_id) REFERENCES monthly_sessions(id),
+  CONSTRAINT chk_mla_end_balance CHECK (balance_at_month_end >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE carryover_loan_records (
+  id                VARCHAR(10)   NOT NULL,
+  original_loan_id  VARCHAR(10)   NOT NULL,
+  new_fiscal_year_id VARCHAR(10)  NOT NULL,
+  carryover_amount  DECIMAL(15,2) NOT NULL,
+  reason            TEXT          NULL,
+  approved_by_id    VARCHAR(10)   NOT NULL,
+  created_at        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_clr_loan (original_loan_id),
+  CONSTRAINT fk_clr_loan    FOREIGN KEY (original_loan_id)   REFERENCES loan_accounts(id),
+  CONSTRAINT fk_clr_fy      FOREIGN KEY (new_fiscal_year_id) REFERENCES fiscal_years(id),
+  CONSTRAINT fk_clr_approver FOREIGN KEY (approved_by_id)    REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+\end{lstlisting}
+
+% ============================================================
+\chapter{Conception de l'API REST}
+% ============================================================
+
+\section{Conventions Générales}
+
+\begin{itemize}
+  \item \textbf{Préfixe} : \texttt{/api/v1/}
+  \item \textbf{Authentification} : Bearer JWT dans le header \texttt{Authorization}
+  \item \textbf{Erreurs} : Format uniforme \texttt{\{statusCode, error, message, details\}}
+  \item \textbf{Pagination} : \texttt{?page=1\&limit=20} sur tous les endpoints liste
+  \item \textbf{Réponses financières} : tous les montants en \textbf{chaîne} (\texttt{"100000.00"}) pour éviter
+        les arrondis JavaScript
+\end{itemize}
+
+\section{Module Auth}
+
+\begin{apiBox}{POST /api/v1/auth/login}
+\begin{lstlisting}[language=TypeScript, numbers=none]
+// Body
+{ "identifier": "phone ou username", "password": "string" }
+// Response 200
+{
+  "accessToken":  "eyJ...",
+  "refreshToken": "eyJ...",
+  "user": { "id": "abc123", "role": "TRESORIER", "username": "..." }
+}
+\end{lstlisting}
+\end{apiBox}
+
+\begin{apiBox}{POST /api/v1/auth/refresh}
+\begin{lstlisting}[language=TypeScript, numbers=none]
+// Body
+{ "refreshToken": "eyJ..." }
+// Response 200 : nouveau accessToken + refreshToken (rotation)
+\end{lstlisting}
+\end{apiBox}
+
+\section{Module Membres}
+
+\begin{apiBox}{GET /api/v1/members \quad [BUREAU]}
+\begin{lstlisting}[language=TypeScript, numbers=none]
+// Query : ?fiscalYearId=&search=&status=ACTIVE&page=1&limit=20
+// Response 200
+{
+  "data": [{
+    "id": "mp01", "memberCode": "CAYA-00001",
+    "fullName": "ABENG ZE Jean",
+    "phone1": "+237677001122",
+    "neighborhood": "Bastos",
+    "membership": { "status": "ACTIVE", "sharesCount": "2.00" }
+  }],
+  "total": 32, "page": 1, "limit": 20
+}
+\end{lstlisting}
+\end{apiBox}
+
+\begin{apiBox}{GET /api/v1/members/:id/summary \quad [BUREAU + self]}
+\begin{lstlisting}[language=TypeScript, numbers=none]
+// Vue complète d'un membre pour l'exercice courant
+{
+  "profile": { "memberCode": "CAYA-00001", "fullName": "...", ... },
+  "membership": { "status": "ACTIVE", "enrollmentType": "RETURNING" },
+  "shareCommitment": { "sharesCount": "2.00", "monthlyAmount": "200000.00" },
+  "savings": {
+    "balance": "1250000.00",
+    "principalBalance": "1100000.00",
+    "totalInterestReceived": "150000.00"
+  },
+  "loans": [{
+    "id": "ln01", "principalAmount": "300000.00",
+    "outstandingBalance": "125000.00", "status": "PARTIALLY_REPAID"
+  }],
+  "rescueFund": { "paidAmount": "50000.00", "balance": "50000.00" }
+}
+\end{lstlisting}
+\end{apiBox}
+
+\section{Module Sessions}
+
+\begin{apiBox}{POST /api/v1/sessions/:id/entries \quad [TRESORIER, BUREAU]}
+\begin{lstlisting}[language=TypeScript, numbers=none]
+// Body — batch de saisie pour une session OPEN
+{
+  "entries": [
+    { "membershipId": "ms01", "type": "COTISATION", "amount": "200000.00" },
+    { "membershipId": "ms01", "type": "EPARGNE",    "amount": "50000.00" },
+    {
+      "membershipId": "ms02",
+      "type": "REMBOURSEMENT",  // décomposé automatiquement en 2 entries
+      "amount": "104000.00",    // système calcule interestPart + principalPart
+      "loanId": "ln01"
+    }
+  ]
+}
+// Response 201
+{
+  "createdEntries": [
+    { "id": "se01", "reference": "CAYA-2026-03-COT-0001", "type": "COTISATION", ... },
+    { "id": "se02", "reference": "CAYA-2026-03-EPG-0001", "type": "EPARGNE", ... },
+    { "id": "se03", "reference": "CAYA-2026-03-RIN-0001", "type": "RBT_INTEREST", ... },
+    { "id": "se04", "reference": "CAYA-2026-03-RPR-0001", "type": "RBT_PRINCIPAL", ... }
+  ],
+  "sessionTotals": { "totalCotisation": "200000.00", ... }
+}
+\end{lstlisting}
+\end{apiBox}
+
+\begin{apiBox}{POST /api/v1/sessions/:id/distribute-interests \quad [TRESORIER]}
+\begin{lstlisting}[language=TypeScript, numbers=none]
+// Déclenche la redistribution mensuelle des intérêts
+// Response 200
+{
+  "snapshot": {
+    "totalInterestPool": "142000.00",
+    "totalSavingsBase":  "18500000.00",
+    "monthlyYield":      "0.767%"
+  },
+  "allocations": [
+    { "memberCode": "CAYA-00001", "savingsBalance": "1250000.00",
+      "allocationAmount": "8750.00" },
+    ...
+  ]
+}
+\end{lstlisting}
+\end{apiBox}
+
+\section{Module Prêts}
+
+\begin{apiBox}{POST /api/v1/loans \quad [TRESORIER — avec autorisation PRESIDENT]}
+\begin{lstlisting}[language=TypeScript, numbers=none]
+// Body
+{
+  "membershipId":  "ms01",
+  "amount":        "500000.00",
+  "requestNotes":  "Besoin urgent travaux"
+}
+// Validation automatique LoanEligibilitySpec :
+//   savings >= 100 000 ✓
+//   amount <= savings × 5 ✓
+//   activeLoans < 2 ✓
+//   amount IN [10 000, 1 000 000] ✓
+// Response 201 : LoanAccount { status: "PENDING" }
+\end{lstlisting}
+\end{apiBox}
+
+\begin{apiBox}{GET /api/v1/loans/annual-summary?fiscalYearId= \quad [BUREAU]}
+\begin{lstlisting}[language=TypeScript, numbers=none]
+// Équivalent vue Rem25 du fichier Excel — zéro saisie manuelle
+{
+  "members": [{
+    "memberCode":    "CAYA-00001",
+    "fullName":      "ABENG ZE Jean",
+    "totalLoans":    "450000.00",
+    "totalInterest": "124000.00",
+    "totalRepaid":   "259000.00",
+    "remaining":     "315000.00"  // outstandingBalance × 1.04
+  }],
+  "totals": { ... }
+}
+\end{lstlisting}
+\end{apiBox}
+
+\section{Module Cassation}
+
+\begin{apiBox}{POST /api/v1/cassation/execute \quad [TRESORIER — SUPER\_ADMIN]}
+\begin{lstlisting}[language=TypeScript, numbers=none]
+// Déclenche le processus complet de cassation (séquence ordonnée)
+// Response 200
+{
+  "cassationRecord": {
+    "id":                   "cas01",
+    "totalDistributed":     "21450000.00",
+    "memberCount":          32,
+    "carryoverLoansCount":  3   // prêts reportés sur N+1
+  },
+  "redistributions": [
+    { "memberCode": "CAYA-00001", "savingsAmount": "1100000.00",
+      "interestAmount": "182000.00", "totalReturned": "1282000.00" }
+  ],
+  "carryovers": [
+    { "memberCode": "CAYA-00015", "carryoverAmount": "315000.00" }
+  ]
+}
+\end{lstlisting}
+\end{apiBox}
+
+% ============================================================
+\chapter{Conception de l'Interface Utilisateur}
+% ============================================================
+
+\section{Application Web — Next.js (Bureau / Trésorier)}
+
+\subsection{Structure des Pages}
+
+\begin{lstlisting}[language=bash, caption={Arborescence Next.js}]
+app/
+  (auth)/
+    login/page.tsx
+  (dashboard)/
+    layout.tsx                -- sidebar + header
+    page.tsx                  -- Dashboard principal
+    membres/
+      page.tsx                -- Liste des membres
+      [id]/page.tsx           -- Fiche membre détaillée
+    sessions/
+      page.tsx                -- Liste des sessions
+      [id]/
+        page.tsx              -- Détail session
+        saisie/page.tsx       -- Saisie des transactions (Trésorier)
+    prets/
+      page.tsx                -- Vue Rem25 annuelle
+      [id]/page.tsx           -- Détail prêt + accrual mensuel
+    epargne/
+      page.tsx                -- Pool épargne + distributions
+    secours/
+      page.tsx                -- Ledger secours + événements
+    beneficiaires/
+      page.tsx                -- Planning + désignation
+    cassation/
+      page.tsx                -- Exécution cassation
+    rapports/
+      page.tsx                -- Exports PDF / Excel
+    config/
+      page.tsx                -- TontineConfig (SUPER_ADMIN)
+\end{lstlisting}
+
+\subsection{Composants Clés}
+
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{4cm}L{9cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Composant}} &
+  \textcolor{white}{\textbf{Rôle}} \\
+  \midrule
+  \texttt{SessionEntryForm}   & Saisie batch des transactions (une ligne par membre) \\
+  \texttt{LoanSummaryTable}   & Tableau Rem25 recalculé automatiquement \\
+  \texttt{InterestDistChart}  & Graphique distribution intérêts (barres empilées) \\
+  \texttt{SavingsEvolution}   & Courbe épargne cumulée + intérêts par mois \\
+  \texttt{MemberCard}         & Fiche résumé d'un membre (mini-dashboard) \\
+  \texttt{CassationWizard}    & Stepper 8 étapes pour la cassation guidée \\
+  \texttt{ExportButton}       & Bouton PDF/Excel avec prévisualisation \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\section{Application Mobile — Flutter}
+
+\subsection{Architecture Flutter}
+
+\begin{lstlisting}[language=bash, caption={Arborescence Flutter}]
+lib/
+  main.dart
+  app/
+    router/          -- go_router config
+    theme/           -- couleurs CAYA, typographie
+  features/
+    auth/
+      data/          -- AuthRepository, AuthRemoteDataSource
+      domain/        -- AuthUseCase, User entity
+      presentation/  -- LoginScreen, widgets
+    dashboard/
+      presentation/  -- DashboardScreen, KPI widgets
+    my_account/
+      presentation/  -- MyAccountScreen (épargne, prêts, secours)
+    transactions/
+      presentation/  -- TransactionHistoryScreen
+    notifications/
+      presentation/  -- NotificationListScreen
+  shared/
+    api/             -- DioClient, interceptors JWT
+    storage/         -- SecureStorageService (tokens)
+    widgets/         -- CayaButton, CayaCard, MoneyText
+\end{lstlisting}
+
+\subsection{Écrans Flutter (Membres)}
+
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{4cm}L{9cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Écran}} &
+  \textcolor{white}{\textbf{Contenu}} \\
+  \midrule
+  \textbf{Login}          & Saisie phone/username + mot de passe \\
+  \textbf{Dashboard}      & Solde épargne, prêts en cours, prochain mois \\
+  \textbf{Mon Compte}     & Épargne brute, intérêts reçus, NAP estimé \\
+  \textbf{Mes Prêts}      & Liste prêts actifs, encours, échéance \\
+  \textbf{Mon Secours}    & Solde caisse, contributions \\
+  \textbf{Historique}     & Liste chronologique des transactions \\
+  \textbf{Graphiques}     & Courbe épargne + intérêts cumulés (fl\_chart) \\
+  \textbf{Notifications}  & Rappels réunion, confirmations, alertes \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\chapter{Stratégie de Tests}
+% ============================================================
+
+\section{Pyramide de Tests}
+
+\begin{center}
+\begin{tikzpicture}
+  \fill[cayaBlue!20] (0,0) -- (6,0) -- (3,4) -- cycle;
+  \fill[cayaBlue!40] (1,1.3) -- (5,1.3) -- (3,4) -- cycle;
+  \fill[cayaBlue!70] (2,2.6) -- (4,2.6) -- (3,4) -- cycle;
+
+  \node at (3, 0.6)  {\small Tests d'intégration (API + BDD)};
+  \node at (3, 2.0)  {\small Tests unitaires (Services, Specs)};
+  \node at (3, 3.3)  {\tiny\bfseries E2E};
+\end{tikzpicture}
+\end{center}
+
+\section{Tests Prioritaires par Module}
+
+\begin{center}
+\small
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{3cm}L{5cm}L{5cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Module}} &
+  \textcolor{white}{\textbf{Tests unitaires}} &
+  \textcolor{white}{\textbf{Tests d'intégration}} \\
+  \midrule
+  Prêts         & LoanEligibilitySpec (7 cas), accrual glissant & Flux complet prêt → rembt → clôture \\
+  Intérêts      & Stratégie THEORETICAL vs ACTUAL & Redistribution + vérif. ∑ allocations \\
+  Transactions  & Décomposition RBT (intérêt/capital), FIFO & Saisie batch session → totaux snapshot \\
+  Cassation     & Calcul NAP, carryover × 1.04 & Séquence cassation 8 étapes \\
+  Auth/RBAC     & Guards par rôle & Chaque endpoint × chaque rôle \\
+  Config        & Immutabilité snapshot & Snapshot créé à activate(), SUPER\_ADMIN force \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{lstlisting}[language=TypeScript, caption={Exemple test unitaire — Accrual glissant}]
+describe('MonthlyLoanAccrualService', () => {
+  it('should apply sliding interest correctly over 3 months', () => {
+    // Mois 1 : emprunt 200 000
+    const m1 = accrualService.compute({ balance: 200_000, repayment: 0 });
+    expect(m1.interestAccrued).toEqual(new Decimal('8000.00'));
+    expect(m1.balanceAtMonthEnd).toEqual(new Decimal('208000.00'));
+
+    // Mois 2 : remboursement partiel 100 000
+    const m2 = accrualService.compute({ balance: 208_000, repayment: 100_000 });
+    expect(m2.interestAccrued).toEqual(new Decimal('8320.00'));
+    expect(m2.balanceAtMonthEnd).toEqual(new Decimal('116320.00'));
+
+    // Mois 3 : remboursement inférieur aux intérêts
+    const m3 = accrualService.compute({ balance: 116_320, repayment: 3_000 });
+    expect(m3.interestAccrued).toEqual(new Decimal('4652.80'));
+    expect(m3.balanceAtMonthEnd).toEqual(new Decimal('117972.80'));
+  });
+});
+\end{lstlisting}
+
+% ============================================================
+\chapter{Schéma Prisma}
+% ============================================================
+
+\section{Configuration Prisma MySQL}
+
+\begin{lstlisting}[language=bash, caption={schema.prisma — extrait}]
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// DATABASE_URL = "mysql://user:pass@localhost:3306/caya_db"
+
+model User {
+  id           String    @id @db.VarChar(10)
+  username     String    @unique @db.VarChar(50)
+  phone        String    @unique @db.VarChar(20)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  role         BureauRole @default(MEMBRE)
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  lastLoginAt  DateTime? @map("last_login_at")
+
+  refreshTokens   RefreshToken[]
+  auditLogs       AuditLog[]
+  memberProfile   MemberProfile?
+
+  @@map("users")
+}
+
+model LoanAccount {
+  id                   String      @id @db.VarChar(10)
+  membershipId         String      @map("membership_id") @db.VarChar(10)
+  fiscalYearId         String      @map("fiscal_year_id") @db.VarChar(10)
+  principalAmount      Decimal     @map("principal_amount") @db.Decimal(15, 2)
+  monthlyRate          Decimal     @default(0.0400) @map("monthly_rate") @db.Decimal(5, 4)
+  disbursedAt          DateTime?   @map("disbursed_at") @db.Date
+  disbursedById        String?     @map("disbursed_by_id") @db.VarChar(10)
+  dueBeforeDate        DateTime    @map("due_before_date") @db.Date
+  status               LoanStatus  @default(PENDING)
+  outstandingBalance   Decimal     @default(0) @map("outstanding_balance") @db.Decimal(15, 2)
+  totalInterestAccrued Decimal     @default(0) @map("total_interest_accrued") @db.Decimal(15, 2)
+  totalRepaid          Decimal     @default(0) @map("total_repaid") @db.Decimal(15, 2)
+  requestedAt          DateTime    @default(now()) @map("requested_at")
+  requestNotes         String?     @map("request_notes") @db.Text
+
+  membership          Membership          @relation(fields: [membershipId], references: [id])
+  fiscalYear          FiscalYear          @relation(fields: [fiscalYearId], references: [id])
+  monthlyAccruals     MonthlyLoanAccrual[]
+  carryoverRecord     CarryoverLoanRecord?
+
+  @@index([membershipId, status])
+  @@index([fiscalYearId])
+  @@map("loan_accounts")
+}
+
+enum BureauRole {
+  SUPER_ADMIN
+  PRESIDENT
+  VICE_PRESIDENT
+  TRESORIER
+  TRESORIER_ADJOINT
+  SECRETAIRE_GENERAL
+  SECRETAIRE_ADJOINT
+  COMMISSAIRE_AUX_COMPTES
+  MEMBRE
+}
+
+enum LoanStatus {
+  PENDING
+  ACTIVE
+  PARTIALLY_REPAID
+  CLOSED
+}
+
+enum InterestPoolMethod {
+  THEORETICAL
+  ACTUAL
+}
+\end{lstlisting}
+
+% ============================================================
+\chapter*{Annexes}
+\addcontentsline{toc}{chapter}{Annexes}
+% ============================================================
+
+\section*{A. Règles de Nommage}
+
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{L{3.5cm}L{4cm}L{6cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{Élément}} &
+  \textcolor{white}{\textbf{Convention}} &
+  \textcolor{white}{\textbf{Exemple}} \\
+  \midrule
+  Tables MySQL      & \texttt{snake\_case}         & \texttt{loan\_accounts} \\
+  Colonnes MySQL    & \texttt{snake\_case}          & \texttt{outstanding\_balance} \\
+  Modèles Prisma    & \texttt{PascalCase}           & \texttt{LoanAccount} \\
+  Champs Prisma     & \texttt{camelCase}            & \texttt{outstandingBalance} \\
+  Classes NestJS    & \texttt{PascalCase}           & \texttt{LoanService} \\
+  Méthodes NestJS   & \texttt{camelCase}            & \texttt{computeMonthlyInterest()} \\
+  DTOs              & \texttt{PascalCase + Dto}     & \texttt{CreateLoanDto} \\
+  Endpoints API     & \texttt{kebab-case} pluriel   & \texttt{/loan-accounts} \\
+  Codes membres     & \texttt{CAYA-NNNNN}           & \texttt{CAYA-00042} \\
+  Refs transactions & \texttt{CAYA-AAAA-MM-TYP-NNNN}& \texttt{CAYA-2026-03-COT-0042} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\section*{B. Variables d'Environnement}
+
+\begin{lstlisting}[language=bash, caption={.env NestJS}]
+# Base de données
+DATABASE_URL="mysql://caya_user:password@localhost:3306/caya_db"
+
+# JWT
+JWT_SECRET="votre_secret_256_bits"
+JWT_EXPIRES_IN="15m"
+JWT_REFRESH_EXPIRES_IN="30d"
+
+# WhatsApp Business API
+WHATSAPP_API_URL="https://api.whatsapp.com/..."
+WHATSAPP_API_TOKEN="..."
+WHATSAPP_PHONE_NUMBER_ID="..."
+
+# SMS
+SMS_PROVIDER_URL="..."
+SMS_API_KEY="..."
+
+# App
+APP_PORT=3000
+NODE_ENV=production
+\end{lstlisting}
+
+\vfill
+\begin{center}
+  \textcolor{cayaBlue}{\rule{0.5\textwidth}{0.4pt}}\\[0.3cm]
+  {\small\textit{Cahier de Conception Technique — CAYA}}\\
+  {\small\textcolor{gray}{Version 1.0 — Mars 2026 — Confidentiel}}
+\end{center}
+
+\end{document}

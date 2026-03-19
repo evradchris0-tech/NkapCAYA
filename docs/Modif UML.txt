@@ -1,0 +1,37 @@
+retire email.
+
+au niveau de tontineConfig. pas besoin de logoURL et photoURL
+
+pas de UUID utilise des UUID court.
+
+Assurez-vous que votre code applicatif gère bien le fait qu'il n'y ait qu'un seul enregistrement actif, ou ajoutez un champ isActive si vous prévoyez de garder un historique des anciennes configurations (pour les archives).
+
+on ne peut pas modifier les règles durant l'exercice. seul le superadmin le peut
+
+on examine la modélisation de la MonthlySession (date, lieu, hôte) et surtout de la SessionEntry (le bulletin de pointage d'un membre lors d'une réunion précise) ?
+
+Aspect	Risque potentiel	Suggestion
+EnrollmentType	La gestion du MID_YEAR.	Un membre arrivant à mi-année doit-il rattraper les cotisations passées ? Si oui, prévoyez un champ catchUpAmount ou une logique dans SavingsLedger.
+Calcul du monthlyAmount	Redondance de données.	Puisque c'est un champ calculé (sharesCount * shareUnitAmount de la table Config), assurez-vous de le figer au moment de l'adhésion. Si la TontineConfig change en cours d'année, le montant dû par le membre pour l'année en cours ne doit pas bouger.
+Dates de l'exercice	Chevauchement.	Ajoutez une contrainte (ou un trigger) pour vérifier qu'un nouvel exercice ne chevauche pas les dates d'un exercice existant.
+
+
+La pièce manquante du puzzle est la gestion des cycles (Exercices). Un membre peut être actif en 2024 mais pas en 2025.
+
+regarde la structure de la table Membership (ou Adhesion) pour lier un membre à un exercice spécifique avec ses parts souscrites ?
+
+Indexation	Performance sur gros volume.	L'index (sessionId, membershipId) est bon, mais pour les relevés de fin d'année d'un membre, l'index (membershipId, type) est celui qui sauvera vos performances.
+
+Type de Transaction	Confusion possible.	Un "Remboursement" peut comporter du Capital ET des Intérêts. Votre ENUM REMBOURSEMENT_PRET est-il suffisant ou faut-il distinguer les deux pour la fiscalité/compta ?
+
+le pot est la cotisation de chaque membre pour acheter quelque chose a grignoter le jour de la reunion.
+
+Intégrité des Données
+Le fait d'utiliser une table de séquence (TransactionSequence) est très "Expert". Pour aller encore plus loin, vous pourriez ajouter un trigger ou une contrainte applicative qui empêche toute création/modification de SessionEntry si le status de la session parente est différent de OPEN.
+
+
+attachementPhoto pas url, une photo tres légère 
+
+il n' y a pas qu'un seul bouffeur par seance mensuelle.
+
+

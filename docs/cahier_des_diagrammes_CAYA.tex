@@ -1,0 +1,2039 @@
+% ============================================================
+%  CAHIER DES DIAGRAMMES UML — APPLICATION CAYA
+%  Club des Amis de Yaoundé
+%  Version 1.0 — Mars 2026
+% ============================================================
+\documentclass[12pt, a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.8cm, right=2.8cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% Couleurs
+\usepackage[dvipsnames, table]{xcolor}
+\definecolor{cayaBlue}{RGB}{0, 71, 130}
+\definecolor{cayaGold}{RGB}{201, 155, 0}
+\definecolor{cayaLight}{RGB}{230, 241, 255}
+\definecolor{warningRed}{RGB}{200, 40, 40}
+\definecolor{successGreen}{RGB}{30, 130, 60}
+\definecolor{codeGray}{RGB}{248, 248, 248}
+\definecolor{plantKeyword}{RGB}{0, 0, 180}
+\definecolor{plantComment}{RGB}{60, 128, 60}
+\definecolor{plantString}{RGB}{160, 32, 32}
+\definecolor{plantType}{RGB}{128, 0, 128}
+
+% En-têtes
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{cayaBlue}{\textbf{CAYA} — Cahier des Diagrammes UML}}
+\fancyhead[R]{\small\textcolor{gray}{v1.0 · Mars 2026}}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{colortbl}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% Graphiques
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc}
+
+% Listes
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=1.5em, itemsep=2pt}
+
+% Boîtes
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable, skins, listings}
+
+\newtcolorbox{diagramBox}[2]{
+  colback=codeGray, colframe=cayaBlue,
+  fonttitle=\bfseries\small\color{white},
+  title=\textbf{#1} \hfill {\normalfont\small #2},
+  coltitle=white, attach boxed title to top left,
+  boxed title style={colback=cayaBlue, arc=2pt},
+  breakable, boxrule=0.8pt, arc=3pt,
+  before upper={\setlength{\parindent}{0pt}}
+}
+
+\newtcolorbox{noteBox}[1]{
+  colback=cayaLight, colframe=cayaBlue!60,
+  fonttitle=\bfseries\small, title=#1,
+  breakable, boxrule=0.6pt, arc=3pt
+}
+
+% Code PlantUML
+\usepackage{listings}
+\lstdefinelanguage{PlantUML}{
+  keywords={@startuml,@enduml,class,interface,enum,abstract,
+            participant,actor,boundary,control,entity,database,
+            note,end,left,right,of,on,link,as,
+            skinparam,title,package,namespace,rectangle,node,
+            usecase,component,artifact,folder,frame,
+            state,choice,fork,join,[*],
+            activate,deactivate,destroy,
+            autonumber,ref,over,loop,alt,else,opt,
+            break,critical,group,par,strict},
+  keywordstyle=\color{plantKeyword}\bfseries,
+  comment=[l]{'},
+  commentstyle=\color{plantComment}\itshape,
+  stringstyle=\color{plantString},
+  morestring=[b]",
+  sensitive=false,
+  moredelim=[s][\color{plantType}]{<}{>},
+}
+\lstset{
+  language=PlantUML,
+  basicstyle=\ttfamily\scriptsize,
+  backgroundcolor=\color{codeGray},
+  frame=none,
+  breaklines=true,
+  keepspaces=true,
+  showstringspaces=false,
+  numbers=left,
+  numberstyle=\tiny\color{gray!60},
+  numbersep=5pt,
+  xleftmargin=10pt,
+  tabsize=2
+}
+
+% Liens
+\usepackage[hidelinks, colorlinks=true, linkcolor=cayaBlue]{hyperref}
+\usepackage{bookmark}
+\usepackage{pifont}
+\newcommand{\cmark}{\textcolor{successGreen}{\ding{51}}}
+
+% ============================================================
+\title{%
+  \vspace{-1cm}
+  {\Huge\bfseries\color{cayaBlue} Cahier des Diagrammes UML}\\[0.4cm]
+  {\large\bfseries Application de Gestion\\[0.1cm]
+  \textbf{\color{cayaGold}CLUB DES AMIS DE YAOUNDÉ (CAYA)}}\\[0.3cm]
+  {\normalsize 18 Diagrammes · PlantUML · Classes · Séquences · États · Déploiement}\\[0.5cm]
+  \rule{0.6\textwidth}{1pt}\\[0.4cm]
+  {\small Version 1.0 \quad|\quad Mars 2026 \quad|\quad Confidentiel}
+}
+\author{}
+\date{}
+
+% ============================================================
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\vfill
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{Outil de rendu} & PlantUML (\texttt{https://www.plantuml.com/plantuml}) \\
+  \textbf{Modules couverts} & 12 modules métier \\
+  \textbf{Diagrammes produits} & 18 (Classes × 11, États × 4, Séquences × 3) \\
+  \textbf{Prérequis} & Cahier des Charges + Cahier de Conception v1.0 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ============================================================
+\chapter*{Guide de Lecture}
+\addcontentsline{toc}{chapter}{Guide de Lecture}
+% ============================================================
+
+\begin{noteBox}{Comment utiliser ce document}
+Chaque bloc de code est du \textbf{PlantUML} valide. Pour le rendre :
+\begin{enumerate}
+  \item Copier le contenu entre \texttt{@startuml} et \texttt{@enduml}
+  \item Le coller sur \texttt{https://www.plantuml.com/plantuml/uml/}
+  \item Ou utiliser l'extension \textit{PlantUML} dans VSCode avec \texttt{Alt+D}
+\end{enumerate}
+Chaque diagramme est autonome et peut être généré indépendamment.
+\end{noteBox}
+
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{C{0.8cm}L{3.5cm}L{2.5cm}L{6cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{\#}} &
+  \textcolor{white}{\textbf{Diagramme}} &
+  \textcolor{white}{\textbf{Type}} &
+  \textcolor{white}{\textbf{Description}} \\
+  \midrule
+  D01 & Auth \& RBAC             & Classes    & Utilisateurs, rôles, tokens \\
+  D02 & Configuration            & Classes    & TontineConfig, snapshot exercice \\
+  D03 & Membres                  & Classes    & Profils, contacts, parrainage \\
+  D04 & Exercice Fiscal          & Classes    & FiscalYear, Membership, Parts \\
+  D05 & Sessions \& Transactions & Classes    & Sessions, entrées, séquences \\
+  D06 & Épargne \& Intérêts      & Classes    & Ledgers, redistribution, pool \\
+  D07 & Prêts                    & Classes    & LoanAccount, accrual, rembt \\
+  D08 & Caisse de Secours        & Classes    & RescueFund, événements \\
+  D09 & Bénéficiaires            & Classes    & Planning, slots, désignation \\
+  D10 & Cassation \& Audit       & Classes    & Clôture, rollover, AuditLog \\
+  D11 & Vue Globale              & Classes    & Relations inter-modules \\
+  D12 & Cas d'Utilisation        & Use Case   & Acteurs et fonctions \\
+  D13 & Composants               & Composants & Architecture technique \\
+  D14 & Déploiement              & Déploiement& Infrastructure serveurs \\
+  D15 & État — FiscalYear        & États      & Cycle de vie exercice \\
+  D16 & État — MonthlySession    & États      & Cycle de vie session \\
+  D17 & État — LoanAccount       & États      & Cycle de vie prêt \\
+  D18 & État — MemberStatus      & États      & Statuts membres \\
+  D19 & Séquence — Session       & Séquence   & Enregistrement réunion mensuelle \\
+  D20 & Séquence — Intérêts      & Séquence   & Distribution mensuelle \\
+  D21 & Séquence — Cassation     & Séquence   & Processus de clôture exercice \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\chapter{Diagrammes de Classes}
+% ============================================================
+
+% -----------------------------------------------------------
+\section{D01 — Module Auth \& RBAC}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D01 — Auth \& RBAC}{Diagramme de Classes}
+\begin{lstlisting}
+@startuml D01_Auth_RBAC
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam classBackgroundColor #EEF4FF
+skinparam classBorderColor #004782
+skinparam arrowColor #004782
+skinparam packageBackgroundColor #F8F8F8
+title <b>Module 01 — Authentification & Contrôle d'Accès (RBAC)</b>
+
+enum BureauRole {
+  SUPER_ADMIN
+  PRESIDENT
+  VICE_PRESIDENT
+  TRESORIER
+  TRESORIER_ADJOINT
+  SECRETAIRE_GENERAL
+  SECRETAIRE_ADJOINT
+  COMMISSAIRE_AUX_COMPTES
+  MEMBRE
+}
+
+class User {
+  + id            : VARCHAR(10) <<PK>>
+  + username      : VARCHAR(50) <<UNIQUE>>
+  + phone         : VARCHAR(20) <<UNIQUE>>
+  + passwordHash  : VARCHAR(255)
+  + role          : BureauRole
+  + isActive      : Boolean = true
+  + createdAt     : Timestamp
+  + updatedAt     : Timestamp
+  + lastLoginAt   : Timestamp
+  --
+  + activate()    : void
+  + deactivate()  : void
+  + changeRole(r) : void
+}
+
+class RefreshToken {
+  + id         : VARCHAR(10) <<PK>>
+  + userId     : VARCHAR(10) <<FK>>
+  + tokenHash  : VARCHAR(255) <<UNIQUE>>
+  + expiresAt  : Timestamp
+  + revokedAt  : Timestamp
+  + createdAt  : Timestamp
+  + userAgent  : VARCHAR(500)
+  --
+  + isValid()  : Boolean
+  + revoke()   : void
+}
+
+class AuditLog {
+  + id         : VARCHAR(10) <<PK>>
+  + actorId    : VARCHAR(10) <<FK>>
+  + action     : VARCHAR(100)
+  + entityType : VARCHAR(50)
+  + entityId   : VARCHAR(10)
+  + beforeData : JSON
+  + afterData  : JSON
+  + reason     : TEXT
+  + ipAddress  : VARCHAR(45)
+  + createdAt  : Timestamp
+  --
+  <<PARTITION BY YEAR(createdAt)>>
+  <<APPEND-ONLY — pas de UPDATE/DELETE>>
+}
+
+note right of AuditLog
+  Lecture restreinte :
+  SUPER_ADMIN
+  PRESIDENT
+  SECRETAIRE_GENERAL
+end note
+
+note bottom of User
+  INV-AUTH-01 : 1 seul PRESIDENT actif
+  INV-AUTH-02 : 1 seul VICE_PRESIDENT actif
+  INV-AUTH-03 : phone synchro MemberProfile.phone1
+  INV-AUTH-04 : changeRole() → AuditLog obligatoire
+end note
+
+User "1" *-- "0..*" RefreshToken : possède >
+User "1" *-- "0..*" AuditLog     : effectue >
+User --> BureauRole               : a le rôle >
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% -----------------------------------------------------------
+\section{D02 — Module Configuration}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D02 — Configuration}{Diagramme de Classes}
+\begin{lstlisting}
+@startuml D02_Configuration
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 10
+skinparam classBackgroundColor #EEF4FF
+skinparam classBorderColor #004782
+skinparam arrowColor #004782
+title <b>Module 02 — Configuration CAYA</b>
+
+class TontineConfig <<Singleton>> {
+  + id                       : VARCHAR = 'caya' <<PK>>
+  .. Identité ..
+  + name                     : VARCHAR(255)
+  + acronym                  : VARCHAR(20)
+  + foundedYear              : SMALLINT
+  + motto                    : VARCHAR(500)
+  + headquartersCity         : VARCHAR(255)
+  + registrationNumber       : VARCHAR(100)
+  .. Parts ..
+  + shareUnitAmount          : DECIMAL(15,2) = 100000
+  + halfShareAmount          : DECIMAL(15,2) = 50000
+  + potMonthlyAmount         : DECIMAL(15,2) = 3000
+  + maxSharesPerMember       : TINYINT = 10
+  .. Épargne ..
+  + mandatoryInitialSavings  : DECIMAL(15,2) = 100000
+  .. Prêts ..
+  + loanMonthlyRate          : DECIMAL(5,4) = 0.0400
+  + minLoanAmount            : DECIMAL(15,2) = 10000
+  + maxLoanAmount            : DECIMAL(15,2) = 1000000
+  + maxLoanMultiplier        : TINYINT = 5
+  + minSavingsToLoan         : DECIMAL(15,2) = 100000
+  + maxConcurrentLoans       : TINYINT = 2
+  .. Secours ..
+  + rescueFundTarget         : DECIMAL(15,2) = 50000
+  + rescueFundMinBalance     : DECIMAL(15,2) = 25000
+  .. Inscription ..
+  + registrationFeeNew       : DECIMAL(15,2)
+  + registrationFeeReturning : DECIMAL(15,2)
+  .. Méta ..
+  + updatedAt                : Timestamp
+  + updatedById              : VARCHAR(10) <<FK>>
+}
+
+class FiscalYearConfig <<Snapshot Immuable>> {
+  + id                      : VARCHAR(10) <<PK>>
+  + fiscalYearId            : VARCHAR(10) <<FK, UNIQUE>>
+  + snapshotAt              : Timestamp
+  + snapshotById            : VARCHAR(10) <<FK>>
+  .. Règles gelées (copie TontineConfig) ..
+  + shareUnitAmount         : DECIMAL(15,2)
+  + loanMonthlyRate         : DECIMAL(5,4)
+  + maxLoanMultiplier       : TINYINT
+  + minSavingsToLoan        : DECIMAL(15,2)
+  + maxConcurrentLoans      : TINYINT
+  + rescueFundTarget        : DECIMAL(15,2)
+  + rescueFundMinBalance    : DECIMAL(15,2)
+  + registrationFeeNew      : DECIMAL(15,2)
+  + registrationFeeReturning: DECIMAL(15,2)
+  + interestPoolMethod      : InterestPoolMethod
+  .. Exception SUPER_ADMIN ..
+  + forcedModifiedAt        : Timestamp
+  + forcedModifiedById      : VARCHAR(10)
+  + forcedModifiedReason    : TEXT
+}
+
+enum InterestPoolMethod {
+  THEORETICAL
+  ACTUAL
+}
+
+class RescueEventAmount {
+  + eventType  : RescueEventType <<PK>>
+  + amount     : DECIMAL(15,2)
+  + label      : VARCHAR(255)
+  + updatedById: VARCHAR(10) <<FK>>
+  + updatedAt  : Timestamp
+}
+
+enum RescueEventType {
+  MEMBER_DEATH   = 300000
+  RELATIVE_DEATH = 100000
+  MARRIAGE       = 200000
+  BIRTH          = 25000
+  ILLNESS        = 50000
+  PROMOTION      = 50000
+}
+
+note right of FiscalYearConfig
+  CONF-01 : Créé au moment de activate()
+  CONF-02 : Immuable après création
+  Exception : SUPER_ADMIN peut forcer
+              + forcedModifiedReason requis
+              + AuditLog obligatoire
+  CONF-03 : interestPoolMethod
+            switchable avant ACTIVE seulement
+end note
+
+TontineConfig    ..> FiscalYearConfig  : snapshot() au ACTIVE
+FiscalYearConfig --> InterestPoolMethod
+RescueEventAmount --> RescueEventType
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% -----------------------------------------------------------
+\section{D03 — Module Membres}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D03 — Membres}{Diagramme de Classes}
+\begin{lstlisting}
+@startuml D03_Membres
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam classBackgroundColor #EEF4FF
+skinparam classBorderColor #004782
+skinparam arrowColor #004782
+title <b>Module 03 — Gestion des Membres</b>
+
+class User {
+  + id       : VARCHAR(10) <<PK>>
+  + username : VARCHAR(50)
+  + phone    : VARCHAR(20)
+  + role     : BureauRole
+  + isActive : Boolean
+}
+
+class MemberProfile {
+  + id                 : VARCHAR(10) <<PK>>
+  + memberCode         : VARCHAR(10) <<UNIQUE>>
+  + userId             : VARCHAR(10) <<FK, UNIQUE>>
+  + firstName          : VARCHAR(100)
+  + lastName           : VARCHAR(100)
+  + phone1             : VARCHAR(20)
+  + phone2             : VARCHAR(20)
+  + attachmentPhoto    : MEDIUMBLOB
+  + neighborhood       : VARCHAR(255)
+  + locationDetail     : TEXT
+  + mobileMoneyType    : VARCHAR(50)
+  + mobileMoneyNumber  : VARCHAR(20)
+  + sponsorId          : VARCHAR(10) <<FK>>
+  + createdAt          : Timestamp
+  + updatedAt          : Timestamp
+  --
+  + fullName()         : String
+  + getActiveMembership() : Membership
+}
+
+class EmergencyContact {
+  + id        : VARCHAR(10) <<PK>>
+  + profileId : VARCHAR(10) <<FK>>
+  + fullName  : VARCHAR(255)
+  + phone     : VARCHAR(20)
+  + relation  : VARCHAR(100)
+}
+
+class MemberCodeSequence <<Singleton>> {
+  - lastCode : INT = 0
+  --
+  + next()   : String
+  ' format retourné : CAYA-00042
+  ' SELECT ... FOR UPDATE (atomique)
+}
+
+note right of MemberProfile
+  memberCode : auto-généré
+  Format : CAYA-NNNNN
+  via MemberCodeSequence.next()
+
+  attachmentPhoto : JPEG compressé
+  Stocké en MEDIUMBLOB (max 100 KB)
+  — pas d'URL externe —
+
+  sponsorId : parrain obligatoire
+  à l'inscription (parrainage)
+end note
+
+User          "1"    --  "1"    MemberProfile    : correspond à >
+MemberProfile "1"    *-- "1..*" EmergencyContact : possède >
+MemberProfile "0..1" --> "0..*" MemberProfile    : parraine >
+MemberProfile ..> MemberCodeSequence             : génère code via >
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% -----------------------------------------------------------
+\section{D04 — Exercice Fiscal et Adhésions}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D04 — Exercice Fiscal \& Adhésions}{Diagramme de Classes}
+\begin{lstlisting}
+@startuml D04_Exercice
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 10
+skinparam classBackgroundColor #EEF4FF
+skinparam classBorderColor #004782
+skinparam arrowColor #004782
+title <b>Module 04 — Exercice Fiscal & Adhésions</b>
+
+enum FiscalYearStatus {
+  PENDING
+  ACTIVE
+  CASSATION
+  CLOSED
+  ARCHIVED
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  EXCLUDED
+}
+
+enum EnrollmentType {
+  NEW
+  RETURNING
+  MID_YEAR
+}
+
+class FiscalYear <<AggregateRoot>> {
+  + id             : VARCHAR(10) <<PK>>
+  + label          : VARCHAR(20) <<UNIQUE>>
+  + startDate      : DATE
+  + endDate        : DATE
+  + cassationDate  : DATE
+  + loanDueDate    : DATE
+  + status         : FiscalYearStatus = PENDING
+  + openedAt       : Timestamp
+  + openedById     : VARCHAR(10) <<FK>>
+  + closedAt       : Timestamp
+  + closedById     : VARCHAR(10) <<FK>>
+  + notes          : TEXT
+  --
+  + activate()     : void
+  + openCassation(): void
+  + close()        : void
+  + archive()      : void
+}
+
+class FiscalYearConfig {
+  + id                  : VARCHAR(10) <<PK>>
+  + fiscalYearId        : VARCHAR(10) <<FK, UNIQUE>>
+  + interestPoolMethod  : InterestPoolMethod
+  + shareUnitAmount     : DECIMAL(15,2)
+  + loanMonthlyRate     : DECIMAL(5,4)
+  ... (snapshot complet TontineConfig)
+}
+
+class Membership {
+  + id                   : VARCHAR(10) <<PK>>
+  + profileId            : VARCHAR(10) <<FK>>
+  + fiscalYearId         : VARCHAR(10) <<FK>>
+  + status               : MemberStatus = ACTIVE
+  + joinedAt             : DATE
+  + joinedAtMonth        : TINYINT
+  + enrollmentType       : EnrollmentType
+  + catchUpAmount        : DECIMAL(15,2) = 0
+  + catchUpPaid          : Boolean = false
+  + registrationFeePaid  : Boolean = false
+  + rescueContribPaid    : Boolean = false
+  + initialSavingsPaid   : Boolean = false
+  --
+  + isEligibleForLoan()  : Boolean
+  + computeCatchUp()     : Decimal
+  <<UNIQUE(profileId, fiscalYearId)>>
+}
+
+class ShareCommitment {
+  + id             : VARCHAR(10) <<PK>>
+  + membershipId   : VARCHAR(10) <<FK, UNIQUE>>
+  + sharesCount    : DECIMAL(4,2)
+  + monthlyAmount  : DECIMAL(15,2)
+  + isLocked       : Boolean = false
+  + lockedAt       : Timestamp
+  + lockedById     : VARCHAR(10) <<FK>>
+  --
+  + lock()          : void
+  + getMonthlyDue() : Decimal
+}
+
+note right of FiscalYear
+  CHECK :
+  startDate < loanDueDate
+           < cassationDate
+           <= endDate
+
+  TRIGGER MySQL :
+  Aucun chevauchement de dates
+  avec un exercice existant
+end note
+
+note bottom of ShareCommitment
+  monthlyAmount = sharesCount × shareUnitAmount
+  Figé à l'inscription — immuable ensuite
+
+  CHECK : sharesCount >= 0.25
+  CHECK : sharesCount <= 10.00
+  CHECK : (sharesCount × 100) MOD 25 = 0
+  Valeurs valides : 0.25, 0.50, 0.75, 1.00 ... 10.00
+end note
+
+note bottom of Membership
+  catchUpAmount =
+    (joinedAtMonth - 1)
+    × (sharesCount × shareUnitAmount
+       + rescueFundMonthlyContrib)
+  Si enrollmentType = MID_YEAR
+end note
+
+FiscalYear  "1"   *-- "0..*" Membership        : contient >
+FiscalYear  "1"   *-- "1"    FiscalYearConfig   : configure >
+Membership  "1"   *-- "0..1" ShareCommitment    : engage >
+FiscalYear  --> FiscalYearStatus
+Membership  --> MemberStatus
+Membership  --> EnrollmentType
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% -----------------------------------------------------------
+\section{D05 — Sessions et Transactions}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D05 — Sessions \& Transactions}{Diagramme de Classes}
+\begin{lstlisting}
+@startuml D05_Sessions
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 10
+skinparam classBackgroundColor #EEF4FF
+skinparam classBorderColor #004782
+skinparam arrowColor #004782
+title <b>Module 05 — Sessions Mensuelles & Transactions</b>
+
+enum SessionStatus {
+  DRAFT
+  OPEN
+  REVIEWING
+  CLOSED
+}
+
+enum TransactionType {
+  INSCRIPTION
+  SECOURS
+  COTISATION
+  POT
+  RBT_PRINCIPAL
+  RBT_INTEREST
+  EPARGNE
+  PROJET
+  AUTRES
+}
+
+class MonthlySession {
+  + id                 : VARCHAR(10) <<PK>>
+  + fiscalYearId       : VARCHAR(10) <<FK>>
+  + sessionNumber      : TINYINT
+  + meetingDate        : DATE
+  + location           : VARCHAR(500)
+  + hostMembershipId   : VARCHAR(10) <<FK>>
+  + status             : SessionStatus = DRAFT
+  + openedAt           : Timestamp
+  + openedById         : VARCHAR(10) <<FK>>
+  + closedAt           : Timestamp
+  + closedById         : VARCHAR(10) <<FK>>
+  .. Totaux snapshot (calculés à la clôture) ..
+  + totalInscription   : DECIMAL(15,2) = 0
+  + totalSecours       : DECIMAL(15,2) = 0
+  + totalCotisation    : DECIMAL(15,2) = 0
+  + totalPot           : DECIMAL(15,2) = 0
+  + totalRbtPrincipal  : DECIMAL(15,2) = 0
+  + totalRbtInterest   : DECIMAL(15,2) = 0
+  + totalEpargne       : DECIMAL(15,2) = 0
+  + totalProjet        : DECIMAL(15,2) = 0
+  + totalAutres        : DECIMAL(15,2) = 0
+  --
+  + open(byId)         : void
+  + requestReview()    : void
+  + close(byId)        : void
+  + computeTotals()    : void
+  <<UNIQUE(fiscalYearId, sessionNumber)>>
+}
+
+class SessionEntry {
+  + id                : VARCHAR(10) <<PK>>
+  + reference         : VARCHAR(30) <<UNIQUE>>
+  + sessionId         : VARCHAR(10) <<FK>>
+  + membershipId      : VARCHAR(10) <<FK>>
+  + type              : TransactionType
+  + amount            : DECIMAL(15,2)
+  + loanId            : VARCHAR(10) <<FK>>
+  + isOutOfSession    : Boolean = false
+  + outOfSessionAt    : Timestamp
+  + outOfSessionRef   : VARCHAR(100)
+  + isImported        : Boolean = false
+  + notes             : TEXT
+  + recordedById      : VARCHAR(10) <<FK>>
+  + recordedAt        : Timestamp
+}
+
+class TransactionSequence {
+  + fiscalYearId  : VARCHAR(10) <<PK>>
+  + sessionNumber : TINYINT     <<PK>>
+  + txType        : VARCHAR(20) <<PK>>
+  + lastSequence  : INT = 0
+  --
+  + nextRef()     : String
+  ' CAYA-AAAA-MM-TYP-NNNN
+  ' SELECT FOR UPDATE (atomique)
+}
+
+note right of SessionEntry
+  SESS-01 : SessionEntry ne peut être créée
+    que si session.status = OPEN
+    (sauf isOutOfSession = true)
+
+  SESS-02 : Si isOutOfSession = true :
+    type ∈ {RBT_PRINCIPAL, RBT_INTEREST}
+    sessionId = NULL
+
+  SESS-03 : Remboursement prêt
+    = 2 entries atomiques (même loanId) :
+    - 1 RBT_INTEREST
+    - 1 RBT_PRINCIPAL
+
+  Trigger MySQL :
+  BEFORE INSERT — vérifie session.status
+end note
+
+note right of TransactionSequence
+  Format référence :
+  CAYA-2026-03-COT-0042
+       AAAA MM  TYP NNNN
+
+  Types courts :
+  INS, SEC, COT, POT,
+  RIN, RPR, EPG, PRJ, AUT
+end note
+
+MonthlySession "1" *-- "0..*" SessionEntry       : enregistre >
+SessionEntry   ..> TransactionSequence            : génère ref via >
+SessionEntry   --> TransactionType
+MonthlySession --> SessionStatus
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% -----------------------------------------------------------
+\section{D06 — Épargne et Redistribution des Intérêts}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D06 — Épargne \& Intérêts}{Diagramme de Classes}
+\begin{lstlisting}
+@startuml D06_Epargne
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 10
+skinparam classBackgroundColor #EEF4FF
+skinparam classBorderColor #004782
+skinparam arrowColor #004782
+title <b>Module 06 — Épargne & Redistribution des Intérêts</b>
+
+enum SavingsEntryType {
+  DEPOSIT
+  INTEREST_CREDIT
+}
+
+enum PoolParticipantType {
+  RESCUE_FUND
+  BUREAU
+}
+
+class SavingsLedger {
+  + id                      : VARCHAR(10) <<PK>>
+  + membershipId            : VARCHAR(10) <<FK, UNIQUE>>
+  + balance                 : DECIMAL(15,2) = 0
+  + principalBalance        : DECIMAL(15,2) = 0
+  + totalInterestReceived   : DECIMAL(15,2) = 0
+  + lastUpdatedAt           : Timestamp
+  --
+  + deposit(amount, session)  : void
+  + creditInterest(amount, snap) : void
+  + getNAP()                  : Decimal
+}
+
+class SavingsEntry {
+  + id             : VARCHAR(10) <<PK>>
+  + ledgerId       : VARCHAR(10) <<FK>>
+  + sessionId      : VARCHAR(10) <<FK>>
+  + sessionEntryId : VARCHAR(10) <<FK>>
+  + month          : TINYINT
+  + amount         : DECIMAL(15,2)
+  + type           : SavingsEntryType
+  + balanceAfter   : DECIMAL(15,2)
+  + createdAt      : Timestamp
+}
+
+class PoolParticipant {
+  + id                     : VARCHAR(10) <<PK>>
+  + fiscalYearId           : VARCHAR(10) <<FK>>
+  + type                   : PoolParticipantType
+  + label                  : VARCHAR(100)
+  + initialBalance         : DECIMAL(15,2)
+  + currentBalance         : DECIMAL(15,2) = 0
+  + totalInterestReceived  : DECIMAL(15,2) = 0
+  --
+  <<UNIQUE(fiscalYearId, type)>>
+}
+
+class InterestDistributionSnapshot {
+  + id                 : VARCHAR(10) <<PK>>
+  + sessionId          : VARCHAR(10) <<FK, UNIQUE>>
+  + totalInterestPool  : DECIMAL(15,2)
+  + totalSavingsBase   : DECIMAL(15,2)
+  + distributedAt      : Timestamp
+  + executedById       : VARCHAR(10) <<FK>>
+  --
+  + monthlyYield()     : Decimal
+  ' = totalInterestPool / totalSavingsBase
+}
+
+class InterestAllocation {
+  + id              : VARCHAR(10) <<PK>>
+  + snapshotId      : VARCHAR(10) <<FK>>
+  + membershipId    : VARCHAR(10) <<FK>>
+  + savingsBalance  : DECIMAL(15,2)
+  + allocationAmount: DECIMAL(15,2)
+  --
+  <<UNIQUE(snapshotId, membershipId)>>
+}
+
+note right of InterestDistributionSnapshot
+  Formule de redistribution :
+  ─────────────────────────────
+  totalSavingsBase =
+    Σ SavingsLedger.balance
+    + Σ PoolParticipant.currentBalance
+
+  Si THEORETICAL :
+    pool = Σ MonthlyLoanAccrual.interestAccrued
+  Si ACTUAL :
+    pool = Σ SessionEntry[RBT_INTEREST].amount
+
+  allocationAmount[i] =
+    balance[i] / totalSavingsBase × pool
+
+  Invariant :
+  Σ allocationAmount = totalInterestPool ± 1
+end note
+
+SavingsLedger "1" *-- "0..*" SavingsEntry               : historise >
+InterestDistributionSnapshot "1" *-- "0..*" InterestAllocation : détaille >
+SavingsEntry --> SavingsEntryType
+PoolParticipant --> PoolParticipantType
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% -----------------------------------------------------------
+\section{D07 — Prêts et Remboursements}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D07 — Prêts \& Remboursements}{Diagramme de Classes}
+\begin{lstlisting}
+@startuml D07_Prets
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 10
+skinparam classBackgroundColor #EEF4FF
+skinparam classBorderColor #004782
+skinparam arrowColor #004782
+title <b>Module 07 — Prêts & Remboursements (Encours Glissant)</b>
+
+enum LoanStatus {
+  PENDING
+  ACTIVE
+  PARTIALLY_REPAID
+  CLOSED
+}
+
+class LoanAccount <<AggregateRoot>> {
+  + id                    : VARCHAR(10) <<PK>>
+  + membershipId          : VARCHAR(10) <<FK>>
+  + fiscalYearId          : VARCHAR(10) <<FK>>
+  + principalAmount       : DECIMAL(15,2)
+  + monthlyRate           : DECIMAL(5,4) = 0.0400
+  + disbursedAt           : DATE
+  + disbursedById         : VARCHAR(10) <<FK>>
+  + dueBeforeDate         : DATE
+  + status                : LoanStatus = PENDING
+  + outstandingBalance    : DECIMAL(15,2) = 0
+  + totalInterestAccrued  : DECIMAL(15,2) = 0
+  + totalRepaid           : DECIMAL(15,2) = 0
+  + requestedAt           : Timestamp
+  + requestNotes          : TEXT
+  --
+  + disburse(byId)        : void
+  + applyRepayment(amount): void
+  + close()               : void
+}
+
+class MonthlyLoanAccrual {
+  + id                    : VARCHAR(10) <<PK>>
+  + loanId                : VARCHAR(10) <<FK>>
+  + sessionId             : VARCHAR(10) <<FK>>
+  + month                 : TINYINT
+  + balanceAtMonthStart   : DECIMAL(15,2)
+  + interestAccrued       : DECIMAL(15,2)
+  + balanceWithInterest   : DECIMAL(15,2)
+  + repaymentReceived     : DECIMAL(15,2) = 0
+  + balanceAtMonthEnd     : DECIMAL(15,2)
+  --
+  <<UNIQUE(loanId, sessionId)>>
+  CHECK : balanceAtMonthEnd >= 0
+}
+
+class LoanRepayment {
+  + id             : VARCHAR(10) <<PK>>
+  + loanId         : VARCHAR(10) <<FK>>
+  + sessionId      : VARCHAR(10) <<FK>>
+  + sessionEntryId : VARCHAR(10) <<FK>>
+  + amount         : DECIMAL(15,2)
+  + principalPart  : DECIMAL(15,2)
+  + interestPart   : DECIMAL(15,2)
+  + balanceAfter   : DECIMAL(15,2)
+  + recordedAt     : Timestamp
+}
+
+class CarryoverLoanRecord {
+  + id               : VARCHAR(10) <<PK>>
+  + originalLoanId   : VARCHAR(10) <<FK, UNIQUE>>
+  + newFiscalYearId  : VARCHAR(10) <<FK>>
+  + carryoverAmount  : DECIMAL(15,2)
+  + reason           : TEXT
+  + approvedById     : VARCHAR(10) <<FK>>
+  + createdAt        : Timestamp
+}
+
+note right of MonthlyLoanAccrual
+  Formule encours glissant :
+  ──────────────────────────
+  interestAccrued      = balanceAtMonthStart × 0.04
+  balanceWithInterest  = balanceAtMonthStart × 1.04
+  balanceAtMonthEnd    = balanceWithInterest
+                         - repaymentReceived
+
+  Décomposition remboursement R :
+  ──────────────────────────────
+  Si R >= interestAccrued :
+    interestPart  = interestAccrued
+    principalPart = R - interestAccrued
+  Si R < interestAccrued :
+    interestPart  = R
+    principalPart = 0
+    (capital inchangé, intérêts capitalisés)
+end note
+
+note bottom of LoanAccount
+  Critères éligibilité :
+  savings >= 100 000
+  amount <= savings × 5
+  amount ∈ [10 000, 1 000 000]
+  activeLoans < 2
+  dueBeforeDate < cassationDate
+
+  Imputation multi-prêts :
+  FIFO par requestedAt ASC
+end note
+
+LoanAccount "1" *-- "0..*" MonthlyLoanAccrual  : accrédite >
+LoanAccount "1" *-- "0..*" LoanRepayment       : reçoit >
+LoanAccount "1" ..> "0..1" CarryoverLoanRecord : génère à cassation >
+LoanAccount --> LoanStatus
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% -----------------------------------------------------------
+\section{D08 — Caisse de Secours}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D08 — Caisse de Secours}{Diagramme de Classes}
+\begin{lstlisting}
+@startuml D08_Secours
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam classBackgroundColor #EEF4FF
+skinparam classBorderColor #004782
+skinparam arrowColor #004782
+title <b>Module 08 — Caisse de Secours</b>
+
+class RescueFundLedger {
+  + id               : VARCHAR(10) <<PK>>
+  + fiscalYearId     : VARCHAR(10) <<FK, UNIQUE>>
+  + totalBalance     : DECIMAL(15,2) = 0
+  + targetPerMember  : DECIMAL(15,2) = 50000
+  + minimumPerMember : DECIMAL(15,2) = 25000
+  + memberCount      : INT
+  + targetTotal      : DECIMAL(15,2)
+  ' = targetPerMember × memberCount
+}
+
+class RescueFundEvent {
+  + id             : VARCHAR(10) <<PK>>
+  + ledgerId       : VARCHAR(10) <<FK>>
+  + beneficiaryId  : VARCHAR(10) <<FK>>
+  + eventType      : RescueEventType
+  + amount         : DECIMAL(15,2)
+  + authorizedById : VARCHAR(10) <<FK>>
+  + eventDate      : DATE
+  + description    : TEXT
+  + createdAt      : Timestamp
+}
+
+class RescueFundPosition {
+  + id            : VARCHAR(10) <<PK>>
+  + membershipId  : VARCHAR(10) <<FK, UNIQUE>>
+  + ledgerId      : VARCHAR(10) <<FK>>
+  + paidAmount    : DECIMAL(15,2) = 0
+  + balance       : DECIMAL(15,2) = 0
+  + refillDebt    : DECIMAL(15,2) = 0
+  + lastUpdatedAt : Timestamp
+}
+
+note right of RescueFundEvent
+  RES-01 : Après paiement
+    totalBalance >= minimumPerMember × memberCount
+  RES-02 : amount = RescueEventAmount[eventType]
+           (montant fixe, non négociable)
+  RES-03 : authorizedById.role ∈
+    {PRESIDENT, VICE_PRESIDENT}
+
+  Calcul renflouement :
+  déficit = targetTotal - totalBalance
+  refillPerMember = déficit / memberCount
+end note
+
+RescueFundLedger "1" *-- "0..*" RescueFundEvent    : enregistre >
+RescueFundLedger "1" *-- "0..*" RescueFundPosition : suit >
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% -----------------------------------------------------------
+\section{D09 — Bénéficiaires}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D09 — Bénéficiaires}{Diagramme de Classes}
+\begin{lstlisting}
+@startuml D09_Beneficiaires
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam classBackgroundColor #EEF4FF
+skinparam classBorderColor #004782
+skinparam arrowColor #004782
+title <b>Module 09 — Bénéficiaires Mensuels (Bouffe de la Tontine)</b>
+
+enum BeneficiaryStatus {
+  UNASSIGNED
+  ASSIGNED
+  DELIVERED
+}
+
+class BeneficiarySchedule {
+  + id            : VARCHAR(10) <<PK>>
+  + fiscalYearId  : VARCHAR(10) <<FK, UNIQUE>>
+  + createdAt     : Timestamp
+}
+
+class BeneficiarySlot {
+  + id              : VARCHAR(10) <<PK>>
+  + scheduleId      : VARCHAR(10) <<FK>>
+  + sessionId       : VARCHAR(10) <<FK>>
+  + month           : TINYINT
+  + slotIndex       : TINYINT
+  + membershipId    : VARCHAR(10) <<FK>>
+  + amountDelivered : DECIMAL(15,2) = 0
+  + designatedById  : VARCHAR(10) <<FK>>
+  + designatedAt    : Timestamp
+  + status          : BeneficiaryStatus = UNASSIGNED
+  + deliveredAt     : Timestamp
+  + notes           : TEXT
+  --
+  + assign(memberId, byId) : void
+  + deliver(amount)        : void
+  <<UNIQUE(sessionId, slotIndex)>>
+  <<UNIQUE(sessionId, membershipId)>>
+}
+
+note right of BeneficiarySlot
+  Désignation manuelle :
+  designatedById.role ∈
+    {PRESIDENT, VICE_PRESIDENT, SUPER_ADMIN}
+
+  amountDelivered : saisi manuellement
+  par le Président — pas de calcul auto
+
+  Un membre ne peut pas avoir
+  2 slots dans la même session
+
+  status = DELIVERED seulement si
+  session.status = CLOSED
+
+  slotIndex : permet plusieurs
+  bénéficiaires par session
+  (0, 1, 2 ...)
+end note
+
+BeneficiarySchedule "1" *-- "0..*" BeneficiarySlot : planifie >
+BeneficiarySlot --> BeneficiaryStatus
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% -----------------------------------------------------------
+\section{D10 — Cassation et Audit}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D10 — Cassation \& Audit}{Diagramme de Classes}
+\begin{lstlisting}
+@startuml D10_Cassation
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 10
+skinparam classBackgroundColor #EEF4FF
+skinparam classBorderColor #004782
+skinparam arrowColor #004782
+title <b>Module 10 — Cassation, Rollover & Audit</b>
+
+class CassationRecord {
+  + id                    : VARCHAR(10) <<PK>>
+  + fiscalYearId          : VARCHAR(10) <<FK, UNIQUE>>
+  + executedAt            : Timestamp
+  + executedById          : VARCHAR(10) <<FK>>
+  + totalSavingsReturned  : DECIMAL(15,2)
+  + totalInterestReturned : DECIMAL(15,2)
+  + totalDistributed      : DECIMAL(15,2)
+  + memberCount           : INT
+  + carryoverCount        : INT
+  + notes                 : TEXT
+}
+
+class CassationRedistribution {
+  + id             : VARCHAR(10) <<PK>>
+  + cassationId    : VARCHAR(10) <<FK>>
+  + membershipId   : VARCHAR(10) <<FK>>
+  + savingsAmount  : DECIMAL(15,2)
+  + interestAmount : DECIMAL(15,2)
+  + totalReturned  : DECIMAL(15,2)
+  --
+  <<UNIQUE(cassationId, membershipId)>>
+}
+
+class PoolParticipantCassationShare {
+  + id              : VARCHAR(10) <<PK>>
+  + cassationId     : VARCHAR(10) <<FK>>
+  + participantType : PoolParticipantType
+  + principalAmount : DECIMAL(15,2)
+  + interestEarned  : DECIMAL(15,2)
+  + totalDistributed: DECIMAL(15,2)
+  --
+  <<UNIQUE(cassationId, participantType)>>
+}
+
+class AuditLog <<PartitionedByYear>> {
+  + id          : VARCHAR(10) <<PK>>
+  + actorId     : VARCHAR(10) <<FK>>
+  + action      : VARCHAR(100)
+  + entityType  : VARCHAR(50)
+  + entityId    : VARCHAR(10)
+  + beforeData  : JSON
+  + afterData   : JSON
+  + reason      : TEXT
+  + ipAddress   : VARCHAR(45)
+  + createdAt   : Timestamp
+  + createdYear : YEAR <<VIRTUAL STORED>>
+  --
+  <<APPEND-ONLY>>
+  <<PARTITION BY RANGE(createdYear)>>
+}
+
+note right of CassationRecord
+  Séquence cassation (ordonnée) :
+  ────────────────────────────────
+  1. Identifier prêts actifs
+     → CarryoverLoanRecord × prêt
+  2. Redistribution intérêts finale
+  3. CassationRedistribution par membre
+  4. PoolParticipantCassationShare
+  5. FiscalYear.status = CLOSED
+  6. INSERT CassationRecord
+  7. Notifier PRESIDENT + TRESORIER
+  8. Créer FiscalYear N+1 (PENDING)
+end note
+
+CassationRecord "1" *-- "0..*" CassationRedistribution      : détaille >
+CassationRecord "1" *-- "0..*" PoolParticipantCassationShare : distribue >
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% -----------------------------------------------------------
+\section{D11 — Vue Globale des Agrégats}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D11 — Vue Globale}{Relations Inter-Modules}
+\begin{lstlisting}
+@startuml D11_Vue_Globale
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 9
+skinparam classBackgroundColor #EEF4FF
+skinparam classBorderColor #004782
+skinparam arrowColor #004782
+skinparam packageBackgroundColor #F4F8FF
+skinparam packageBorderColor #7799CC
+title <b>CAYA — Vue Globale des Relations Inter-Modules</b>
+
+package "Identité" {
+  class User
+  class MemberProfile
+}
+
+package "Exercice" {
+  class FiscalYear <<Root>>
+  class FiscalYearConfig
+  class Membership
+  class ShareCommitment
+}
+
+package "Sessions" {
+  class MonthlySession
+  class SessionEntry
+  class TransactionSequence
+}
+
+package "Épargne" {
+  class SavingsLedger
+  class InterestDistributionSnapshot
+  class PoolParticipant
+}
+
+package "Prêts" {
+  class LoanAccount <<Root>>
+  class MonthlyLoanAccrual
+  class CarryoverLoanRecord
+}
+
+package "Secours" {
+  class RescueFundLedger
+  class RescueFundEvent
+  class RescueFundPosition
+}
+
+package "Bénéficiaires" {
+  class BeneficiarySchedule
+  class BeneficiarySlot
+}
+
+package "Cassation" {
+  class CassationRecord
+  class CassationRedistribution
+  class PoolParticipantCassationShare
+}
+
+' Relations principales
+User          "1" -- "1"    MemberProfile
+MemberProfile "1" -- "0..*" Membership
+FiscalYear    "1" *-- "0..*" Membership
+FiscalYear    "1" -- "1"    FiscalYearConfig
+FiscalYear    "1" *-- "0..*" MonthlySession
+FiscalYear    "1" *-- "0..*" LoanAccount
+FiscalYear    "1" -- "1"    RescueFundLedger
+FiscalYear    "1" -- "1"    BeneficiarySchedule
+FiscalYear    "1" -- "0..1" CassationRecord
+
+Membership    "1" -- "1"    ShareCommitment
+Membership    "1" -- "1"    SavingsLedger
+Membership    "1" -- "1"    RescueFundPosition
+Membership    "1" -- "0..*" LoanAccount
+
+MonthlySession "1" *-- "0..*" SessionEntry
+MonthlySession "1" -- "0..1" InterestDistributionSnapshot
+MonthlySession "1" -- "0..*" BeneficiarySlot
+
+LoanAccount   "1" -- "0..*" MonthlyLoanAccrual
+LoanAccount   "1" -- "0..1" CarryoverLoanRecord
+
+CassationRecord "1" -- "0..*" CassationRedistribution
+CassationRecord "1" -- "0..*" PoolParticipantCassationShare
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% -----------------------------------------------------------
+\section{D12 — Cas d'Utilisation}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D12 — Cas d'Utilisation}{Use Case Diagram}
+\begin{lstlisting}
+@startuml D12_UseCase
+!theme plain
+skinparam actorBackgroundColor #EEF4FF
+skinparam actorBorderColor #004782
+skinparam usecaseBackgroundColor #EEF4FF
+skinparam usecaseBorderColor #004782
+skinparam arrowColor #004782
+left to right direction
+title <b>CAYA — Diagramme des Cas d'Utilisation</b>
+
+actor "Membre"           as MEMBRE
+actor "Trésorier"        as TRES
+actor "Président / VP"   as PRES
+actor "Secrétaire"       as SEC
+actor "Super Admin"      as SA
+
+rectangle "Application CAYA" {
+
+  package "Authentification" {
+    usecase "Se connecter"          as UC_LOGIN
+    usecase "Renouveler session"    as UC_REFRESH
+  }
+
+  package "Consultation Membre" {
+    usecase "Voir sa fiche"         as UC_MY_ACCOUNT
+    usecase "Voir historique"       as UC_HISTORY
+    usecase "Voir ses prêts"        as UC_MY_LOANS
+    usecase "Recevoir notifications" as UC_NOTIF
+  }
+
+  package "Saisie des Transactions" {
+    usecase "Ouvrir session"        as UC_OPEN_SES
+    usecase "Saisir transactions"   as UC_SAISIE
+    usecase "Remboursement OOS"     as UC_OOS
+    usecase "Clore session"         as UC_CLOSE_SES
+    usecase "Distribuer intérêts"   as UC_DISTRIB
+  }
+
+  package "Gestion des Prêts" {
+    usecase "Demander un prêt"      as UC_REQ_LOAN
+    usecase "Autoriser un prêt"     as UC_AUTH_LOAN
+    usecase "Débloquer un prêt"     as UC_DISB_LOAN
+  }
+
+  package "Gouvernance" {
+    usecase "Désigner bénéficiaire" as UC_BENEF
+    usecase "Autoriser secours"     as UC_SECOURS
+    usecase "Configurer exercice"   as UC_CONFIG
+    usecase "Consulter audit log"   as UC_AUDIT
+    usecase "Exécuter cassation"    as UC_CASSATION
+  }
+
+  package "Rapports" {
+    usecase "Exporter PDF"          as UC_PDF
+    usecase "Exporter Excel"        as UC_XLS
+  }
+}
+
+MEMBRE --> UC_LOGIN
+MEMBRE --> UC_MY_ACCOUNT
+MEMBRE --> UC_HISTORY
+MEMBRE --> UC_MY_LOANS
+MEMBRE --> UC_NOTIF
+
+TRES   --> UC_LOGIN
+TRES   --> UC_OPEN_SES
+TRES   --> UC_SAISIE
+TRES   --> UC_OOS
+TRES   --> UC_CLOSE_SES
+TRES   --> UC_DISTRIB
+TRES   --> UC_DISB_LOAN
+TRES   --> UC_CASSATION
+TRES   --> UC_PDF
+TRES   --> UC_XLS
+
+PRES   --> UC_LOGIN
+PRES   --> UC_AUTH_LOAN
+PRES   --> UC_BENEF
+PRES   --> UC_SECOURS
+PRES   --> UC_AUDIT
+PRES   --> UC_PDF
+
+SEC    --> UC_LOGIN
+SEC    --> UC_AUDIT
+SEC    --> UC_PDF
+
+SA     --> UC_CONFIG
+SA     --> UC_AUDIT
+SA     --> UC_CASSATION
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% -----------------------------------------------------------
+\section{D13 — Diagramme de Composants}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D13 — Composants}{Component Diagram}
+\begin{lstlisting}
+@startuml D13_Composants
+!theme plain
+skinparam componentBackgroundColor #EEF4FF
+skinparam componentBorderColor #004782
+skinparam arrowColor #004782
+skinparam interfaceBackgroundColor #FFF8E0
+skinparam databaseBackgroundColor #E0F0FF
+title <b>CAYA — Architecture des Composants</b>
+
+package "Frontend Web (Next.js)" {
+  [Dashboard]       as DASH
+  [SessionSaisie]   as SAISIE
+  [RapportsExport]  as RAPPORTS
+  [ConfigPanel]     as CONFIG
+}
+
+package "Mobile (Flutter)" {
+  [MemberApp]       as FLUTTER
+}
+
+package "Backend NestJS" {
+  [AuthModule]      as AUTH
+  [MembersModule]   as MEMB
+  [SessionsModule]  as SESS
+  [SavingsModule]   as SAV
+  [LoansModule]     as LOAN
+  [RescueModule]    as RES
+  [CassationModule] as CASS
+  [ReportsModule]   as REP
+  [NotifModule]     as NOTIF
+}
+
+package "Infrastructure" {
+  database "MySQL 8.0\ncaya_db" as DB
+  [PrismaService]   as PRISMA
+  [WhatsApp API]    as WA
+  [SMS Provider]    as SMS
+}
+
+' Frontend → Backend
+DASH     --> AUTH    : JWT Bearer
+DASH     --> MEMB
+DASH     --> SESS
+SAISIE   --> SESS
+RAPPORTS --> REP
+CONFIG   --> AUTH
+
+' Mobile → Backend
+FLUTTER  --> AUTH    : JWT Bearer
+FLUTTER  --> MEMB
+FLUTTER  --> LOAN
+FLUTTER  --> SAV
+
+' Backend → Infrastructure
+AUTH     --> PRISMA
+MEMB     --> PRISMA
+SESS     --> PRISMA
+SAV      --> PRISMA
+LOAN     --> PRISMA
+RES      --> PRISMA
+CASS     --> PRISMA
+REP      --> PRISMA
+
+PRISMA   --> DB
+
+NOTIF    --> WA
+NOTIF    --> SMS
+CASS     --> NOTIF
+SESS     --> NOTIF
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% -----------------------------------------------------------
+\section{D14 — Diagramme de Déploiement}
+% -----------------------------------------------------------
+
+\begin{diagramBox}{D14 — Déploiement}{Deployment Diagram}
+\begin{lstlisting}
+@startuml D14_Deploiement
+!theme plain
+skinparam nodeBackgroundColor #EEF4FF
+skinparam nodeBorderColor #004782
+skinparam arrowColor #004782
+title <b>CAYA — Diagramme de Déploiement</b>
+
+node "Navigateur Web\n(Bureau / Trésorier)" as BROWSER {
+  artifact "Next.js App\n(SPA / SSR)" as NEXT
+}
+
+node "Smartphone\n(Membres)" as PHONE {
+  artifact "Flutter App\n(Android / iOS)" as FLUTTER
+}
+
+node "Serveur d'Application\n(VPS / Cloud)" as SERVER {
+  artifact "NestJS API\n:3000" as API
+  artifact "Prisma Client"     as PRISMA
+}
+
+node "Serveur Base de Données\n(MySQL 8.0)" as DBSERVER {
+  database "caya_db\n(InnoDB)" as DB
+}
+
+node "Services Tiers" as EXTERNAL {
+  artifact "WhatsApp\nBusiness API" as WA
+  artifact "SMS Provider\n(Orange/MTN)" as SMS
+}
+
+BROWSER  --> SERVER   : HTTPS :443 / REST JSON
+PHONE    --> SERVER   : HTTPS :443 / REST JSON
+SERVER   --> DBSERVER : TCP :3306
+API      --> PRISMA
+PRISMA   --> DB
+API      --> WA       : HTTPS Webhook
+API      --> SMS       : HTTPS API
+
+note right of SERVER
+  - Node.js 20 LTS
+  - NestJS 10
+  - JWT RS256
+  - Rate limiting : 100 req/min
+  - Logs : Winston → fichiers
+end note
+
+note right of DBSERVER
+  - MySQL 8.0
+  - InnoDB Engine
+  - utf8mb4_unicode_ci
+  - Backup journalier
+  - AuditLog partitionné
+end note
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% ============================================================
+\chapter{Diagrammes de Machine d'États}
+% ============================================================
+
+\begin{diagramBox}{D15 — État : FiscalYear}{State Machine}
+\begin{lstlisting}
+@startuml D15_State_FiscalYear
+!theme plain
+skinparam stateBackgroundColor #EEF4FF
+skinparam stateBorderColor #004782
+skinparam arrowColor #004782
+title <b>Machine d'États — FiscalYear</b>
+
+[*] --> PENDING : <<create>>\nPRESIDENT / SUPER_ADMIN
+
+PENDING --> ACTIVE : activate()\n[snapshot FiscalYearConfig]\n[créer 12 MonthlySession DRAFT]\n[créer SavingsLedger par membre]\n[créer RescueFundLedger]\n[créer BeneficiarySchedule]
+
+ACTIVE --> CASSATION : openCassation()\n[cassationDate atteinte]
+
+CASSATION --> CLOSED : close()\n[CarryoverLoanRecord créés]\n[CassationRecord créé]\n[redistribution finale exécutée]\n[notifications envoyées]
+
+CLOSED --> ARCHIVED : archive()\n[données figées]
+
+ARCHIVED --> [*]
+
+note right of PENDING
+  Modifiable :
+  - startDate / endDate
+  - cassationDate
+  - loanDueDate
+  - interestPoolMethod
+  — avant activation seulement —
+end note
+
+note right of ACTIVE
+  Immuable :
+  FiscalYearConfig.shareUnitAmount
+  FiscalYearConfig.loanMonthlyRate
+  — sauf SUPER_ADMIN force —
+end note
+
+note right of CASSATION
+  Actions obligatoires avant CLOSED :
+  1. Vérifier prêts → CarryoverLoanRecord
+  2. Distribution intérêts finale
+  3. CassationRedistribution par membre
+end note
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+\begin{diagramBox}{D16 — État : MonthlySession}{State Machine}
+\begin{lstlisting}
+@startuml D16_State_Session
+!theme plain
+skinparam stateBackgroundColor #EEF4FF
+skinparam stateBorderColor #004782
+skinparam arrowColor #004782
+title <b>Machine d'États — MonthlySession</b>
+
+[*] --> DRAFT : <<auto-créée>>\n lors de FiscalYear.activate()
+
+DRAFT --> OPEN : open(TRESORIER)\n[session[n-1].status = CLOSED\n OU n = 1]
+
+OPEN --> REVIEWING : requestReview(TRESORIER)\n[saisie terminée]
+
+REVIEWING --> CLOSED : close(PRESIDENT)\n[computeTotals()]\n[distributeInterests()]
+
+CLOSED --> OPEN : reopen(SUPER_ADMIN only)\n+ AuditLog obligatoire\n+ raison requise
+
+note right of OPEN
+  État actif pour la saisie :
+  SessionEntry créables
+  uniquement en statut OPEN
+
+  Trigger MySQL bloque
+  toute insertion si ≠ OPEN
+end note
+
+note right of CLOSED
+  État terminal normal.
+  Totaux snapshot figés.
+  Intérêts redistribués.
+  Uniquement SUPER_ADMIN
+  peut rouvrir + AuditLog.
+end note
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+\begin{diagramBox}{D17 — État : LoanAccount}{State Machine}
+\begin{lstlisting}
+@startuml D17_State_Loan
+!theme plain
+skinparam stateBackgroundColor #EEF4FF
+skinparam stateBorderColor #004782
+skinparam arrowColor #004782
+title <b>Machine d'États — LoanAccount</b>
+
+[*] --> PENDING : requestLoan(membre)\n[LoanEligibilitySpec.validate()]
+
+PENDING --> ACTIVE : disburse(TRESORIER)\n[PRESIDENT autorisé]\n[disbursedAt = today]\n[outstandingBalance = principalAmount]
+
+PENDING --> [*] : reject(PRESIDENT)\n+ motif requis
+
+ACTIVE --> PARTIALLY_REPAID : applyRepayment(R)\n[outstandingBalance > 0]
+
+ACTIVE --> CLOSED : applyRepayment(R)\n[outstandingBalance = 0]
+
+PARTIALLY_REPAID --> PARTIALLY_REPAID : applyRepayment(R)\n[still > 0]
+
+PARTIALLY_REPAID --> CLOSED : applyRepayment(R)\n[outstandingBalance = 0]
+
+ACTIVE --> [*] : <<cassation>>\nCarryoverLoanRecord créé\nnotification envoyée
+
+PARTIALLY_REPAID --> [*] : <<cassation>>\nCarryoverLoanRecord créé\nnotification envoyée
+
+note right of PENDING
+  LoanEligibilitySpec vérifie :
+  - savings >= 100 000
+  - amount <= savings × 5
+  - amount ∈ [10 000, 1 000 000]
+  - activeLoans < 2
+  - dueBeforeDate < cassationDate
+end note
+
+note right of ACTIVE
+  Chaque mois :
+  MonthlyLoanAccrual calculé
+  encours[m] = encours[m-1] × 1.04
+               - remboursement[m]
+end note
+
+note bottom of CLOSED
+  outstandingBalance = 0.00
+  totalRepaid = principalAmount
+               + totalInterestAccrued
+end note
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+\begin{diagramBox}{D18 — État : MemberStatus}{State Machine}
+\begin{lstlisting}
+@startuml D18_State_Member
+!theme plain
+skinparam stateBackgroundColor #EEF4FF
+skinparam stateBorderColor #004782
+skinparam arrowColor #004782
+title <b>Machine d'États — MemberStatus (dans Membership)</b>
+
+[*] --> ACTIVE : enroll(fiscalYear)\n[TRESORIER / BUREAU]
+
+ACTIVE --> INACTIVE : setInactive(PRESIDENT)\n[membre ne participe plus\n temporairement]
+
+ACTIVE --> SUSPENDED : suspend(PRESIDENT)\n[non-respect des règles\n cotisations en retard]
+
+ACTIVE --> EXCLUDED : exclude(PRESIDENT)\n[décision définitive]
+
+INACTIVE --> ACTIVE : reactivate(PRESIDENT)\n[caisses à jour]
+
+SUSPENDED --> ACTIVE : lift(PRESIDENT)\n[dette soldée\n cotisations à jour]
+
+SUSPENDED --> EXCLUDED : exclude(PRESIDENT)\n[suspension persistante]
+
+EXCLUDED --> [*]
+
+note right of SUSPENDED
+  Conséquences suspension :
+  - Inéligible aux prêts
+  - Inéligible au bénéfice
+  - Épargne bloquée (pas de retrait)
+  - Secours encore possible
+end note
+
+note right of EXCLUDED
+  État terminal.
+  Données conservées
+  pour audit historique.
+  Compte User désactivé.
+end note
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% ============================================================
+\chapter{Diagrammes de Séquence}
+% ============================================================
+
+\begin{diagramBox}{D19 — Séquence : Enregistrement Session Mensuelle}{Sequence Diagram}
+\begin{lstlisting}
+@startuml D19_Seq_Session
+!theme plain
+skinparam sequenceArrowThickness 1.5
+skinparam participantBackgroundColor #EEF4FF
+skinparam participantBorderColor #004782
+skinparam actorBackgroundColor #FFF8E0
+skinparam arrowColor #004782
+skinparam noteBackgroundColor #FFFFF0
+skinparam noteBorderColor #CCCC00
+title <b>Séquence — Enregistrement d'une Réunion Mensuelle</b>
+
+actor      "Trésorier"               as TRES
+participant "SessionController"       as SC
+participant "SessionService"          as SS
+participant "TransactionRefFactory"   as TRF
+participant "LoanRepaymentAllocator"  as LRA
+participant "SavingsService"          as SAV
+participant "InterestDistribService"  as IDS
+participant "UnitOfWork (Prisma.$tx)" as UOW
+database    "MySQL"                   as DB
+
+TRES -> SC  : POST /sessions/{id}/entries\n[entries[]]
+SC   -> SS  : recordEntries(sessionId, entries)
+SS   -> DB  : SELECT status FROM monthly_sessions
+DB   --> SS : 'OPEN'
+
+note right of SS
+  Guard : session.status MUST = 'OPEN'
+  Sinon → 422 SESSION_NOT_OPEN
+end note
+
+loop pour chaque entry
+  SS -> TRF : generateRef(type, sessionNumber, fiscalYear)
+  TRF -> DB : SELECT FOR UPDATE\nFROM transaction_sequences
+  DB --> TRF : lastSequence
+  TRF -> DB : UPDATE lastSequence = lastSequence + 1
+  TRF --> SS : "CAYA-2026-03-COT-0042"
+
+  alt type = REMBOURSEMENT (amount saisi)
+    SS -> LRA : allocateRepayment(membershipId, amount)
+    LRA -> DB : SELECT loan_accounts\nWHERE status ≠ CLOSED\nORDER BY requested_at ASC
+    DB --> LRA : loans[] (FIFO)
+    LRA -> LRA : décomposer(amount, interestDue, capital)
+    LRA --> SS : [{loanId, interestPart, principalPart}]
+  end
+end
+
+SS -> UOW : $transaction(async (tx) => {
+  UOW -> DB : INSERT session_entries[]
+  UOW -> DB : INSERT loan_repayments[]
+  UOW -> DB : UPDATE loan_accounts\n  outstandingBalance, totalRepaid
+  UOW -> DB : INSERT monthly_loan_accruals
+  UOW -> DB : INSERT savings_entries [DEPOSIT]
+  UOW -> DB : UPDATE savings_ledgers.balance
+  UOW -> DB : UPDATE rescue_fund_positions (si SECOURS)
+  UOW -> DB : UPDATE monthly_sessions totaux
+  UOW -> DB : COMMIT
+})
+
+SS --> SC  : {createdEntries[], sessionTotals{}}
+SC --> TRES : 201 Created
+
+TRES -> SC  : POST /sessions/{id}/distribute-interests
+SC   -> IDS : distribute(sessionId)
+IDS  -> DB  : SELECT interestPoolMethod\nFROM fiscal_year_configs
+IDS  -> IDS : getStrategy(method)
+IDS  -> DB  : computePool() selon stratégie
+IDS  -> DB  : SELECT savings balances\n+ pool participants
+IDS  -> UOW : INSERT snapshot\nINSERT allocations[]\nUPDATE savings_ledgers\nUPDATE pool_participants
+IDS --> SC  : snapshot {pool, yield%, allocations[]}
+SC --> TRES : 200 OK
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+\begin{diagramBox}{D20 — Séquence : Distribution Mensuelle des Intérêts}{Sequence Diagram}
+\begin{lstlisting}
+@startuml D20_Seq_Interets
+!theme plain
+skinparam sequenceArrowThickness 1.5
+skinparam participantBackgroundColor #EEF4FF
+skinparam participantBorderColor #004782
+skinparam actorBackgroundColor #FFF8E0
+skinparam arrowColor #004782
+title <b>Séquence — Distribution Mensuelle des Intérêts</b>
+
+actor       "Trésorier"                  as TRES
+participant "InterestDistribService"      as IDS
+participant "TheoreticalStrategy"         as THEO
+participant "ActualStrategy"              as ACT
+participant "UnitOfWork"                  as UOW
+database    "MySQL"                       as DB
+
+TRES -> IDS : distributeInterests(sessionId)
+IDS  -> DB  : SELECT interest_pool_method\nFROM fiscal_year_configs
+
+alt method = THEORETICAL
+  IDS -> THEO : computePool(sessionId)
+  THEO -> DB  : SELECT SUM(interest_accrued)\nFROM monthly_loan_accruals\nWHERE session_id = ?
+  DB --> THEO : totalInterestPool
+  THEO --> IDS : totalInterestPool
+
+else method = ACTUAL
+  IDS -> ACT  : computePool(sessionId)
+  ACT  -> DB  : SELECT SUM(amount)\nFROM session_entries\nWHERE type='RBT_INTEREST'\nAND session_id = ?
+  DB --> ACT  : totalInterestPool
+  ACT --> IDS : totalInterestPool
+end
+
+IDS -> DB : SELECT sl.membership_id,\n  sl.balance AS member_balance\nFROM savings_ledgers sl\nJOIN memberships m ON ...\nWHERE m.fiscal_year_id = ?
+
+IDS -> DB : SELECT pp.type, pp.current_balance\nFROM pool_participants\nWHERE fiscal_year_id = ?
+
+IDS -> IDS : totalBase = Σ member_balances\n            + Σ pool_balances
+
+note right of IDS
+  Pour chaque membre i :
+  allocationAmount[i] =
+    balance[i] / totalBase
+    × totalInterestPool
+
+  Vérification :
+  Σ allocationAmount = totalInterestPool ± 1
+end note
+
+IDS -> UOW : $transaction(async (tx) => {
+  UOW -> DB : INSERT interest_distribution_snapshots
+  UOW -> DB : INSERT interest_allocations[]\n  (par membre)
+  UOW -> DB : INSERT savings_entries [INTEREST_CREDIT]\n  (par membre)
+  UOW -> DB : UPDATE savings_ledgers\n  balance += allocationAmount\n  totalInterestReceived += allocationAmount
+  UOW -> DB : UPDATE pool_participants\n  currentBalance += allocationAmount\n  totalInterestReceived += allocationAmount
+  UOW -> DB : COMMIT
+})
+
+IDS --> TRES : {snapshot{pool, yield%, allocations[]}}
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+\begin{diagramBox}{D21 — Séquence : Processus de Cassation}{Sequence Diagram}
+\begin{lstlisting}
+@startuml D21_Seq_Cassation
+!theme plain
+skinparam sequenceArrowThickness 1.5
+skinparam participantBackgroundColor #EEF4FF
+skinparam participantBorderColor #004782
+skinparam actorBackgroundColor #FFF8E0
+skinparam arrowColor #004782
+title <b>Séquence — Processus de Cassation (Clôture Exercice)</b>
+
+actor       "Trésorier"               as TRES
+participant "CassationService"         as CS
+participant "InterestDistribService"   as IDS
+participant "NotificationService"      as NOTIF
+participant "UnitOfWork"               as UOW
+database    "MySQL"                    as DB
+
+TRES -> CS  : executeCassation(fiscalYearId)
+CS   -> DB  : SELECT * FROM fiscal_years\nWHERE id = ? AND status = 'CASSATION'
+
+note right of CS
+  Étape 1 : Traiter prêts non soldés
+end note
+
+CS -> DB    : SELECT * FROM loan_accounts\nWHERE fiscal_year_id = ?\nAND status NOT IN ('CLOSED')
+
+loop pour chaque prêt actif
+  CS -> DB  : INSERT carryover_loan_records\n  carryoverAmount = outstandingBalance × 1.04
+end
+
+note right of CS
+  Étape 2 : Distribution intérêts finale
+end note
+
+CS -> IDS   : distributeInterests(lastSessionId)
+IDS --> CS  : snapshot final
+
+note right of CS
+  Étape 3 : Redistribution membres
+end note
+
+CS -> DB    : SELECT sl.membership_id,\n  sl.balance + sl.total_interest_received\nFROM savings_ledgers sl
+
+CS -> UOW   : $transaction(async (tx) => {
+
+  UOW -> DB : INSERT cassation_record\n  {totalDistributed, memberCount...}
+
+  loop pour chaque membre
+    UOW -> DB : INSERT cassation_redistributions\n  {savingsAmount, interestAmount, totalReturned}
+  end
+
+  loop RESCUE_FUND + BUREAU
+    UOW -> DB : INSERT pool_participant_cassation_shares
+  end
+
+  UOW -> DB   : UPDATE fiscal_years\n  SET status = 'CLOSED'\n  closedAt = NOW()
+
+  UOW -> DB   : COMMIT
+})
+
+note right of CS
+  Étape 4 : Notifications + N+1
+end note
+
+CS -> NOTIF : notifyCassationComplete(\n  PRESIDENT, TRESORIER,\n  totalDistributed,\n  carryoverLoansCount\n)
+NOTIF -> DB : LOG notification_sent
+
+CS -> DB    : INSERT fiscal_years\n  {label:'2026-2027', status:'PENDING', ...}
+
+CS --> TRES : {cassationRecord, redistributions[], carryovers[]}
+
+@enduml
+\end{lstlisting}
+\end{diagramBox}
+
+% ============================================================
+\chapter*{Annexe — Commandes de Rendu}
+\addcontentsline{toc}{chapter}{Annexe — Commandes de Rendu}
+% ============================================================
+
+\begin{noteBox}{Générer tous les diagrammes en ligne de commande}
+\begin{lstlisting}[language=bash, numbers=none]
+# Installer PlantUML (Java requis)
+# https://plantuml.com/download
+
+# Générer un diagramme unique
+java -jar plantuml.jar D01_Auth_RBAC.puml
+
+# Générer tous les diagrammes d'un dossier
+java -jar plantuml.jar -o ./output/ *.puml
+
+# Générer en SVG (meilleure qualité vectorielle)
+java -jar plantuml.jar -tsvg *.puml
+
+# Extension VSCode : PlantUML (jebbs.plantuml)
+# Raccourci : Alt+D  (prévisualisation live)
+# Raccourci : Ctrl+Shift+P > PlantUML: Export
+
+# Site en ligne (copier-coller le code)
+# https://www.plantuml.com/plantuml/uml/
+\end{lstlisting}
+\end{noteBox}
+
+\begin{center}
+\rowcolors{2}{cayaLight}{white}
+\begin{tabular}{C{0.8cm}L{4.5cm}L{3cm}C{3cm}}
+  \toprule
+  \rowcolor{cayaBlue}
+  \textcolor{white}{\textbf{\#}} &
+  \textcolor{white}{\textbf{Diagramme}} &
+  \textcolor{white}{\textbf{Type}} &
+  \textcolor{white}{\textbf{Statut}} \\
+  \midrule
+  D01 & Auth \& RBAC              & Classes    & \cmark Complet \\
+  D02 & Configuration             & Classes    & \cmark Complet \\
+  D03 & Membres                   & Classes    & \cmark Complet \\
+  D04 & Exercice Fiscal           & Classes    & \cmark Complet \\
+  D05 & Sessions \& Transactions  & Classes    & \cmark Complet \\
+  D06 & Épargne \& Intérêts       & Classes    & \cmark Complet \\
+  D07 & Prêts                     & Classes    & \cmark Complet \\
+  D08 & Caisse de Secours         & Classes    & \cmark Complet \\
+  D09 & Bénéficiaires             & Classes    & \cmark Complet \\
+  D10 & Cassation \& Audit        & Classes    & \cmark Complet \\
+  D11 & Vue Globale               & Classes    & \cmark Complet \\
+  D12 & Cas d'Utilisation         & Use Case   & \cmark Complet \\
+  D13 & Composants                & Composants & \cmark Complet \\
+  D14 & Déploiement               & Déploiement& \cmark Complet \\
+  D15 & État — FiscalYear         & États      & \cmark Complet \\
+  D16 & État — MonthlySession     & États      & \cmark Complet \\
+  D17 & État — LoanAccount        & États      & \cmark Complet \\
+  D18 & État — MemberStatus       & États      & \cmark Complet \\
+  D19 & Séquence — Session        & Séquence   & \cmark Complet \\
+  D20 & Séquence — Intérêts       & Séquence   & \cmark Complet \\
+  D21 & Séquence — Cassation      & Séquence   & \cmark Complet \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\vfill
+\begin{center}
+  \textcolor{cayaBlue}{\rule{0.5\textwidth}{0.4pt}}\\[0.3cm]
+  {\small\textit{Cahier des Diagrammes UML — CAYA}}\\
+  {\small\textcolor{gray}{21 diagrammes · PlantUML · Version 1.0 · Mars 2026}}
+\end{center}
+
+\end{document}
