@@ -38,7 +38,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Profil de l\'utilisateur connecté' })
-  me(@CurrentUser() user: Express.User) {
-    return user;
+  me(@CurrentUser() user: { id: string }) {
+    return this.authService.getMe(user.id);
   }
 }

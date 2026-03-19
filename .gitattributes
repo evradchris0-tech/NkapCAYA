@@ -1,0 +1,27 @@
+# Normaliser les fins de ligne en LF dans le dépôt, checkout en CRLF sur Windows
+* text=auto eol=lf
+
+# Fichiers texte explicites
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.js    text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.dart  text eol=lf
+*.sql   text eol=lf
+*.prisma text eol=lf
+*.env.example text eol=lf
+*.sh    text eol=lf
+
+# Fichiers binaires — pas de conversion
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.ttf   binary
+*.woff  binary
+*.woff2 binary

@@ -3,23 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class AuthState {
   final bool isAuthenticated;
   final String? userId;
-  final String? memberCode;
+  final String? role;
 
   const AuthState({
     this.isAuthenticated = false,
     this.userId,
-    this.memberCode,
+    this.role,
   });
 
   AuthState copyWith({
     bool? isAuthenticated,
     String? userId,
-    String? memberCode,
+    String? role,
   }) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       userId: userId ?? this.userId,
-      memberCode: memberCode ?? this.memberCode,
+      role: role ?? this.role,
     );
   }
 }
@@ -27,8 +27,8 @@ class AuthState {
 class AuthStateNotifier extends StateNotifier<AuthState> {
   AuthStateNotifier() : super(const AuthState());
 
-  void setAuthenticated({required String userId, required String memberCode}) {
-    state = AuthState(isAuthenticated: true, userId: userId, memberCode: memberCode);
+  void setAuthenticated({required String userId, required String role}) {
+    state = AuthState(isAuthenticated: true, userId: userId, role: role);
   }
 
   void setUnauthenticated() {

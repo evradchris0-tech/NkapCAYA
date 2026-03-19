@@ -1,20 +1,16 @@
 import apiClient from './client';
-import type { AuthResponse, LoginPayload } from '@types/api.types';
+import type { AuthResponse, LoginPayload, TokensResponse, AuthUser } from '@types/api.types';
 
 export const authApi = {
-  /**
-   * Authentifie un utilisateur et retourne les tokens JWT.
-   */
   login: (payload: LoginPayload) =>
     apiClient.post<AuthResponse>('/auth/login', payload).then((r) => r.data),
 
-  /**
-   * Invalide la session côté serveur.
-   */
-  logout: () => apiClient.post('/auth/logout').then((r) => r.data),
+  refresh: (refreshToken: string) =>
+    apiClient.post<TokensResponse>('/auth/refresh', { refreshToken }).then((r) => r.data),
 
-  /**
-   * Retourne le profil de l'utilisateur connecté.
-   */
-  me: () => apiClient.get<AuthResponse['user']>('/auth/me').then((r) => r.data),
+  logout: (refreshToken: string) =>
+    apiClient.post('/auth/logout', { refreshToken }).then((r) => r.data),
+
+  me: () =>
+    apiClient.get<AuthUser>('/auth/me').then((r) => r.data),
 };

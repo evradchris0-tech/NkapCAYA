@@ -3,7 +3,7 @@ import type {
   TransactionType,
   LoanStatus,
   SessionStatus,
-  UserRole,
+  BureauRole,
 } from './domain.types';
 
 // ── Generic wrappers ──────────────────────────────────────────────────────────
@@ -25,21 +25,31 @@ export interface ApiError {
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 export interface LoginPayload {
-  email: string;
+  identifier: string;
   password: string;
 }
 
 export interface AuthUser {
   id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
+  username: string;
+  phone: string;
+  role: BureauRole;
+  isActive: boolean;
+  lastLoginAt: string | null;
+}
+
+export interface AuthTokens {
+  access: string;
+  refresh: string;
 }
 
 export interface AuthResponse {
-  accessToken: string;
+  tokens: AuthTokens;
   user: AuthUser;
+}
+
+export interface TokensResponse {
+  tokens: AuthTokens;
 }
 
 // ── Member ────────────────────────────────────────────────────────────────────
@@ -49,7 +59,6 @@ export interface Member {
   firstName: string;
   lastName: string;
   phone: string;
-  email?: string;
   status: MemberStatus;
   joinDate: string;
   totalSavings: number;

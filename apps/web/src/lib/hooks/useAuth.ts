@@ -6,7 +6,7 @@ import { authApi } from '@lib/api/auth.api';
 import type { AuthUser } from '@types/api.types';
 
 interface LoginPayload {
-  email: string;
+  identifier: string;
   password: string;
 }
 
@@ -15,8 +15,12 @@ interface UseAuthReturn {
   isLoading: boolean;
   error: string | null;
   login: (payload: LoginPayload) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  fetchMe: () => Promise<void>;
 }
+
+const ACCESS_TOKEN_KEY = 'caya_access_token';
+const REFRESH_TOKEN_KEY = 'caya_refresh_token';
 
 export function useAuth(): UseAuthReturn {
   const router = useRouter();
@@ -30,12 +34,12 @@ export function useAuth(): UseAuthReturn {
       setError(null);
       try {
         const data = await authApi.login(payload);
-        localStorage.setItem('caya_access_token', data.accessToken);
+        localStorage.setItem(ACCESS_TOKEN_KEY, data.tokens.access);
+        localStorage.setItem(REFRESH_TOKEN_KEY, data.tokens.refresh);
         setUser(data.user);
         router.push('/');
-      } catch (err) {
-        setError('Email ou mot de passe invalide.');
-        console.error(err);
+      } catch {
+        setError('Identifiant ou mot de passe invalide.');
       } finally {
         setIsLoading(false);
       }
@@ -43,11 +47,31 @@ export function useAuth(): UseAuthReturn {
     [router]
   );
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('caya_access_token');
-    setUser(null);
-    router.push('/login');
+  const logout = useCallback(async () => {
+    try {
+      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+      if (refreshToken) {
+        await authApi.logout(refreshToken);
+      }
+    } finally {
+      localStorage.removeItem(ACCESS_TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      setUser(null);
+      router.push('/login');
+    }
   }, [router]);
 
-  return { user, isLoading, error, login, logout };
+  const fetchMe = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const me = await authApi.me();
+      setUser(me);
+    } catch {
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return { user, isLoading, error, login, logout, fetchMe };
 }

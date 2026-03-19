@@ -2,10 +2,10 @@ import '../entities/user_entity.dart';
 import '../repositories/auth_repository.dart';
 
 class LoginParams {
-  final String email;
+  final String identifier;
   final String password;
 
-  const LoginParams({required this.email, required this.password});
+  const LoginParams({required this.identifier, required this.password});
 }
 
 class LoginUseCase {
@@ -14,6 +14,6 @@ class LoginUseCase {
   const LoginUseCase(this._repository);
 
   Future<UserEntity> call(LoginParams params) {
-    return _repository.login(email: params.email, password: params.password);
+    return _repository.login(identifier: params.identifier, password: params.password);
   }
 }

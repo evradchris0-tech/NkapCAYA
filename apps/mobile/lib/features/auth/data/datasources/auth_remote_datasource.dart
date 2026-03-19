@@ -6,7 +6,7 @@ import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<({TokenModel token, UserModel user})> login({
-    required String email,
+    required String identifier,
     required String password,
   });
 
@@ -26,12 +26,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<({TokenModel token, UserModel user})> login({
-    required String email,
+    required String identifier,
     required String password,
   }) async {
     final response = await _apiClient.post<Map<String, dynamic>>(
       ApiConstants.login,
-      data: {'email': email, 'password': password},
+      data: {'identifier': identifier, 'password': password},
     );
     final data = response.data!;
     final token = TokenModel.fromJson(data['tokens'] as Map<String, dynamic>);
@@ -49,7 +49,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     if (refresh != null) {
       await _apiClient.post<void>(
         ApiConstants.logout,
-        data: {'refresh': refresh},
+        data: {'refreshToken': refresh},
       );
     }
     await _storage.delete(key: ApiConstants.accessTokenKey);

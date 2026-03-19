@@ -12,13 +12,13 @@ class LoginForm extends ConsumerStatefulWidget {
 
 class _LoginFormState extends ConsumerState<LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -26,7 +26,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     await ref.read(authNotifierProvider.notifier).login(
-          email: _emailController.text.trim(),
+          identifier: _identifierController.text.trim(),
           password: _passwordController.text,
         );
   }
@@ -57,15 +57,14 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             const SizedBox(height: 16),
           ],
           TextFormField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
+            controller: _identifierController,
+            keyboardType: TextInputType.text,
             decoration: const InputDecoration(
-              labelText: 'Adresse e-mail',
-              prefixIcon: Icon(Icons.email_outlined),
+              labelText: 'Username ou Téléphone',
+              prefixIcon: Icon(Icons.person_outline),
             ),
             validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'E-mail requis';
-              if (!v.contains('@')) return 'E-mail invalide';
+              if (v == null || v.trim().isEmpty) return 'Identifiant requis';
               return null;
             },
           ),

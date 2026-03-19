@@ -2,9 +2,14 @@ name: CI — NkapCAYA
 
 on:
   push:
-    branches: [develop, main]
+    branches: [develop, main, 'feature/**', 'fix/**']
   pull_request:
     branches: [develop, main]
+
+# Annule les runs en cours si un nouveau push arrive sur la même branche
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # ─────────────────────────────────────────────────
@@ -17,18 +22,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
 
       - name: Lint API
         run: pnpm --filter api lint
@@ -56,25 +65,28 @@ jobs:
           --health-cmd="mysqladmin ping"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=5
 
     env:
       DATABASE_URL: mysql://root:root@localhost:3306/caya_test
-      JWT_SECRET: test-secret
-      JWT_REFRESH_SECRET: test-refresh-secret
+      JWT_SECRET: ci-test-secret-not-for-production
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_SECRET: ci-test-refresh-secret-not-for-production
+      JWT_REFRESH_EXPIRES_IN: 30d
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -82,17 +94,19 @@ jobs:
       - name: Generate Prisma Client
         run: pnpm db:generate
 
-      - name: Run Migrations (test)
-        run: pnpm --filter api exec prisma migrate deploy
+      - name: Push DB schema (test)
+        run: pnpm exec prisma db push --schema=database/schema.prisma --force-reset --skip-generate --accept-data-loss
 
-      - name: Run Unit Tests
-        run: pnpm --filter api test --coverage
+      - name: Run Unit Tests (with coverage)
+        run: pnpm --filter api test:cov
 
       - name: Upload Coverage
+        if: always()
         uses: codecov/codecov-action@v4
         with:
           directory: ./apps/api/coverage
           flags: api
+          fail_ci_if_error: false
 
   # ─────────────────────────────────────────────────
   # JOB 3 — Lint & Build Web Next.js
@@ -104,15 +118,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -122,12 +137,14 @@ jobs:
 
       - name: Build Web
         run: pnpm --filter web build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3000/api/v1
 
   # ─────────────────────────────────────────────────
-  # JOB 4 — Flutter Mobile (analyse statique)
+  # JOB 4 — Flutter Mobile (analyse statique + tests)
   # ─────────────────────────────────────────────────
   mobile-analyze:
-    name: Mobile — Flutter Analyze
+    name: Mobile — Flutter Analyze & Test
     runs-on: ubuntu-latest
 
     steps:
@@ -136,17 +153,54 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          flutter-version: '3.22.0'
           channel: stable
+          cache: true
 
       - name: Install Flutter dependencies
         working-directory: apps/mobile
         run: flutter pub get
 
+      - name: Verify formatting
+        working-directory: apps/mobile
+        run: dart format --output=none --set-exit-if-changed .
+
       - name: Analyze Flutter code
         working-directory: apps/mobile
-        run: flutter analyze
+        run: flutter analyze --fatal-infos
 
       - name: Run Flutter tests
         working-directory: apps/mobile
-        run: flutter test
+        run: flutter test --coverage
+
+  # ─────────────────────────────────────────────────
+  # JOB 5 — Audit sécurité dépendances
+  # ─────────────────────────────────────────────────
+  security-audit:
+    name: Sécurité — Audit dépendances
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit API dependencies
+        run: pnpm --filter api audit --audit-level=high
+        continue-on-error: true
+
+      - name: Audit Web dependencies
+        run: pnpm --filter web audit --audit-level=high
+        continue-on-error: true

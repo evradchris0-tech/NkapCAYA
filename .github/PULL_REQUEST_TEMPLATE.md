@@ -42,7 +42,26 @@
 ## Checklist
 
 - [ ] Le code suit les conventions du projet (ESLint + Prettier)
-- [ ] Aucune valeur `float`/`double` pour les montants financiers
+- [ ] Aucune valeur `float`/`double` pour les montants financiers (utiliser `Decimal`)
 - [ ] Aucune valeur calculable saisie en dur
 - [ ] Le schéma Prisma est à jour si modification de données
-- [ ] La documentation Swagger est à jour
+- [ ] Une migration a été créée si le schéma a changé (`pnpm db:migrate`)
+- [ ] La documentation Swagger est à jour (`@ApiOperation`, `@ApiResponse`)
+
+## Sécurité
+
+- [ ] Aucun secret / token / mot de passe dans le code ou les logs
+- [ ] Les routes protégées ont `@UseGuards(JwtAuthGuard)`
+- [ ] Les routes à rôle restreint ont `@Roles(...)` + `RolesGuard`
+- [ ] Les inputs utilisateur sont validés par `class-validator`
+
+## Tests manuels
+
+<!-- Commande curl ou scénario Swagger pour vérifier le comportement -->
+
+```bash
+# Exemple :
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"identifier": "admin", "password": "Caya@2026!"}'
+```

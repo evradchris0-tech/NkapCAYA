@@ -175,11 +175,17 @@ class _AuthInterceptor extends Interceptor {
       if (refresh == null) return false;
       final response = await _dio.post(
         ApiConstants.tokenRefresh,
-        data: {'refresh': refresh},
+        data: {'refreshToken': refresh},
       );
-      final newAccess = response.data['access'] as String?;
+      final tokens = response.data['tokens'] as Map<String, dynamic>?;
+      if (tokens == null) return false;
+      final newAccess = tokens['access'] as String?;
+      final newRefresh = tokens['refresh'] as String?;
       if (newAccess != null) {
         await _storage.write(key: ApiConstants.accessTokenKey, value: newAccess);
+        if (newRefresh != null) {
+          await _storage.write(key: ApiConstants.refreshTokenKey, value: newRefresh);
+        }
         return true;
       }
       return false;
