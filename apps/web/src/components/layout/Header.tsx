@@ -6,18 +6,18 @@ export default function Header() {
   const { user, logout } = useAuth();
 
   return (
-    <header className="h-14 shrink-0 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+    <header className="h-16 shrink-0 bg-background border-b border-border flex items-center justify-between px-8 shadow-soft">
       <div />
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-6">
         {user && (
-          <span className="text-sm text-gray-600">
+          <span className="text-sm font-medium text-foreground">
             {user.username}
           </span>
         )}
         <button
           onClick={logout}
-          className="text-sm text-gray-500 hover:text-red-600 transition"
+          className="text-sm font-medium text-muted-foreground hover:text-accent transition-colors duration-200"
         >
           Déconnexion
         </button>

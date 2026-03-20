@@ -6,7 +6,7 @@ interface LoanDetailPageProps {
 
 export default function LoanDetailPage({ params }: LoanDetailPageProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title={`Prêt #${params.id}`}
         breadcrumbs={[
@@ -15,9 +15,11 @@ export default function LoanDetailPage({ params }: LoanDetailPageProps) {
           { label: `#${params.id}` },
         ]}
       />
-      <p className="text-gray-500 text-sm">
-        Détail du prêt {params.id} à implémenter.
-      </p>
+      <div className="bg-background border border-border rounded-lg p-8 text-center">
+        <p className="text-muted-foreground font-medium">
+          Détail du prêt {params.id} à implémenter.
+        </p>
+      </div>
     </div>
   );
 }

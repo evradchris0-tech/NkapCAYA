@@ -2,25 +2,30 @@ import PageHeader from '@components/layout/PageHeader';
 import Card from '@components/ui/Card';
 
 const kpis = [
-  { label: 'Membres actifs', value: '—' },
-  { label: 'Épargne totale', value: '—' },
-  { label: 'Prêts en cours', value: '—' },
-  { label: 'Caisse de secours', value: '—' },
+  { label: 'Membres actifs', value: '—', icon: '👥' },
+  { label: 'Épargne totale', value: '—', icon: '💰' },
+  { label: 'Prêts en cours', value: '—', icon: '🏦' },
+  { label: 'Caisse de secours', value: '—', icon: '🛡️' },
 ];
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Tableau de bord"
         breadcrumbs={[{ label: 'Accueil' }]}
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {kpis.map((kpi) => (
-          <Card key={kpi.label}>
-            <p className="text-sm text-gray-500">{kpi.label}</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{kpi.value}</p>
+          <Card key={kpi.label} className="group hover:shadow-lg">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-muted-foreground">{kpi.label}</p>
+                <p className="text-3xl font-bold text-foreground mt-3">{kpi.value}</p>
+              </div>
+              <div className="text-4xl">{kpi.icon}</div>
+            </div>
           </Card>
         ))}
       </div>

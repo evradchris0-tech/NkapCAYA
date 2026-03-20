@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@lib/hooks/useAuth';
+import Input from '@components/ui/Input';
+import Button from '@components/ui/Button';
 
 const loginSchema = z.object({
   identifier: z.string().min(3, 'Identifiant requis (username ou téléphone)'),
@@ -25,53 +27,42 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-md">
-        <h1 className="text-2xl font-bold text-center mb-2 text-gray-900">
-          CAYA — Connexion
-        </h1>
-        <p className="text-center text-gray-500 text-sm mb-6">
-          Accédez à votre espace tontine
-        </p>
+    <main className="min-h-screen flex items-center justify-center bg-secondary px-4">
+      <div className="w-full max-w-md p-10 bg-background rounded-lg shadow-elevated border border-border">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            CAYA
+          </h1>
+          <p className="text-muted-foreground font-medium">
+            Accédez à votre espace tontine
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Identifiant
-            </label>
-            <input
-              {...register('identifier')}
-              type="text"
-              placeholder="Username ou numéro de téléphone"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.identifier && (
-              <p className="text-red-500 text-xs mt-1">{errors.identifier.message}</p>
-            )}
-          </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <Input
+            label="Identifiant"
+            {...register('identifier')}
+            type="text"
+            placeholder="Username ou numéro de téléphone"
+            error={errors.identifier?.message}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Mot de passe
-            </label>
-            <input
-              {...register('password')}
-              type="password"
-              placeholder="••••••••"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.password && (
-              <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
-            )}
-          </div>
+          <Input
+            label="Mot de passe"
+            {...register('password')}
+            type="password"
+            placeholder="••••••••"
+            error={errors.password?.message}
+          />
 
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition disabled:opacity-50"
+            size="lg"
+            className="w-full"
           >
             {isLoading ? 'Connexion…' : 'Se connecter'}
-          </button>
+          </Button>
         </form>
       </div>
     </main>

@@ -1,9 +1,10 @@
 import PageHeader from '@components/layout/PageHeader';
 import MemberForm from '@components/forms/MemberForm';
+import Card from '@components/ui/Card';
 
 export default function NewMemberPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Nouveau membre"
         breadcrumbs={[
@@ -12,9 +13,9 @@ export default function NewMemberPage() {
           { label: 'Nouveau' },
         ]}
       />
-      <div className="bg-white rounded-xl shadow-sm p-6 max-w-2xl">
+      <Card padding="lg" className="max-w-2xl">
         <MemberForm />
-      </div>
+      </Card>
     </div>
   );
 }

@@ -8,9 +8,9 @@ interface CardProps {
 }
 
 const paddingStyles = {
-  sm: 'p-3',
-  md: 'p-5',
-  lg: 'p-6',
+  sm: 'p-4',
+  md: 'p-6',
+  lg: 'p-8',
 };
 
 export default function Card({
@@ -21,7 +21,7 @@ export default function Card({
   return (
     <div
       className={clsx(
-        'bg-white rounded-xl shadow-sm border border-gray-100',
+        'bg-background rounded-lg border border-border shadow-soft hover:shadow-md transition-shadow duration-200',
         paddingStyles[padding],
         className
       )}

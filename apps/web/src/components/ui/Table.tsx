@@ -24,15 +24,15 @@ export default function Table<T>({
   isLoading = false,
 }: TableProps<T>) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50">
+    <div className="overflow-x-auto rounded-lg border border-border bg-background shadow-soft">
+      <table className="min-w-full divide-y divide-border text-sm">
+        <thead className="bg-secondary border-b border-border">
           <tr>
             {columns.map((col) => (
               <th
                 key={String(col.key)}
                 className={clsx(
-                  'px-4 py-3 text-left font-semibold text-gray-600 uppercase tracking-wide text-xs',
+                  'px-6 py-4 text-left font-semibold text-foreground uppercase tracking-wide text-xs',
                   col.className
                 )}
               >
@@ -41,12 +41,12 @@ export default function Table<T>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-border">
           {isLoading ? (
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-4 py-8 text-center text-gray-400"
+                className="px-6 py-8 text-center text-muted-foreground"
               >
                 Chargement…
               </td>
@@ -55,7 +55,7 @@ export default function Table<T>({
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-4 py-8 text-center text-gray-400"
+                className="px-6 py-8 text-center text-muted-foreground"
               >
                 {emptyMessage}
               </td>
@@ -64,7 +64,7 @@ export default function Table<T>({
             data.map((row) => (
               <tr
                 key={keyExtractor(row)}
-                className="hover:bg-gray-50 transition"
+                className="hover:bg-secondary transition-colors duration-200"
               >
                 {columns.map((col) => {
                   const rawValue = (row as Record<string, unknown>)[
@@ -73,7 +73,7 @@ export default function Table<T>({
                   return (
                     <td
                       key={String(col.key)}
-                      className={clsx('px-4 py-3 text-gray-700', col.className)}
+                      className={clsx('px-6 py-4 text-foreground', col.className)}
                     >
                       {col.render ? col.render(rawValue, row) : String(rawValue ?? '—')}
                     </td>

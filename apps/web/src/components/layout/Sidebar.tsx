@@ -26,15 +26,15 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 shrink-0 bg-gray-900 text-gray-200 flex flex-col h-full">
+    <aside className="w-64 shrink-0 bg-primary text-white flex flex-col h-full border-r border-border">
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-gray-800">
-        <h1 className="text-xl font-bold tracking-wide text-white">CAYA</h1>
-        <p className="text-xs text-gray-400 mt-0.5">Gestion tontine</p>
+      <div className="px-6 py-6 border-b border-primary-dark">
+        <h1 className="text-2xl font-bold tracking-tight text-white">CAYA</h1>
+        <p className="text-xs text-blue-100 mt-1.5 font-medium">Gestion tontine</p>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive =
             item.href === '/'
@@ -45,21 +45,21 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               className={clsx(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition',
+                'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200',
                 isActive
-                  ? 'bg-blue-600 text-white font-medium'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  ? 'bg-blue-700 text-white shadow-md'
+                  : 'text-blue-100 hover:bg-blue-600 hover:text-white'
               )}
             >
-              <span className="text-base">{item.icon}</span>
-              {item.label}
+              <span className="text-lg">{item.icon}</span>
+              <span>{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-gray-800 text-xs text-gray-500">
+      <div className="px-6 py-4 border-t border-primary-dark text-xs text-blue-100 font-medium">
         v0.1.0
       </div>
     </aside>
