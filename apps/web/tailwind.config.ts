@@ -19,6 +19,9 @@ const config: Config = {
         'muted-foreground': 'var(--muted-foreground)',
         border: 'var(--border)',
       },
+      borderColor: {
+        border: 'var(--border)',
+      },
     },
   },
   plugins: [],
