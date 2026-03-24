@@ -43,13 +43,17 @@ export default function MemberForm({ memberId, defaultValues, onSuccess }: Membe
     defaultValues,
   });
 
+  /** Supprime les espaces, tirets, parenthèses et points d'un numéro */
+  const normalizePhone = (v?: string) => v ? v.replace(/[\s\-\(\)\.]/g, '') : undefined;
+
   const onSubmit = async (data: MemberFormValues) => {
     const payload = {
       ...data,
-      phone2: data.phone2 || undefined,
+      phone1: normalizePhone(data.phone1) ?? data.phone1,
+      phone2: normalizePhone(data.phone2),
       locationDetail: data.locationDetail || undefined,
       mobileMoneyType: data.mobileMoneyType || undefined,
-      mobileMoneyNumber: data.mobileMoneyNumber || undefined,
+      mobileMoneyNumber: normalizePhone(data.mobileMoneyNumber),
       sponsorId: data.sponsorId || undefined,
       username: data.username || undefined,
     };

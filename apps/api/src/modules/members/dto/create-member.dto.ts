@@ -6,7 +6,12 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Supprime les caractères de formatage d'un numéro de téléphone */
+const normalizePhone = (value: unknown): string =>
+  typeof value === 'string' ? value.replace(/[\s\-\(\)\.]/g, '') : (value as string);
 
 export class CreateMemberDto {
   // ── Identité ──────────────────────────────────────────────────────────────
@@ -25,18 +30,20 @@ export class CreateMemberDto {
 
   // ── Téléphones ────────────────────────────────────────────────────────────
 
-  @ApiProperty({ example: '237699001122', description: 'Téléphone principal (aussi utilisé pour le compte)' })
+  @ApiProperty({ example: '+237 699 001 122', description: 'Téléphone principal (espaces/tirets acceptés)' })
+  @Transform(({ value }) => normalizePhone(value))
   @IsString()
   @IsNotEmpty()
   @MaxLength(20)
-  @Matches(/^\+?[0-9]{8,19}$/, { message: 'phone1 doit être un numéro valide (8 à 19 chiffres, + optionnel)' })
+  @Matches(/^\+?[0-9]{8,19}$/, { message: 'phone1 doit être un numéro valide (ex: +237699001122)' })
   phone1: string;
 
-  @ApiPropertyOptional({ example: '237677001122', description: 'Téléphone secondaire' })
+  @ApiPropertyOptional({ example: '+237 677 001 122', description: 'Téléphone secondaire' })
   @IsOptional()
+  @Transform(({ value }) => (value ? normalizePhone(value) : value))
   @IsString()
   @MaxLength(20)
-  @Matches(/^\+?[0-9]{8,19}$/, { message: 'phone2 doit être un numéro valide (8 à 19 chiffres, + optionnel)' })
+  @Matches(/^\+?[0-9]{8,19}$/, { message: 'phone2 doit être un numéro valide' })
   phone2?: string;
 
   // ── Localisation ─────────────────────────────────────────────────────────
@@ -60,8 +67,9 @@ export class CreateMemberDto {
   @MaxLength(50)
   mobileMoneyType?: string;
 
-  @ApiPropertyOptional({ example: '237699001122' })
+  @ApiPropertyOptional({ example: '+237 699 001 122' })
   @IsOptional()
+  @Transform(({ value }) => (value ? normalizePhone(value) : value))
   @IsString()
   @MaxLength(20)
   @Matches(/^\+?[0-9]{8,19}$/, { message: 'mobileMoneyNumber doit être un numéro valide' })
