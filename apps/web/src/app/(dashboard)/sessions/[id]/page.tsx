@@ -168,10 +168,10 @@ export default function SessionDetailPage({ params }: Props) {
     return { totalGeneral, participantIds, cotisantIds, absentMembers, totalRbt, pct, pieData, barData };
   }, [session, memberships]);
 
-  // Bénéficiaire de cette session
-  const beneficiarySlot: BeneficiarySlot | undefined = useMemo(() => {
-    if (!schedule?.slots || !session) return undefined;
-    return schedule.slots.find((s) => s.sessionId === params.id);
+  // Bénéficiaires de cette session (plusieurs slots possibles)
+  const beneficiarySlots: BeneficiarySlot[] = useMemo(() => {
+    if (!schedule?.slots || !session) return [];
+    return schedule.slots.filter((s) => s.sessionId === params.id);
   }, [schedule, session, params.id]);
 
   const handleOpen = async () => { await openSession.mutateAsync(params.id); };
@@ -344,42 +344,45 @@ export default function SessionDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Bénéficiaire du mois */}
+        {/* Bénéficiaires du mois (multi-slots) */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5">
           <div className="flex items-center gap-2 mb-3">
             <Gift className="h-4 w-4 text-teal-600" />
-            <p className="text-sm font-semibold text-gray-800">Bénéficiaire du mois</p>
+            <p className="text-sm font-semibold text-gray-800">
+              Bénéficiaire{beneficiarySlots.length > 1 ? 's' : ''} du mois
+              {beneficiarySlots.length > 0 && (
+                <span className="ml-2 text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full font-medium">
+                  {beneficiarySlots.length}
+                </span>
+              )}
+            </p>
           </div>
-          {beneficiarySlot ? (
+          {beneficiarySlots.length > 0 ? (
             <div className="space-y-3">
-              <div>
-                <p className="text-xs text-gray-500">Membre désigné</p>
-                <p className="text-sm font-semibold text-gray-900 mt-0.5">
-                  {beneficiarySlot.membership?.profile
-                    ? `${beneficiarySlot.membership.profile.lastName} ${beneficiarySlot.membership.profile.firstName}`
-                    : '—'}
-                </p>
-                {beneficiarySlot.membership?.profile?.memberCode && (
-                  <p className="text-xs font-mono text-gray-400">{beneficiarySlot.membership.profile.memberCode}</p>
-                )}
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Montant livré</p>
-                <p className="text-lg font-bold text-teal-700 tabular-nums mt-0.5">
-                  {parseFloat(beneficiarySlot.amountDelivered || '0').toLocaleString('fr-FR')} XAF
-                </p>
-              </div>
-              <span className={`inline-block text-[11px] font-medium px-2.5 py-1 rounded-full ${
-                beneficiarySlot.status === 'DELIVERED'
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : beneficiarySlot.status === 'ASSIGNED'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-gray-100 text-gray-500'
-              }`}>
-                {beneficiarySlot.status === 'DELIVERED' ? 'Livré'
-                  : beneficiarySlot.status === 'ASSIGNED' ? 'Désigné'
-                  : 'Non attribué'}
-              </span>
+              {beneficiarySlots.map((slot, i) => (
+                <div key={slot.id} className={`rounded-lg p-3 ${i > 0 ? 'border-t border-gray-100 pt-3' : ''}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs text-gray-400">Slot #{slot.slotIndex}</p>
+                      <p className="text-sm font-semibold text-gray-900 mt-0.5">
+                        {slot.membership?.profile
+                          ? `${slot.membership.profile.lastName} ${slot.membership.profile.firstName}`
+                          : <span className="text-gray-400 italic text-xs">Non désigné</span>}
+                      </p>
+                      <p className="text-sm font-bold text-teal-700 tabular-nums mt-0.5">
+                        {parseFloat(slot.amountDelivered || '0').toLocaleString('fr-FR')} XAF
+                      </p>
+                    </div>
+                    <span className={`shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                      slot.status === 'DELIVERED' ? 'bg-emerald-100 text-emerald-700'
+                      : slot.status === 'ASSIGNED' ? 'bg-blue-100 text-blue-700'
+                      : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {slot.status === 'DELIVERED' ? 'Livré' : slot.status === 'ASSIGNED' ? 'Désigné' : 'Non attribué'}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">

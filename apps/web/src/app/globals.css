@@ -29,3 +29,12 @@ html {
 *:focus:not(:focus-visible) {
   outline: none;
 }
+
+/* ── Cacher la scrollbar (gardez le scroll) ── */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+*::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Edge */
+}

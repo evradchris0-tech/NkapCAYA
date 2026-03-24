@@ -4,10 +4,12 @@ import { useState } from 'react';
 import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
 import { useBeneficiarySchedule, useAssignSlot, useMarkDelivered } from '@lib/hooks/useBeneficiaries';
-import { useFiscalYears, useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
+import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
+import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
 import { BureauRole } from '@/types/domain.types';
 import type { BeneficiaryStatus } from '@/types/api.types';
+import { Skeleton } from '@components/ui/Skeleton';
 
 const STATUS_LABELS: Record<BeneficiaryStatus, string> = {
   UNASSIGNED: 'Non désigné',
@@ -23,12 +25,11 @@ const STATUS_COLORS: Record<BeneficiaryStatus, string> = {
 
 export default function BeneficiariesPage() {
   const { data: currentUser } = useCurrentUser();
-  const { data: fiscalYears } = useFiscalYears();
-  const activeFy = fiscalYears?.find((f) => f.status === 'ACTIVE');
-  const { data: memberships } = useFiscalYearMemberships(activeFy?.id ?? '');
-  const { data: schedule, isLoading } = useBeneficiarySchedule(activeFy?.id ?? '');
-  const assignSlot = useAssignSlot(activeFy?.id ?? '');
-  const markDelivered = useMarkDelivered(activeFy?.id ?? '');
+  const { selectedFyId, selectedFy, fiscalYears, setSelectedFyId } = useFiscalYearContext();
+  const { data: memberships } = useFiscalYearMemberships(selectedFyId);
+  const { data: schedule, isLoading } = useBeneficiarySchedule(selectedFyId);
+  const assignSlot = useAssignSlot(selectedFyId);
+  const markDelivered = useMarkDelivered(selectedFyId);
 
   const [assigningSlotId, setAssigningSlotId] = useState<string | null>(null);
   const [selectedMembership, setSelectedMembership] = useState('');
@@ -47,20 +48,6 @@ export default function BeneficiariesPage() {
     setSelectedMembership('');
   };
 
-  if (!activeFy) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Bénéficiaires"
-          breadcrumbs={[{ label: 'Accueil', href: '/' }, { label: 'Bénéficiaires' }]}
-        />
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 text-sm">
-          Aucun exercice fiscal actif.
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -68,8 +55,36 @@ export default function BeneficiariesPage() {
         breadcrumbs={[{ label: 'Accueil', href: '/' }, { label: 'Bénéficiaires' }]}
       />
 
+      {/* Sélecteur exercice */}
+      {fiscalYears && fiscalYears.length > 0 && (
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-gray-700 shrink-0">Exercice :</label>
+          <select
+            value={selectedFyId}
+            onChange={(e) => setSelectedFyId(e.target.value)}
+            className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-blue-500"
+          >
+            {fiscalYears.map((fy) => (
+              <option key={fy.id} value={fy.id}>{fy.label} — {fy.status}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {isLoading ? (
-        <div className="flex items-center justify-center py-16 text-gray-400 text-sm">Chargement…</div>
+        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex gap-4">
+              <Skeleton className="h-4 w-12" />
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-24 ml-auto" />
+            </div>
+          ))}
+        </div>
+      ) : !selectedFyId ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 text-sm">
+          Sélectionnez un exercice fiscal.
+        </div>
       ) : !schedule || !schedule.slots || schedule.slots.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 text-sm">
           Aucun tableau de rotation disponible. L&apos;exercice doit être actif et les membres inscrits.
@@ -99,7 +114,6 @@ export default function BeneficiariesPage() {
                     {slot.membership?.profile ? (
                       <span className="text-gray-900 font-medium">
                         {slot.membership.profile.lastName} {slot.membership.profile.firstName}
-                        <span className="ml-1 text-xs text-gray-400">({slot.membership.profile.memberCode})</span>
                       </span>
                     ) : assigningSlotId === slot.id ? (
                       <div className="flex items-center gap-2">
