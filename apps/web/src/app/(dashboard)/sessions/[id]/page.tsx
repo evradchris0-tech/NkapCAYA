@@ -4,7 +4,11 @@ import { useState } from 'react';
 import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
 import ConfirmDialog from '@components/ui/ConfirmDialog';
+import ChartCard from '@components/ui/ChartCard';
 import TransactionForm from '@components/forms/TransactionForm';
+import {
+  PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts';
 import { useSession, useOpenSession, useCloseForReview, useValidateAndClose } from '@lib/hooks/useSessions';
 import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
@@ -84,6 +88,19 @@ export default function SessionDetailPage({ params }: Props) {
     session.totalEpargne, session.totalProjet, session.totalAutres,
   ].reduce((sum, v) => sum + parseFloat(v || '0'), 0);
 
+  const PIE_COLORS = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#f43f5e','#14b8a6','#f97316','#6366f1','#94a3b8'];
+  const pieData = [
+    { name: TRANSACTION_TYPE_LABELS[TransactionType.COTISATION],    value: parseFloat(session.totalCotisation || '0') },
+    { name: TRANSACTION_TYPE_LABELS[TransactionType.POT],           value: parseFloat(session.totalPot || '0') },
+    { name: TRANSACTION_TYPE_LABELS[TransactionType.INSCRIPTION],   value: parseFloat(session.totalInscription || '0') },
+    { name: TRANSACTION_TYPE_LABELS[TransactionType.SECOURS],       value: parseFloat(session.totalSecours || '0') },
+    { name: TRANSACTION_TYPE_LABELS[TransactionType.RBT_PRINCIPAL], value: parseFloat(session.totalRbtPrincipal || '0') },
+    { name: TRANSACTION_TYPE_LABELS[TransactionType.RBT_INTEREST],  value: parseFloat(session.totalRbtInterest || '0') },
+    { name: TRANSACTION_TYPE_LABELS[TransactionType.EPARGNE],       value: parseFloat(session.totalEpargne || '0') },
+    { name: TRANSACTION_TYPE_LABELS[TransactionType.PROJET],        value: parseFloat(session.totalProjet || '0') },
+    { name: TRANSACTION_TYPE_LABELS[TransactionType.AUTRES],        value: parseFloat(session.totalAutres || '0') },
+  ].filter((d) => d.value > 0);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -156,21 +173,58 @@ export default function SessionDetailPage({ params }: Props) {
       )}
 
       {/* ── Totaux par type ── */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-base font-semibold text-gray-800 mb-4">Totaux par type</h2>
-        <div className="space-y-0.5">
-          <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.COTISATION]} value={session.totalCotisation} />
-          <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.POT]} value={session.totalPot} />
-          <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.INSCRIPTION]} value={session.totalInscription} />
-          <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.SECOURS]} value={session.totalSecours} />
-          <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.RBT_PRINCIPAL]} value={session.totalRbtPrincipal} />
-          <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.RBT_INTEREST]} value={session.totalRbtInterest} />
-          <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.EPARGNE]} value={session.totalEpargne} />
-          <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.PROJET]} value={session.totalProjet} />
-          <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.AUTRES]} value={session.totalAutres} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Détail textuel */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="text-base font-semibold text-gray-800 mb-4">Totaux par type</h2>
+          <div className="space-y-0.5">
+            <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.COTISATION]} value={session.totalCotisation} />
+            <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.POT]} value={session.totalPot} />
+            <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.INSCRIPTION]} value={session.totalInscription} />
+            <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.SECOURS]} value={session.totalSecours} />
+            <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.RBT_PRINCIPAL]} value={session.totalRbtPrincipal} />
+            <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.RBT_INTEREST]} value={session.totalRbtInterest} />
+            <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.EPARGNE]} value={session.totalEpargne} />
+            <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.PROJET]} value={session.totalProjet} />
+            <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.AUTRES]} value={session.totalAutres} />
+          </div>
+          {totalGeneral === 0 && (
+            <p className="text-sm text-gray-400 text-center py-4">Aucune transaction enregistrée.</p>
+          )}
         </div>
-        {totalGeneral === 0 && (
-          <p className="text-sm text-gray-400 text-center py-4">Aucune transaction enregistrée.</p>
+
+        {/* Donut chart */}
+        {pieData.length > 0 && (
+          <ChartCard title="Répartition des collectes" subtitle={`Total : ${totalGeneral.toLocaleString('fr-FR')} XAF`}>
+            <div className="h-64 px-2 pb-3">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="44%"
+                    innerRadius={52}
+                    outerRadius={76}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {pieData.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} strokeWidth={0} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(v: number) => [`${v.toLocaleString('fr-FR')} XAF`]}
+                    contentStyle={{ borderRadius: 8, fontSize: 12 }}
+                  />
+                  <Legend
+                    iconType="circle"
+                    iconSize={7}
+                    formatter={(value) => <span className="text-xs text-gray-600">{value}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </ChartCard>
         )}
       </div>
 

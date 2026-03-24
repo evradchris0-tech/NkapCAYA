@@ -16,6 +16,8 @@ import { useMembers } from '@lib/hooks/useMembers';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
 import { BureauRole } from '@/types/domain.types';
 import type { FiscalYearStatus } from '@/types/api.types';
+import ChartCard from '@components/ui/ChartCard';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from 'recharts';
 
 const STATUS_LABELS: Record<FiscalYearStatus, string> = {
   PENDING: 'En attente',
@@ -185,6 +187,60 @@ export default function FiscalYearDetailPage({ params }: Props) {
         onConfirm={async () => { await handleOpenCassation(); setConfirmCassation(false); }}
         onCancel={() => setConfirmCassation(false)}
       />
+
+      {/* ── Visualisation inscriptions ── */}
+      {memberships && memberships.length > 0 && (() => {
+        const newCount       = memberships.filter((m) => m.enrollmentType === 'NEW').length;
+        const returningCount = memberships.filter((m) => m.enrollmentType === 'RETURNING').length;
+        const typeData = [
+          { name: 'Nouveaux',        value: newCount,       color: '#10b981' },
+          { name: 'Ré-inscriptions', value: returningCount, color: '#3b82f6' },
+        ].filter((d) => d.value > 0);
+
+        const sharesOf = (m: typeof memberships[0]) => Number(m.shareCommitment?.sharesCount ?? 0);
+        const totalShares = memberships.reduce((s, m) => s + sharesOf(m), 0);
+        const sharesData = memberships
+          .filter((m) => sharesOf(m) > 0)
+          .sort((a, b) => sharesOf(b) - sharesOf(a))
+          .slice(0, 8)
+          .map((m) => ({
+            name: m.profile ? `${m.profile.lastName.charAt(0)}. ${m.profile.firstName}` : m.profileId.slice(-4),
+            Parts: sharesOf(m),
+          }));
+
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ChartCard title="Type d'inscription" subtitle={`${memberships.length} membres — ${totalShares} parts total`}>
+              <div className="h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={typeData} cx="50%" cy="42%" innerRadius={50} outerRadius={72} paddingAngle={4} dataKey="value">
+                      {typeData.map((entry, i) => <Cell key={i} fill={entry.color} strokeWidth={0} />)}
+                    </Pie>
+                    <Tooltip formatter={(v: number, n: string) => [`${v} membre${v > 1 ? 's' : ''}`, n]} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
+                    <Legend iconType="circle" iconSize={7} formatter={(v) => <span className="text-xs text-gray-600">{v}</span>} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            {sharesData.length > 0 && (
+              <ChartCard title="Parts par membre" subtitle="Top 8 — engagements de parts">
+                <div className="h-52 px-2 pb-3">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={sharesData} layout="vertical" barSize={12} margin={{ top: 4, right: 12, bottom: 0, left: 72 }}>
+                      <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                      <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#374151' }} axisLine={false} tickLine={false} width={70} />
+                      <Tooltip formatter={(v: number) => [`${v} part${v > 1 ? 's' : ''}`]} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
+                      <Bar dataKey="Parts" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </ChartCard>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ── Membres inscrits ── */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

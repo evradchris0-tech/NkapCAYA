@@ -2,9 +2,13 @@
 
 import { useState } from 'react';
 import PageHeader from '@components/layout/PageHeader';
+import ChartCard from '@components/ui/ChartCard';
 import { useSavingsByMembership } from '@lib/hooks/useSavings';
 import { useFiscalYears, useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
 import type { SavingsEntryType } from '@/types/api.types';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts';
 
 const ENTRY_TYPE_LABELS: Record<SavingsEntryType, string> = {
   DEPOSIT: 'Versement',
@@ -90,6 +94,56 @@ export default function SavingsPage() {
               </div>
             ))}
           </div>
+
+          {/* Graphe progression du solde */}
+          {ledger.entries && ledger.entries.length > 0 && (() => {
+            // Agréger par mois : somme cumulative
+            const byMonth: Record<number, { versement: number; interets: number; solde: number }> = {};
+            ledger.entries.forEach((e) => {
+              if (!byMonth[e.month]) byMonth[e.month] = { versement: 0, interets: 0, solde: 0 };
+              if (e.type === 'DEPOSIT')         byMonth[e.month].versement += parseFloat(e.amount);
+              if (e.type === 'INTEREST_CREDIT') byMonth[e.month].interets  += parseFloat(e.amount);
+              byMonth[e.month].solde = parseFloat(e.balanceAfter);
+            });
+            const chartData = Object.entries(byMonth)
+              .sort(([a], [b]) => Number(a) - Number(b))
+              .map(([month, d]) => ({
+                label: `M${month}`,
+                Versement: d.versement,
+                Intérêts: d.interets,
+                Solde: d.solde,
+              }));
+            return (
+              <ChartCard title="Progression de l'épargne" subtitle="Solde cumulé par mois">
+                <div className="h-56 px-2 pb-3">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
+                      <defs>
+                        <linearGradient id="soldeGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.18} />
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="interetGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%"  stopColor="#10b981" stopOpacity={0.18} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                      <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                      <YAxis tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={44} />
+                      <Tooltip
+                        formatter={(v: number, name: string) => [`${v.toLocaleString('fr-FR')} XAF`, name]}
+                        contentStyle={{ borderRadius: 8, fontSize: 12 }}
+                      />
+                      <Legend iconType="circle" iconSize={7} formatter={(v) => <span className="text-xs text-gray-600">{v}</span>} />
+                      <Area type="monotone" dataKey="Solde"    stroke="#3b82f6" strokeWidth={2} fill="url(#soldeGrad)"  dot={false} />
+                      <Area type="monotone" dataKey="Intérêts" stroke="#10b981" strokeWidth={2} fill="url(#interetGrad)" dot={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </ChartCard>
+            );
+          })()}
 
           {/* Historique */}
           {ledger.entries && ledger.entries.length > 0 ? (

@@ -7,11 +7,16 @@ import { z } from 'zod';
 import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
 import Input from '@components/ui/Input';
+import ChartCard from '@components/ui/ChartCard';
 import { useRescueFundLedger, useRescueFundEvents, useRecordRescueEvent } from '@lib/hooks/useRescueFund';
 import { useFiscalYears, useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
 import { BureauRole } from '@/types/domain.types';
 import type { RescueEventType } from '@/types/api.types';
+import {
+  RadialBarChart, RadialBar, PolarAngleAxis, PieChart, Pie, Cell,
+  Tooltip, ResponsiveContainer, Legend,
+} from 'recharts';
 
 const EVENT_TYPE_LABELS: Record<RescueEventType, string> = {
   MEMBER_DEATH: 'Décès du membre',
@@ -158,32 +163,86 @@ export default function RescueFundPage() {
         </div>
       )}
 
-      {/* KPI solde */}
+      {/* KPI solde + graphes */}
       {ledgerLoading ? (
         <div className="flex items-center justify-center py-16 text-gray-400 text-sm">Chargement…</div>
-      ) : ledger ? (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            {
-              label: 'Solde actuel',
-              value: `${parseFloat(ledger.totalBalance).toLocaleString('fr-FR')} XAF`,
-            },
-            {
-              label: 'Objectif / membre',
-              value: `${parseFloat(ledger.targetPerMember).toLocaleString('fr-FR')} XAF`,
-            },
-            {
-              label: 'Minimum / membre',
-              value: `${parseFloat(ledger.minimumPerMember).toLocaleString('fr-FR')} XAF`,
-            },
-          ].map(({ label, value }) => (
-            <div key={label} className="bg-white rounded-xl border border-gray-200 p-4">
-              <p className="text-xs text-gray-500 mb-1">{label}</p>
-              <p className="font-semibold text-gray-900 tabular-nums">{value}</p>
+      ) : ledger ? (() => {
+        const balance = parseFloat(ledger.totalBalance);
+        const target  = parseFloat(ledger.targetPerMember);
+        const minimum = parseFloat(ledger.minimumPerMember);
+        const pct = target > 0 ? Math.min((balance / target) * 100, 100) : 0;
+        const gaugeColor = pct >= 80 ? '#10b981' : pct >= 40 ? '#f59e0b' : '#ef4444';
+
+        const eventCounts: Record<string, number> = {};
+        (events ?? []).forEach((e) => {
+          eventCounts[EVENT_TYPE_LABELS[e.eventType]] = (eventCounts[EVENT_TYPE_LABELS[e.eventType]] || 0) + 1;
+        });
+        const eventPieData = Object.entries(eventCounts).map(([name, value]) => ({ name, value }));
+        const PIE_COLORS = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#f43f5e','#14b8a6'];
+
+        return (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                { label: 'Solde actuel',     value: `${balance.toLocaleString('fr-FR')} XAF` },
+                { label: 'Objectif / membre', value: `${target.toLocaleString('fr-FR')} XAF` },
+                { label: 'Minimum / membre',  value: `${minimum.toLocaleString('fr-FR')} XAF` },
+              ].map(({ label, value }) => (
+                <div key={label} className="bg-white rounded-xl border border-gray-200 p-4">
+                  <p className="text-xs text-gray-500 mb-1">{label}</p>
+                  <p className="font-semibold text-gray-900 tabular-nums">{value}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      ) : null}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Gauge remplissage */}
+              <ChartCard title="Niveau de la caisse" subtitle={`${pct.toFixed(0)} % de l'objectif atteint`}>
+                <div className="h-52 flex flex-col items-center justify-center relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadialBarChart
+                      cx="50%" cy="68%"
+                      innerRadius="55%" outerRadius="80%"
+                      startAngle={180} endAngle={0}
+                      data={[{ value: pct, fill: gaugeColor }]}
+                    >
+                      <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                      <RadialBar background={{ fill: '#f1f5f9' }} dataKey="value" cornerRadius={6} angleAxisId={0} />
+                    </RadialBarChart>
+                  </ResponsiveContainer>
+                  <div className="absolute bottom-10 text-center pointer-events-none">
+                    <p className="text-2xl font-bold tabular-nums" style={{ color: gaugeColor }}>{pct.toFixed(0)} %</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{balance.toLocaleString('fr-FR')} XAF</p>
+                  </div>
+                </div>
+              </ChartCard>
+
+              {/* Donut types d'événements */}
+              {eventPieData.length > 0 ? (
+                <ChartCard title="Répartition des décaissements" subtitle={`${(events ?? []).length} événement${(events?.length ?? 0) > 1 ? 's' : ''}`}>
+                  <div className="h-52">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={eventPieData} cx="50%" cy="42%" innerRadius={44} outerRadius={68} paddingAngle={3} dataKey="value">
+                          {eventPieData.map((_, i) => (
+                            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} strokeWidth={0} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(v: number, n: string) => [`${v} événement${v > 1 ? 's' : ''}`, n]} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
+                        <Legend iconType="circle" iconSize={7} formatter={(v) => <span className="text-xs text-gray-600">{v}</span>} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </ChartCard>
+              ) : (
+                <div className="bg-white rounded-xl border border-gray-200 p-8 flex items-center justify-center text-gray-300 text-sm">
+                  Aucun décaissement enregistré
+                </div>
+              )}
+            </div>
+          </>
+        );
+      })() : null}
 
       {/* Historique événements */}
       {events && events.length > 0 ? (

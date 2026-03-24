@@ -3,10 +3,14 @@
 import { useState } from 'react';
 import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
+import ChartCard from '@components/ui/ChartCard';
 import { useCassation, useExecuteCassation } from '@lib/hooks/useCassation';
 import { useFiscalYears } from '@lib/hooks/useFiscalYear';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
 import { BureauRole } from '@/types/domain.types';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell,
+} from 'recharts';
 
 export default function CassationPage() {
   const { data: currentUser } = useCurrentUser();
@@ -106,6 +110,57 @@ export default function CassationPage() {
               {record.notes}
             </div>
           )}
+
+          {/* Graphe redistributions */}
+          {record.redistributions && record.redistributions.length > 0 && (() => {
+            const barData = [...record.redistributions]
+              .sort((a, b) => parseFloat(b.totalReturned) - parseFloat(a.totalReturned))
+              .slice(0, 12)
+              .map((r) => ({
+                name: r.membership?.profile
+                  ? `${r.membership.profile.lastName.charAt(0)}. ${r.membership.profile.firstName}`
+                  : r.membershipId.slice(-4),
+                Capital:   parseFloat(r.savingsAmount),
+                Intérêts:  parseFloat(r.interestAmount),
+              }));
+            return (
+              <ChartCard
+                title="Redistributions par membre"
+                subtitle={`Top ${barData.length} — Capital + Intérêts`}
+              >
+                <div className="h-72 px-2 pb-3">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={barData}
+                      layout="vertical"
+                      barSize={14}
+                      margin={{ top: 4, right: 16, bottom: 0, left: 80 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                      <XAxis
+                        type="number"
+                        tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}
+                        tick={{ fontSize: 10, fill: '#94a3b8' }}
+                        axisLine={false} tickLine={false}
+                      />
+                      <YAxis
+                        type="category" dataKey="name"
+                        tick={{ fontSize: 11, fill: '#374151' }}
+                        axisLine={false} tickLine={false} width={78}
+                      />
+                      <Tooltip
+                        formatter={(v: number, n: string) => [`${v.toLocaleString('fr-FR')} XAF`, n]}
+                        contentStyle={{ borderRadius: 8, fontSize: 12 }}
+                      />
+                      <Legend iconType="circle" iconSize={7} formatter={(v) => <span className="text-xs text-gray-600">{v}</span>} />
+                      <Bar dataKey="Capital"  stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="Intérêts" stackId="a" fill="#10b981" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </ChartCard>
+            );
+          })()}
 
           {/* Redistributions par membre */}
           {record.redistributions && record.redistributions.length > 0 && (
