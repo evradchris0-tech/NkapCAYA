@@ -95,6 +95,14 @@ export function useRemoveEmergencyContact(memberId: string) {
   });
 }
 
+export function useMemberMemberships(memberId: string) {
+  return useQuery({
+    queryKey: [...MEMBERS_KEY, memberId, 'memberships'],
+    queryFn: () => membersApi.getMemberships(memberId),
+    enabled: Boolean(memberId),
+  });
+}
+
 export function useChangeRole(memberId: string) {
   const queryClient = useQueryClient();
   return useMutation({

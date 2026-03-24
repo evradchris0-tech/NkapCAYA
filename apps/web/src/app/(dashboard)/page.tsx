@@ -43,9 +43,9 @@ function KpiCard({ icon: Icon, iconBg, iconColor, label, value, isLoading, sub }
       </div>
       <div className="min-w-0">
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
-        <p className="text-2xl font-bold text-gray-900 mt-0.5 tabular-nums">
+        <div className="text-2xl font-bold text-gray-900 mt-0.5 tabular-nums">
           {isLoading ? <Skeleton className="h-7 w-20 mt-1" /> : value}
-        </p>
+        </div>
         {sub && !isLoading && (
           <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
         )}

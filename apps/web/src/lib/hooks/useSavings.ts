@@ -10,3 +10,11 @@ export function useSavingsByMembership(membershipId: string) {
     enabled: Boolean(membershipId),
   });
 }
+
+export function useFiscalYearSavings(fiscalYearId: string) {
+  return useQuery({
+    queryKey: [...SAVINGS_KEY, 'fy', fiscalYearId],
+    queryFn: () => savingsApi.getFiscalYearBalances(fiscalYearId),
+    enabled: Boolean(fiscalYearId),
+  });
+}
