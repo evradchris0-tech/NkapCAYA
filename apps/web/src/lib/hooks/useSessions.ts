@@ -1,16 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  sessionsApi,
-  CreateSessionPayload,
-  CreateTransactionPayload,
-} from '@lib/api/sessions.api';
+import { sessionsApi, RecordEntryPayload } from '@lib/api/sessions.api';
 
 const SESSIONS_KEY = ['sessions'] as const;
 
-export function useSessions(params?: { page?: number; limit?: number }) {
+export function useSessionsByFiscalYear(fiscalYearId: string) {
   return useQuery({
-    queryKey: [...SESSIONS_KEY, params],
-    queryFn: () => sessionsApi.getAll(params),
+    queryKey: [...SESSIONS_KEY, 'fy', fiscalYearId],
+    queryFn: () => sessionsApi.getByFiscalYear(fiscalYearId),
+    enabled: Boolean(fiscalYearId),
   });
 }
 
@@ -22,38 +19,45 @@ export function useSession(id: string) {
   });
 }
 
-export function useSessionTransactions(sessionId: string) {
-  return useQuery({
-    queryKey: [...SESSIONS_KEY, sessionId, 'transactions'],
-    queryFn: () => sessionsApi.getTransactions(sessionId),
-    enabled: Boolean(sessionId),
-  });
-}
-
-export function useCreateSession() {
+export function useOpenSession() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: CreateSessionPayload) => sessionsApi.create(payload),
-    onSuccess: () => {
+    mutationFn: (id: string) => sessionsApi.open(id),
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: SESSIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: [...SESSIONS_KEY, id] });
     },
   });
 }
 
-export function useAddTransaction() {
+export function useRecordEntry(sessionId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      sessionId,
-      payload,
-    }: {
-      sessionId: string;
-      payload: CreateTransactionPayload;
-    }) => sessionsApi.addTransaction(sessionId, payload),
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: [...SESSIONS_KEY, variables.sessionId],
-      });
+    mutationFn: (payload: RecordEntryPayload) => sessionsApi.recordEntry(sessionId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...SESSIONS_KEY, sessionId] });
+    },
+  });
+}
+
+export function useCloseForReview() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => sessionsApi.closeForReview(id),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: SESSIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: [...SESSIONS_KEY, id] });
+    },
+  });
+}
+
+export function useValidateAndClose() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => sessionsApi.validateAndClose(id),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: SESSIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: [...SESSIONS_KEY, id] });
     },
   });
 }

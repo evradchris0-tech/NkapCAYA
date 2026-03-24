@@ -1,35 +1,49 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CassationRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(_data: unknown) {
-    throw new Error('Not implemented');
+  create(data: Prisma.CassationRecordUncheckedCreateInput, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    return client.cassationRecord.create({ data });
   }
 
-  async findById(_id: string) {
-    throw new Error('Not implemented');
+  findById(id: string) {
+    return this.prisma.cassationRecord.findUnique({
+      where: { id },
+      include: {
+        redistributions: { include: { membership: { include: { profile: true } } } },
+        participantShares: true,
+      },
+    });
   }
 
-  async findByFiscalYear(_fiscalYearId: string) {
-    throw new Error('Not implemented');
+  findByFiscalYear(fiscalYearId: string) {
+    return this.prisma.cassationRecord.findUnique({
+      where: { fiscalYearId },
+      include: {
+        redistributions: { include: { membership: { include: { profile: true } } } },
+        participantShares: true,
+      },
+    });
   }
 
-  async createRedistribution(_data: unknown) {
-    throw new Error('Not implemented');
+  createRedistribution(
+    data: Prisma.CassationRedistributionUncheckedCreateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.cassationRedistribution.create({ data });
   }
 
-  async findRedistributions(_cassationRecordId: string) {
-    throw new Error('Not implemented');
-  }
-
-  async createPoolParticipantShare(_data: unknown) {
-    throw new Error('Not implemented');
-  }
-
-  async updateStatus(_id: string, _status: string) {
-    throw new Error('Not implemented');
+  createPoolParticipantShare(
+    data: Prisma.PoolParticipantCassationShareUncheckedCreateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.poolParticipantCassationShare.create({ data });
   }
 }

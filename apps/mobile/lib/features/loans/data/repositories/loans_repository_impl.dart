@@ -8,12 +8,7 @@ class LoansRepositoryImpl implements LoansRepository {
   const LoansRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<List<LoanEntity>> getMyLoans() {
-    return _remoteDataSource.getMyLoans();
-  }
-
-  @override
-  Future<LoanEntity> getLoanById(String id) {
-    return _remoteDataSource.getLoanById(id);
+  Future<List<LoanEntity>> getLoans(String membershipId) {
+    return _remoteDataSource.getLoans(membershipId);
   }
 }

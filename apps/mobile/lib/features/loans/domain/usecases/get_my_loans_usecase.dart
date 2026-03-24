@@ -1,12 +1,12 @@
 import '../entities/loan_entity.dart';
 import '../repositories/loans_repository.dart';
 
-class GetMyLoansUseCase {
+class GetLoansUseCase {
   final LoansRepository _repository;
 
-  const GetMyLoansUseCase(this._repository);
+  const GetLoansUseCase(this._repository);
 
-  Future<List<LoanEntity>> call() {
-    return _repository.getMyLoans();
+  Future<List<LoanEntity>> call(String membershipId) {
+    return _repository.getLoans(membershipId);
   }
 }

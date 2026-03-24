@@ -3,33 +3,25 @@ import '../../domain/entities/savings_entity.dart';
 class SavingsModel extends SavingsEntity {
   const SavingsModel({
     required super.id,
-    required super.memberCode,
+    required super.membershipId,
     required super.balance,
-    required super.totalDeposited,
-    required super.totalWithdrawn,
-    required super.lastUpdated,
+    required super.principalBalance,
+    required super.totalInterestReceived,
+    required super.updatedAt,
   });
 
   factory SavingsModel.fromJson(Map<String, dynamic> json) {
     return SavingsModel(
       id: json['id'] as String,
-      memberCode: json['member_code'] as String,
-      balance: (json['balance'] as num).toDouble(),
-      totalDeposited: (json['total_deposited'] as num).toDouble(),
-      totalWithdrawn: (json['total_withdrawn'] as num).toDouble(),
-      lastUpdated: DateTime.parse(json['last_updated'] as String),
+      membershipId: json['membershipId'] as String,
+      balance: double.tryParse(json['balance']?.toString() ?? '0') ?? 0,
+      principalBalance:
+          double.tryParse(json['principalBalance']?.toString() ?? '0') ?? 0,
+      totalInterestReceived:
+          double.tryParse(json['totalInterestReceived']?.toString() ?? '0') ??
+          0,
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'member_code': memberCode,
-      'balance': balance,
-      'total_deposited': totalDeposited,
-      'total_withdrawn': totalWithdrawn,
-      'last_updated': lastUpdated.toIso8601String(),
-    };
   }
 }
 
@@ -38,43 +30,22 @@ class SavingsTransactionModel extends SavingsTransactionEntity {
     required super.id,
     required super.type,
     required super.amount,
-    super.reference,
-    super.note,
+    required super.balanceAfter,
+    required super.reference,
+    super.notes,
     required super.createdAt,
   });
 
   factory SavingsTransactionModel.fromJson(Map<String, dynamic> json) {
     return SavingsTransactionModel(
       id: json['id'] as String,
-      type: _parseType(json['type'] as String),
-      amount: (json['amount'] as num).toDouble(),
-      reference: json['reference'] as String?,
-      note: json['note'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      type: json['type'] as String? ?? 'EPARGNE',
+      amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0,
+      balanceAfter:
+          double.tryParse(json['balanceAfter']?.toString() ?? '0') ?? 0,
+      reference: json['reference'] as String? ?? '',
+      notes: json['notes'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'type': type.name,
-      'amount': amount,
-      'reference': reference,
-      'note': note,
-      'created_at': createdAt.toIso8601String(),
-    };
-  }
-
-  static SavingsTransactionType _parseType(String value) {
-    switch (value.toLowerCase()) {
-      case 'deposit':
-        return SavingsTransactionType.deposit;
-      case 'withdrawal':
-        return SavingsTransactionType.withdrawal;
-      case 'interest':
-        return SavingsTransactionType.interest;
-      default:
-        return SavingsTransactionType.deposit;
-    }
   }
 }

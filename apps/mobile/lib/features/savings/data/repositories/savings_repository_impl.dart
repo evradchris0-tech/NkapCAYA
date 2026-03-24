@@ -8,15 +8,7 @@ class SavingsRepositoryImpl implements SavingsRepository {
   const SavingsRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<SavingsEntity> getBalance() {
-    return _remoteDataSource.getBalance();
-  }
-
-  @override
-  Future<List<SavingsTransactionEntity>> getTransactions({
-    int page = 1,
-    int pageSize = 20,
-  }) {
-    return _remoteDataSource.getTransactions(page: page, pageSize: pageSize);
+  Future<SavingsEntity> getSavings(String membershipId) {
+    return _remoteDataSource.getSavings(membershipId);
   }
 }

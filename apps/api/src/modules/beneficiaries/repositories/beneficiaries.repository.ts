@@ -1,31 +1,39 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class BeneficiariesRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findScheduleByFiscalYear(_fiscalYearId: string) {
-    throw new Error('Not implemented');
+  findScheduleByFiscalYear(fiscalYearId: string) {
+    return this.prisma.beneficiarySchedule.findUnique({
+      where: { fiscalYearId },
+      include: {
+        slots: {
+          orderBy: [{ month: 'asc' }, { slotIndex: 'asc' }],
+          include: { membership: { include: { profile: true } }, session: true },
+        },
+      },
+    });
   }
 
-  async findSlotById(_id: string) {
-    throw new Error('Not implemented');
+  findSlotById(id: string) {
+    return this.prisma.beneficiarySlot.findUnique({
+      where: { id },
+      include: { schedule: true, session: true },
+    });
   }
 
-  async findSlotsBySchedule(_scheduleId: string) {
-    throw new Error('Not implemented');
+  updateSlot(id: string, data: Prisma.BeneficiarySlotUpdateInput) {
+    return this.prisma.beneficiarySlot.update({ where: { id }, data });
   }
 
-  async updateSlot(_id: string, _data: unknown) {
-    throw new Error('Not implemented');
+  createSchedule(data: Prisma.BeneficiaryScheduleUncheckedCreateInput) {
+    return this.prisma.beneficiarySchedule.create({ data });
   }
 
-  async createSchedule(_data: unknown) {
-    throw new Error('Not implemented');
-  }
-
-  async createSlot(_data: unknown) {
-    throw new Error('Not implemented');
+  createSlot(data: Prisma.BeneficiarySlotUncheckedCreateInput) {
+    return this.prisma.beneficiarySlot.create({ data });
   }
 }

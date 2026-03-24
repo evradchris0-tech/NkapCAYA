@@ -1,23 +1,22 @@
-import { IsString, IsNumber, IsOptional, Min } from 'class-validator';
+import { IsUUID, IsNumber, IsDateString, IsOptional, IsString, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RequestLoanDto {
   @ApiProperty({ description: 'Membership ID of the borrower' })
-  @IsString()
+  @IsUUID()
   membershipId: string;
 
-  @ApiProperty({ description: 'Requested loan amount' })
+  @ApiProperty({ description: 'Requested loan amount in XAF', minimum: 10000 })
   @IsNumber()
-  @Min(1)
+  @Min(10000)
   amount: number;
 
-  @ApiProperty({ description: 'Repayment duration in months' })
-  @IsNumber()
-  @Min(1)
-  durationMonths: number;
+  @ApiProperty({ description: 'Date limite de remboursement (ISO date)' })
+  @IsDateString()
+  dueBeforeDate: string;
 
-  @ApiPropertyOptional({ description: 'Purpose of the loan' })
+  @ApiPropertyOptional({ description: 'Justification / objet du prêt' })
   @IsOptional()
   @IsString()
-  purpose?: string;
+  requestNotes?: string;
 }

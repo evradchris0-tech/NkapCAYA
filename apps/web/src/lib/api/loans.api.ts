@@ -1,34 +1,31 @@
 import apiClient from './client';
-import type { Loan, LoanRepayment, PaginatedResponse } from '@/types/api.types';
+import type { LoanAccount, LoanRepayment } from '@/types/api.types';
 
-export interface CreateLoanPayload {
-  memberId: string;
+export interface RequestLoanPayload {
+  membershipId: string;
   amount: number;
-  interestRate: number;
-  durationMonths: number;
-  startDate: string;
-  purpose?: string;
+  dueBeforeDate: string;
+  requestNotes?: string;
+}
+
+export interface ApplyRepaymentPayload {
+  amount: number;
+  sessionId?: string;
 }
 
 export const loansApi = {
-  getAll: (params?: { page?: number; limit?: number; status?: string }) =>
-    apiClient
-      .get<PaginatedResponse<Loan>>('/loans', { params })
-      .then((r) => r.data),
+  getByMembership: (membershipId: string) =>
+    apiClient.get<LoanAccount[]>('/loans', { params: { membershipId } }).then((r) => r.data),
 
   getById: (id: string) =>
-    apiClient.get<Loan>(`/loans/${id}`).then((r) => r.data),
+    apiClient.get<LoanAccount>(`/loans/${id}`).then((r) => r.data),
 
-  create: (payload: CreateLoanPayload) =>
-    apiClient.post<Loan>('/loans', payload).then((r) => r.data),
+  request: (payload: RequestLoanPayload) =>
+    apiClient.post<LoanAccount>('/loans/request', payload).then((r) => r.data),
 
-  addRepayment: (loanId: string, amount: number) =>
-    apiClient
-      .post<LoanRepayment>(`/loans/${loanId}/repayments`, { amount })
-      .then((r) => r.data),
+  approve: (id: string) =>
+    apiClient.patch<LoanAccount>(`/loans/${id}/approve`).then((r) => r.data),
 
-  getRepayments: (loanId: string) =>
-    apiClient
-      .get<LoanRepayment[]>(`/loans/${loanId}/repayments`)
-      .then((r) => r.data),
+  repay: (id: string, payload: ApplyRepaymentPayload) =>
+    apiClient.post<LoanRepayment>(`/loans/${id}/repay`, payload).then((r) => r.data),
 };

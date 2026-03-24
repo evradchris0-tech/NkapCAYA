@@ -1,12 +1,12 @@
 import '../entities/savings_entity.dart';
 import '../repositories/savings_repository.dart';
 
-class GetSavingsBalanceUseCase {
+class GetSavingsUseCase {
   final SavingsRepository _repository;
 
-  const GetSavingsBalanceUseCase(this._repository);
+  const GetSavingsUseCase(this._repository);
 
-  Future<SavingsEntity> call() {
-    return _repository.getBalance();
+  Future<SavingsEntity> call(String membershipId) {
+    return _repository.getSavings(membershipId);
   }
 }

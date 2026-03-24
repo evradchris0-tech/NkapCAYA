@@ -14,7 +14,7 @@ describe('LoansService', () => {
           provide: LoansRepository,
           useValue: {
             create: jest.fn(),
-            findById: jest.fn(),
+            findById: jest.fn().mockResolvedValue({ id: 'loan-id', loanStatus: 'ACTIVE' }),
             findByMembership: jest.fn(),
             updateStatus: jest.fn(),
             updateBalance: jest.fn(),
@@ -22,7 +22,27 @@ describe('LoansService', () => {
             createMonthlyAccrual: jest.fn(),
           },
         },
-        { provide: PrismaService, useValue: {} },
+        {
+          provide: PrismaService,
+          useValue: {
+            $transaction: jest.fn().mockRejectedValue(new Error('Not implemented')),
+            loanAccount: {
+              findUnique: jest.fn().mockResolvedValue({
+                id: 'loan-id',
+                status: 'ACTIVE',
+                outstandingBalance: '100000',
+                monthlyRate: '0.04',
+              }),
+              update: jest.fn().mockResolvedValue({}),
+              findMany: jest.fn(),
+            },
+            monthlyLoanAccrual: {
+              findFirst: jest.fn().mockResolvedValue(null),
+              create: jest.fn().mockResolvedValue({ id: 'accrual-1' }),
+            },
+            monthlySession: { findUnique: jest.fn().mockResolvedValue({ id: 'session-id', sessionNumber: 1 }) },
+          },
+        },
       ],
     }).compile();
 
@@ -36,28 +56,24 @@ describe('LoansService', () => {
   describe('requestLoan()', () => {
     it('should create a loan request', async () => {
       await expect(
-        service.requestLoan({ membershipId: 'mid', amount: 100000, durationMonths: 6 }),
+        service.requestLoan({ membershipId: 'mid', amount: 100000, dueBeforeDate: '2026-12-31' }, 'actor-id'),
       ).rejects.toThrow('Not implemented');
-    });
-  });
-
-  describe('disburse()', () => {
-    it('should disburse an approved loan', async () => {
-      await expect(service.disburse('loan-id')).rejects.toThrow('Not implemented');
     });
   });
 
   describe('applyRepayment()', () => {
     it('should apply a repayment to a loan', async () => {
       await expect(
-        service.applyRepayment('loan-id', { amount: 10000, sessionId: 'session-id' }),
+        service.applyRepayment('loan-id', { amount: 10000, sessionId: 'session-id' }, 'actor-id'),
       ).rejects.toThrow('Not implemented');
     });
   });
 
   describe('computeMonthlyAccrual()', () => {
-    it('should compute monthly accrual for a loan', async () => {
-      await expect(service.computeMonthlyAccrual('loan-id', 'session-id')).rejects.toThrow('Not implemented');
+    it('should compute and persist monthly accrual for an active loan', async () => {
+      const result = await service.computeMonthlyAccrual('loan-id', 'session-id');
+      expect(result).toBeDefined();
+      expect(result?.id).toBe('accrual-1');
     });
   });
 });

@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
   Param,
@@ -7,10 +8,11 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SessionsService } from '../services/sessions.service';
-import { RecordEntriesDto } from '../dto/record-entries.dto';
+import { RecordEntryDto } from '../dto/record-entry.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { BureauRole } from '@prisma/client';
 
 @ApiTags('sessions')
@@ -20,24 +22,52 @@ import { BureauRole } from '@prisma/client';
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Détail d\'une session + entries' })
+  getSession(@Param('id') id: string) {
+    return this.sessionsService.getSession(id);
+  }
+
   @Post(':id/open')
-  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT)
-  @ApiOperation({ summary: 'Open a monthly session' })
-  openSession(@Param('id') id: string) {
-    return this.sessionsService.openSession(id);
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.TRESORIER)
+  @ApiOperation({ summary: 'DRAFT → OPEN (SESS-04)' })
+  openSession(@Param('id') id: string, @CurrentUser('id') actorId: string) {
+    return this.sessionsService.openSession(id, actorId);
+  }
+
+  @Post(':id/reopen')
+  @Roles(BureauRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'CLOSED → OPEN (M-03)' })
+  reopenSession(
+    @Param('id') id: string,
+    @Body('reason') reason: string,
+    @CurrentUser('id') actorId: string,
+  ) {
+    return this.sessionsService.reopenSession(id, actorId, reason);
   }
 
   @Post(':id/entries')
-  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT, BureauRole.TRESORIER)
-  @ApiOperation({ summary: 'Record entries for a session' })
-  recordEntries(@Param('id') id: string, @Body() dto: RecordEntriesDto) {
-    return this.sessionsService.recordEntries(id, dto);
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.TRESORIER)
+  @ApiOperation({ summary: 'Enregistrer une transaction (SESS-01)' })
+  recordEntry(
+    @Param('id') id: string,
+    @Body() dto: RecordEntryDto,
+    @CurrentUser('id') actorId: string,
+  ) {
+    return this.sessionsService.recordEntry(id, dto, actorId);
   }
 
-  @Post(':id/close')
+  @Post(':id/close-review')
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.TRESORIER)
+  @ApiOperation({ summary: 'OPEN → REVIEWING' })
+  closeForReview(@Param('id') id: string, @CurrentUser('id') actorId: string) {
+    return this.sessionsService.closeForReview(id, actorId);
+  }
+
+  @Post(':id/validate')
   @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT)
-  @ApiOperation({ summary: 'Close a monthly session' })
-  closeSession(@Param('id') id: string) {
-    return this.sessionsService.closeSession(id);
+  @ApiOperation({ summary: 'REVIEWING → CLOSED + distribution des intérêts' })
+  validateAndClose(@Param('id') id: string, @CurrentUser('id') actorId: string) {
+    return this.sessionsService.validateAndClose(id, actorId);
   }
 }

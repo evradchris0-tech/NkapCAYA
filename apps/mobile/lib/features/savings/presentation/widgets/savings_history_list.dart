@@ -65,14 +65,20 @@ class SavingsHistoryList extends StatelessWidget {
     );
   }
 
-  String _typeLabel(SavingsTransactionType type) {
+  String _typeLabel(String type) {
     switch (type) {
-      case SavingsTransactionType.deposit:
-        return 'Dépôt';
-      case SavingsTransactionType.withdrawal:
-        return 'Retrait';
-      case SavingsTransactionType.interest:
-        return 'Intérêts';
+      case 'EPARGNE':
+        return 'Dépôt épargne';
+      case 'INTEREST_CREDIT':
+        return 'Intérêts distribués';
+      case 'INSCRIPTION':
+        return 'Frais d\'inscription';
+      case 'COTISATION':
+        return 'Cotisation';
+      case 'SECOURS':
+        return 'Fonds de secours';
+      default:
+        return type;
     }
   }
 }

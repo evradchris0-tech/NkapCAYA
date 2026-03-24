@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Transitions fluides sur tous les éléments interactifs ── */
+a,
+button,
+input,
+select,
+textarea {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* ── Focus visible accessible (clavier) ── */
+:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Scroll fluide ── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Supprime les outlines par défaut (remplacés par focus-visible ci-dessus) ── */
+*:focus:not(:focus-visible) {
+  outline: none;
+}

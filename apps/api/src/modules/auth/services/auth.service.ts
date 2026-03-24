@@ -9,6 +9,7 @@ import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomUUID } from 'crypto';
 import { LoginDto } from '../dto/login.dto';
+import { ChangePasswordDto } from '../dto/change-password.dto';
 import { UserRepository } from '../repositories/user.repository';
 import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
 
@@ -110,6 +111,19 @@ export class AuthService {
       throw new UnauthorizedException('Utilisateur introuvable');
     }
     return this.sanitizeUser(user);
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
+    const user = await this.userRepo.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('Utilisateur introuvable');
+    }
+    const valid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!valid) {
+      throw new UnauthorizedException('Mot de passe actuel incorrect');
+    }
+    const newHash = await bcrypt.hash(dto.newPassword, 12);
+    await this.userRepo.updatePassword(userId, newHash);
   }
 
   private async generateTokens(user: User): Promise<{ access: string; refresh: string }> {

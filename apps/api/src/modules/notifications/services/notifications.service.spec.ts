@@ -95,11 +95,11 @@ describe('NotificationsService', () => {
     });
   });
 
-  // ── sendWhatsApp — non encore implémenté ─────────────────────────────────
+  // ── sendWhatsApp — dev mode (pas de credentials Twilio) ─────────────────
 
   describe('sendWhatsApp()', () => {
-    it('should throw not implemented', async () => {
-      await expect(service.sendWhatsApp('+237690000000', 'Test')).rejects.toThrow();
+    it('should log and return in dev mode (no Twilio credentials)', async () => {
+      await expect(service.sendWhatsApp('+237690000000', 'Test')).resolves.toBeUndefined();
     });
   });
 });

@@ -10,25 +10,29 @@ import { CassationService } from '../services/cassation.service';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { BureauRole } from '@prisma/client';
 
 @ApiTags('cassation')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('cassation')
+@Controller('fiscal-years/:fyId/cassation')
 export class CassationController {
   constructor(private readonly cassationService: CassationService) {}
 
-  @Post(':fiscalYearId/execute')
-  @Roles(BureauRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Execute cassation for a fiscal year' })
-  executeCassation(@Param('fiscalYearId') fiscalYearId: string) {
-    return this.cassationService.executeCassation(fiscalYearId);
+  @Get()
+  @ApiOperation({ summary: 'Résultat de la cassation + redistributions' })
+  findByFiscalYear(@Param('fyId') fyId: string) {
+    return this.cassationService.findByFiscalYear(fyId);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get cassation record by ID' })
-  findById(@Param('id') id: string) {
-    return this.cassationService.findById(id);
+  @Post('execute')
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.TRESORIER)
+  @ApiOperation({ summary: 'Lancer la cassation (CASSATION → CLOSED + redistributions)' })
+  executeCassation(
+    @Param('fyId') fyId: string,
+    @CurrentUser('id') actorId: string,
+  ) {
+    return this.cassationService.executeCassation(fyId, actorId);
   }
 }

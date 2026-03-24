@@ -19,23 +19,55 @@ export class MembersRepository {
     return this.prisma.memberProfile.create({ data });
   }
 
-  async findAll(): Promise<MemberProfileSummary[]> {
-    return this.prisma.memberProfile.findMany({
-      include: {
-        user: { select: { id: true, username: true, phone: true, role: true, isActive: true } },
-      },
-      orderBy: { lastName: 'asc' },
-    }) as Promise<MemberProfileSummary[]>;
+  async findAll(filters: { page: number; limit: number; search?: string; role?: string; isActive?: boolean }): Promise<{ data: MemberProfileSummary[]; total: number }> {
+    const { page, limit, search, role, isActive } = filters;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.MemberProfileWhereInput = {
+      deletedAt: null,
+    };
+
+    if (search) {
+      where.OR = [
+        { firstName: { contains: search } },
+        { lastName: { contains: search } },
+        { memberCode: { contains: search } },
+        { phone1: { contains: search } },
+        { phone2: { contains: search } },
+      ];
+    }
+
+    const userFilters: any = { deletedAt: null };
+    if (role) userFilters.role = role;
+    if (isActive !== undefined) userFilters.isActive = isActive;
+    
+    where.user = userFilters;
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.memberProfile.findMany({
+        where,
+        include: {
+          user: { select: { id: true, username: true, phone: true, role: true, isActive: true } },
+        },
+        orderBy: { lastName: 'asc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.memberProfile.count({ where }),
+    ]);
+
+    return { data: data as MemberProfileSummary[], total };
   }
 
   async findById(id: string): Promise<MemberProfileWithUser | null> {
-    return this.prisma.memberProfile.findUnique({
-      where: { id },
+    const profile = await this.prisma.memberProfile.findFirst({
+      where: { id, deletedAt: null },
       include: {
         user: { select: { id: true, username: true, phone: true, role: true, isActive: true } },
-        emergencyContacts: true,
+        emergencyContacts: { where: { deletedAt: null } },
       },
-    }) as Promise<MemberProfileWithUser | null>;
+    });
+    return profile as MemberProfileWithUser | null;
   }
 
   async findByUserId(userId: string): Promise<MemberProfile | null> {
@@ -76,6 +108,9 @@ export class MembersRepository {
   }
 
   async deleteEmergencyContact(id: string): Promise<void> {
-    await this.prisma.emergencyContact.delete({ where: { id } });
+    await this.prisma.emergencyContact.update({ 
+      where: { id },
+      data: { deletedAt: new Date() }
+    });
   }
 }

@@ -1,30 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../providers/rescue_fund_provider.dart';
 import '../widgets/rescue_fund_balance.dart';
 
-class RescueFundPage extends StatelessWidget {
+class RescueFundPage extends ConsumerWidget {
   const RescueFundPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final positionAsync = ref.watch(rescueFundPositionProvider);
+    final ledgerAsync = ref.watch(rescueFundLedgerProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Fonds de Secours')),
       body: RefreshIndicator(
-        onRefresh: () async {},
+        onRefresh: () async {
+          ref.invalidate(rescueFundPositionProvider);
+          ref.invalidate(rescueFundLedgerProvider);
+        },
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Balance overview
-              const RescueFundBalance(
-                memberContribution: 25000,
-                totalFund: 1250000,
-                pendingRequests: 75000,
+              positionAsync.when(
+                data: (position) => ledgerAsync.when(
+                  data: (ledger) => RescueFundBalance(
+                    memberContribution: position.paidAmount,
+                    totalFund: ledger.totalBalance,
+                    memberBalance: position.balance,
+                    refillDebt: position.refillDebt,
+                  ),
+                  loading: () => const _LoadingCard(),
+                  error: (e, _) => _ErrorCard(message: e.toString()),
+                ),
+                loading: () => const _LoadingCard(),
+                error: (e, _) => _ErrorCard(message: e.toString()),
               ),
               const SizedBox(height: 24),
-              // Info section
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -41,7 +56,7 @@ class RescueFundPage extends StatelessWidget {
                         color: AppColors.cayaBlue,
                         title: 'Contribution automatique',
                         subtitle:
-                            '2% de chaque cotisation est versé au fonds de secours.',
+                            'Une part fixe est versée chaque mois au fonds de secours.',
                       ),
                       const SizedBox(height: 12),
                       _InfoItem(
@@ -49,7 +64,7 @@ class RescueFundPage extends StatelessWidget {
                         color: AppColors.success,
                         title: 'Cas éligibles',
                         subtitle:
-                            'Décès, maladie grave, catastrophe naturelle.',
+                            'Décès, maladie grave, mariage, naissance, promotion.',
                       ),
                       const SizedBox(height: 12),
                       _InfoItem(
@@ -57,34 +72,50 @@ class RescueFundPage extends StatelessWidget {
                         color: AppColors.warning,
                         title: 'Validation',
                         subtitle:
-                            "Chaque demande est soumise au vote du bureau.",
+                            'Chaque décaissement est autorisé par le Président.',
                       ),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Contribution history
-              Text(
-                'Mes contributions',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 12),
-              Card(
-                child: Column(
-                  children: [
-                    _ContributionItem(date: 'Mars 2024', amount: 200),
-                    const Divider(height: 1, indent: 16, endIndent: 16),
-                    _ContributionItem(date: 'Février 2024', amount: 200),
-                    const Divider(height: 1, indent: 16, endIndent: 16),
-                    _ContributionItem(date: 'Janvier 2024', amount: 200),
-                  ],
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _LoadingCard extends StatelessWidget {
+  const _LoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 160,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+class _ErrorCard extends StatelessWidget {
+  final String message;
+
+  const _ErrorCard({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(message, style: const TextStyle(color: AppColors.error)),
     );
   }
 }
@@ -139,36 +170,6 @@ class _InfoItem extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ContributionItem extends StatelessWidget {
-  final String date;
-  final double amount;
-
-  const _ContributionItem({required this.date, required this.amount});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: const CircleAvatar(
-        backgroundColor: Color(0xFFE8F5E9),
-        child: Icon(
-          Icons.volunteer_activism_outlined,
-          color: AppColors.success,
-          size: 18,
-        ),
-      ),
-      title: Text('Contribution — $date', style: const TextStyle(fontSize: 14)),
-      trailing: Text(
-        '${amount.toStringAsFixed(0)} XAF',
-        style: const TextStyle(
-          color: AppColors.success,
-          fontWeight: FontWeight.bold,
-          fontSize: 13,
-        ),
-      ),
     );
   }
 }

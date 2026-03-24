@@ -4,6 +4,7 @@ import { SavingsService } from '../services/savings.service';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { BureauRole } from '@prisma/client';
 
 @ApiTags('savings')
@@ -14,15 +15,18 @@ export class SavingsController {
   constructor(private readonly savingsService: SavingsService) {}
 
   @Get(':membershipId')
-  @ApiOperation({ summary: 'Get savings balance for a membership' })
+  @ApiOperation({ summary: 'Solde épargne + historique d\'un membre' })
   getBalance(@Param('membershipId') membershipId: string) {
     return this.savingsService.getBalance(membershipId);
   }
 
   @Post('distribute/:sessionId')
   @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT)
-  @ApiOperation({ summary: 'Distribute interests for a session' })
-  distributeInterests(@Param('sessionId') sessionId: string) {
-    return this.savingsService.distributeInterests(sessionId);
+  @ApiOperation({ summary: 'Distribuer les intérêts d\'une session (PRESIDENT)' })
+  distributeInterests(
+    @Param('sessionId') sessionId: string,
+    @CurrentUser('id') actorId: string,
+  ) {
+    return this.savingsService.distributeInterests(sessionId, actorId);
   }
 }

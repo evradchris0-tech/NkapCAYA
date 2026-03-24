@@ -53,28 +53,32 @@ class ProfilePage extends ConsumerWidget {
                         child: Column(
                           children: [
                             _InfoTile(
-                              icon: Icons.email_outlined,
-                              label: 'E-mail',
-                              value: member.email,
-                            ),
-                            const Divider(height: 1, indent: 56),
-                            _InfoTile(
                               icon: Icons.phone_outlined,
-                              label: 'Téléphone',
-                              value: member.phone ?? 'Non renseigné',
+                              label: 'Téléphone principal',
+                              value: member.phone1,
                             ),
-                            const Divider(height: 1, indent: 56),
-                            _InfoTile(
-                              icon: Icons.work_outline,
-                              label: 'Profession',
-                              value: member.profession,
-                            ),
-                            if (member.address != null) ...[
+                            if (member.phone2 != null) ...[
+                              const Divider(height: 1, indent: 56),
+                              _InfoTile(
+                                icon: Icons.phone_outlined,
+                                label: 'Téléphone secondaire',
+                                value: member.phone2!,
+                              ),
+                            ],
+                            if (member.neighborhood != null) ...[
                               const Divider(height: 1, indent: 56),
                               _InfoTile(
                                 icon: Icons.location_on_outlined,
-                                label: 'Adresse',
-                                value: member.address!,
+                                label: 'Quartier',
+                                value: member.neighborhood!,
+                              ),
+                            ],
+                            if (member.mobileMoneyNumber != null) ...[
+                              const Divider(height: 1, indent: 56),
+                              _InfoTile(
+                                icon: Icons.account_balance_wallet_outlined,
+                                label: member.mobileMoneyType ?? 'Mobile Money',
+                                value: member.mobileMoneyNumber!,
                               ),
                             ],
                           ],

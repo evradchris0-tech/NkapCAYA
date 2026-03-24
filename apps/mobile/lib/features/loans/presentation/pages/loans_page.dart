@@ -11,7 +11,7 @@ class LoansPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final loansAsync = ref.watch(myLoansProvider);
+    final loansAsync = ref.watch(loansProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mes Prêts')),
@@ -19,7 +19,7 @@ class LoansPage extends ConsumerWidget {
         loading: () => const LoadingWidget(message: 'Chargement des prêts...'),
         error: (e, _) => CayaErrorWidget(
           message: e.toString(),
-          onRetry: () => ref.invalidate(myLoansProvider),
+          onRetry: () => ref.invalidate(loansProvider),
         ),
         data: (loans) {
           if (loans.isEmpty) {
@@ -42,12 +42,12 @@ class LoansPage extends ConsumerWidget {
             );
           }
 
-          final active = loans.where((l) => l.isActive || l.isOverdue).toList();
-          final others =
-              loans.where((l) => !l.isActive && !l.isOverdue).toList();
+          final active = loans.where((l) => l.isActive).toList();
+          final pending = loans.where((l) => l.isPending).toList();
+          final closed = loans.where((l) => l.isClosed).toList();
 
           return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(myLoansProvider),
+            onRefresh: () async => ref.invalidate(loansProvider),
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -62,10 +62,21 @@ class LoansPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                 ],
-                if (others.isNotEmpty) ...[
-                  _sectionTitle(context, 'Historique'),
+                if (pending.isNotEmpty) ...[
+                  _sectionTitle(context, 'En attente'),
                   const SizedBox(height: 8),
-                  ...others.map(
+                  ...pending.map(
+                    (l) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: LoanCard(loan: l),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (closed.isNotEmpty) ...[
+                  _sectionTitle(context, 'Soldés'),
+                  const SizedBox(height: 8),
+                  ...closed.map(
                     (l) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: LoanCard(loan: l),

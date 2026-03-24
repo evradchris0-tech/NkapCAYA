@@ -3,68 +3,51 @@ import '../../domain/entities/loan_entity.dart';
 class LoanModel extends LoanEntity {
   const LoanModel({
     required super.id,
-    required super.memberCode,
-    required super.amount,
-    required super.remainingBalance,
-    required super.interestRate,
-    required super.durationMonths,
+    required super.membershipId,
+    required super.fiscalYearId,
+    required super.principalAmount,
+    required super.outstandingBalance,
+    required super.monthlyRate,
     required super.status,
     required super.requestedAt,
-    super.approvedAt,
-    super.dueDate,
-    super.purpose,
+    super.disbursedAt,
+    required super.dueBeforeDate,
+    required super.totalInterestAccrued,
+    required super.totalRepaid,
+    super.requestNotes,
   });
 
   factory LoanModel.fromJson(Map<String, dynamic> json) {
     return LoanModel(
       id: json['id'] as String,
-      memberCode: json['member_code'] as String,
-      amount: (json['amount'] as num).toDouble(),
-      remainingBalance: (json['remaining_balance'] as num).toDouble(),
-      interestRate: (json['interest_rate'] as num).toDouble(),
-      durationMonths: json['duration_months'] as int,
-      status: _parseStatus(json['status'] as String),
-      requestedAt: DateTime.parse(json['requested_at'] as String),
-      approvedAt: json['approved_at'] != null
-          ? DateTime.parse(json['approved_at'] as String)
+      membershipId: json['membershipId'] as String,
+      fiscalYearId: json['fiscalYearId'] as String,
+      principalAmount:
+          double.tryParse(json['principalAmount']?.toString() ?? '0') ?? 0,
+      outstandingBalance:
+          double.tryParse(json['outstandingBalance']?.toString() ?? '0') ?? 0,
+      monthlyRate: double.tryParse(json['monthlyRate']?.toString() ?? '0') ?? 0,
+      status: _parseStatus(json['status'] as String? ?? 'PENDING'),
+      requestedAt: DateTime.parse(json['requestedAt'] as String),
+      disbursedAt: json['disbursedAt'] != null
+          ? DateTime.parse(json['disbursedAt'] as String)
           : null,
-      dueDate: json['due_date'] != null
-          ? DateTime.parse(json['due_date'] as String)
-          : null,
-      purpose: json['purpose'] as String?,
+      dueBeforeDate: DateTime.parse(json['dueBeforeDate'] as String),
+      totalInterestAccrued:
+          double.tryParse(json['totalInterestAccrued']?.toString() ?? '0') ?? 0,
+      totalRepaid:
+          double.tryParse(json['totalRepaid']?.toString() ?? '0') ?? 0,
+      requestNotes: json['requestNotes'] as String?,
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'member_code': memberCode,
-      'amount': amount,
-      'remaining_balance': remainingBalance,
-      'interest_rate': interestRate,
-      'duration_months': durationMonths,
-      'status': status.name,
-      'requested_at': requestedAt.toIso8601String(),
-      'approved_at': approvedAt?.toIso8601String(),
-      'due_date': dueDate?.toIso8601String(),
-      'purpose': purpose,
-    };
-  }
-
   static LoanStatus _parseStatus(String value) {
-    switch (value.toLowerCase()) {
-      case 'pending':
-        return LoanStatus.pending;
-      case 'approved':
-        return LoanStatus.approved;
-      case 'active':
+    switch (value.toUpperCase()) {
+      case 'ACTIVE':
         return LoanStatus.active;
-      case 'repaid':
-        return LoanStatus.repaid;
-      case 'rejected':
-        return LoanStatus.rejected;
-      case 'overdue':
-        return LoanStatus.overdue;
+      case 'CLOSED':
+        return LoanStatus.closed;
+      case 'PENDING':
       default:
         return LoanStatus.pending;
     }

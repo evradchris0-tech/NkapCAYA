@@ -5,36 +5,30 @@ import '../../../../shared/widgets/amount_display.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../../../shared/widgets/error_widget.dart';
 import '../providers/savings_provider.dart';
-import '../widgets/savings_history_list.dart';
 
 class SavingsPage extends ConsumerWidget {
   const SavingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final balanceAsync = ref.watch(savingsBalanceProvider);
-    final transactionsAsync = ref.watch(savingsTransactionsProvider);
+    final savingsAsync = ref.watch(savingsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mon Épargne')),
       body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(savingsBalanceProvider);
-          ref.invalidate(savingsTransactionsProvider);
-        },
+        onRefresh: () async => ref.invalidate(savingsProvider),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Balance card
-              balanceAsync.when(
+              savingsAsync.when(
                 loading: () =>
                     const SizedBox(height: 120, child: LoadingWidget()),
                 error: (e, _) => CayaErrorWidget(
                   message: e.toString(),
-                  onRetry: () => ref.invalidate(savingsBalanceProvider),
+                  onRetry: () => ref.invalidate(savingsProvider),
                 ),
                 data: (savings) => Container(
                   width: double.infinity,
@@ -67,40 +61,22 @@ class SavingsPage extends ConsumerWidget {
                       Row(
                         children: [
                           _StatChip(
-                            label: 'Total déposé',
-                            amount: savings.totalDeposited,
+                            label: 'Capital versé',
+                            amount: savings.principalBalance,
                             icon: Icons.arrow_downward,
                             color: AppColors.success,
                           ),
                           const SizedBox(width: 16),
                           _StatChip(
-                            label: 'Total retiré',
-                            amount: savings.totalWithdrawn,
-                            icon: Icons.arrow_upward,
-                            color: AppColors.errorLight,
+                            label: 'Intérêts reçus',
+                            amount: savings.totalInterestReceived,
+                            icon: Icons.trending_up,
+                            color: AppColors.cayaGoldLight,
                           ),
                         ],
                       ),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Historique',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 12),
-              Card(
-                child: transactionsAsync.when(
-                  loading: () =>
-                      const SizedBox(height: 200, child: LoadingWidget()),
-                  error: (e, _) => CayaErrorWidget(
-                    message: e.toString(),
-                    onRetry: () => ref.invalidate(savingsTransactionsProvider),
-                  ),
-                  data: (transactions) =>
-                      SavingsHistoryList(transactions: transactions),
                 ),
               ),
             ],

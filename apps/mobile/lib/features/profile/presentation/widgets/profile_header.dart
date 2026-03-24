@@ -1,7 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../domain/entities/member_entity.dart';
 
 class ProfileHeader extends StatelessWidget {
@@ -23,23 +21,17 @@ class ProfileHeader extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Avatar
           CircleAvatar(
             radius: 44,
             backgroundColor: AppColors.cayaGold.withValues(alpha: 0.3),
-            backgroundImage: member.photoUrl != null
-                ? CachedNetworkImageProvider(member.photoUrl!)
-                : null,
-            child: member.photoUrl == null
-                ? Text(
-                    _initials(member.fullName),
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )
-                : null,
+            child: Text(
+              _initials(member.fullName),
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -59,29 +51,25 @@ class ProfileHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          _StatusBadge(status: member.status),
-          const SizedBox(height: 16),
-          // Stats row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _Stat(label: 'Profession', value: member.profession),
-              const SizedBox(width: 4),
-              Container(width: 1, height: 28, color: Colors.white24),
-              const SizedBox(width: 4),
-              _Stat(
-                label: 'Membre depuis',
-                value: DateFormatter.formatMonthYear(member.joinDate),
-              ),
-              const SizedBox(width: 4),
-              Container(width: 1, height: 28, color: Colors.white24),
-              const SizedBox(width: 4),
-              _Stat(
-                label: 'Cotisations',
-                value: '${member.contributionMonths} mois',
-              ),
-            ],
-          ),
+          _StatusBadge(isActive: member.userIsActive),
+          if (member.neighborhood != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.location_on_outlined,
+                  color: Colors.white60,
+                  size: 14,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  member.neighborhood!,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -97,22 +85,14 @@ class ProfileHeader extends StatelessWidget {
 }
 
 class _StatusBadge extends StatelessWidget {
-  final MemberStatus status;
+  final bool isActive;
 
-  const _StatusBadge({required this.status});
+  const _StatusBadge({required this.isActive});
 
   @override
   Widget build(BuildContext context) {
-    final color = status == MemberStatus.active
-        ? AppColors.success
-        : status == MemberStatus.suspended
-            ? AppColors.warning
-            : AppColors.grey500;
-    final label = status == MemberStatus.active
-        ? 'Actif'
-        : status == MemberStatus.suspended
-            ? 'Suspendu'
-            : 'Inactif';
+    final color = isActive ? AppColors.success : AppColors.grey500;
+    final label = isActive ? 'Actif' : 'Inactif';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -122,37 +102,6 @@ class _StatusBadge extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(label, style: TextStyle(color: color, fontSize: 12)),
-    );
-  }
-}
-
-class _Stat extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _Stat({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
-          ),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white60, fontSize: 10),
-          ),
-        ],
-      ),
     );
   }
 }

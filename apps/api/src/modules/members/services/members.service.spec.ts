@@ -6,6 +6,7 @@ import { PrismaService } from '@database/prisma.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
 import { CreateMemberDto } from '../dto/create-member.dto';
 import { UpdateMemberDto } from '../dto/update-member.dto';
+import { PaginationDto } from '@common/dto/pagination.dto';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -50,7 +51,7 @@ describe('MembersService', () => {
         {
           provide: MembersRepository,
           useValue: {
-            findAll: jest.fn(),
+            findAll: jest.fn().mockResolvedValue({ data: [], total: 0 }),
             findById: jest.fn(),
             memberCodeExists: jest.fn().mockResolvedValue(false),
             update: jest.fn(),
@@ -69,6 +70,8 @@ describe('MembersService', () => {
             },
             memberProfile: {
               findFirst: jest.fn().mockResolvedValue(null),
+              findUnique: jest.fn().mockResolvedValue(mockProfile),
+              update: jest.fn().mockResolvedValue({}),
             },
             $transaction: jest.fn(),
           },
@@ -123,14 +126,18 @@ describe('MembersService', () => {
 
   // ── T03 — findAll ─────────────────────────────────────────────────────────
 
-  describe('T03 — findAll retourne la liste', () => {
-    it('should return array of profiles', async () => {
-      repo.findAll.mockResolvedValue([mockProfile as unknown as MemberProfileSummary]);
+  describe('T03 — findAll retourne la liste paginée', () => {
+    it('should return paginated profiles', async () => {
+      repo.findAll.mockResolvedValue({ data: [mockProfile as unknown as MemberProfileSummary], total: 1 });
 
-      const result = await service.findAll();
+      const pagination: PaginationDto = { page: 1, limit: 20 };
+      const result = await service.findAll(pagination);
 
-      expect(result).toHaveLength(1);
-      expect(result[0].memberCode).toBe('MBA3X7K2');
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].memberCode).toBe('MBA3X7K2');
+      expect(result.total).toBe(1);
+      expect(result.page).toBe(1);
+      expect(result.totalPages).toBe(1);
     });
   });
 
@@ -216,7 +223,7 @@ describe('MembersService', () => {
 
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u_test0001' },
-        data: { isActive: false },
+        data: { isActive: false, deletedAt: expect.any(Date) },
       });
     });
   });
@@ -232,6 +239,22 @@ describe('MembersService', () => {
 
       expect(result).toEqual([]);
       expect(repo.findMembershipsByProfileId).toHaveBeenCalledWith('profile-uuid-1');
+    });
+  });
+
+  // ── T09 — reactivate ──────────────────────────────────────────────────────
+
+  describe('T09 — reactivate réactive le compte User', () => {
+    it('should set user.isActive = true', async () => {
+      repo.findById.mockResolvedValue(mockProfile as unknown as MemberProfileWithUser);
+      (prisma.user.update as jest.Mock).mockResolvedValue({});
+
+      await service.reactivate('profile-uuid-1');
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u_test0001' },
+        data: { isActive: true, deletedAt: null },
+      });
     });
   });
 });

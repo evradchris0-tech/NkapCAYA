@@ -3,8 +3,7 @@ import '../../../../core/network/api_client.dart';
 import '../models/loan_model.dart';
 
 abstract class LoansRemoteDataSource {
-  Future<List<LoanModel>> getMyLoans();
-  Future<LoanModel> getLoanById(String id);
+  Future<List<LoanModel>> getLoans(String membershipId);
 }
 
 class LoansRemoteDataSourceImpl implements LoansRemoteDataSource {
@@ -14,21 +13,14 @@ class LoansRemoteDataSourceImpl implements LoansRemoteDataSource {
       : _apiClient = apiClient;
 
   @override
-  Future<List<LoanModel>> getMyLoans() async {
-    final response = await _apiClient.get<Map<String, dynamic>>(
-      ApiConstants.myLoans,
+  Future<List<LoanModel>> getLoans(String membershipId) async {
+    final response = await _apiClient.get<List<dynamic>>(
+      ApiConstants.loans,
+      queryParameters: {'membershipId': membershipId},
     );
-    final results = response.data!['results'] as List<dynamic>;
-    return results
-        .map((e) => LoanModel.fromJson(e as Map<String, dynamic>))
+    return (response.data ?? [])
+        .cast<Map<String, dynamic>>()
+        .map(LoanModel.fromJson)
         .toList();
-  }
-
-  @override
-  Future<LoanModel> getLoanById(String id) async {
-    final response = await _apiClient.get<Map<String, dynamic>>(
-      '${ApiConstants.myLoans}$id/',
-    );
-    return LoanModel.fromJson(response.data!);
   }
 }

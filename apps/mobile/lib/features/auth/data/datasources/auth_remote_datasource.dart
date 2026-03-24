@@ -62,7 +62,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<UserModel> fetchCurrentUser() async {
     final response = await _apiClient.get<Map<String, dynamic>>(
-      ApiConstants.myProfile,
+      ApiConstants.authMe,
     );
     return UserModel.fromJson(response.data!);
   }

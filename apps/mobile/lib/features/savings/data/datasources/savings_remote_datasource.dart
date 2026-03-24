@@ -3,11 +3,7 @@ import '../../../../core/network/api_client.dart';
 import '../models/savings_model.dart';
 
 abstract class SavingsRemoteDataSource {
-  Future<SavingsModel> getBalance();
-  Future<List<SavingsTransactionModel>> getTransactions({
-    int page = 1,
-    int pageSize = 20,
-  });
+  Future<SavingsModel> getSavings(String membershipId);
 }
 
 class SavingsRemoteDataSourceImpl implements SavingsRemoteDataSource {
@@ -17,25 +13,10 @@ class SavingsRemoteDataSourceImpl implements SavingsRemoteDataSource {
       : _apiClient = apiClient;
 
   @override
-  Future<SavingsModel> getBalance() async {
+  Future<SavingsModel> getSavings(String membershipId) async {
     final response = await _apiClient.get<Map<String, dynamic>>(
-      ApiConstants.savingsBalance,
+      ApiConstants.savings(membershipId),
     );
     return SavingsModel.fromJson(response.data!);
-  }
-
-  @override
-  Future<List<SavingsTransactionModel>> getTransactions({
-    int page = 1,
-    int pageSize = 20,
-  }) async {
-    final response = await _apiClient.get<Map<String, dynamic>>(
-      ApiConstants.savingsTransactions,
-      queryParameters: {'page': page, 'page_size': pageSize},
-    );
-    final results = response.data!['results'] as List<dynamic>;
-    return results
-        .map((e) => SavingsTransactionModel.fromJson(e as Map<String, dynamic>))
-        .toList();
   }
 }

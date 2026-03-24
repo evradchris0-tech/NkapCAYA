@@ -1,34 +1,36 @@
-enum MemberStatus { active, suspended, inactive }
-
 class MemberEntity {
-  final String id;
+  final String id; // MemberProfile.id
   final String memberCode;
+  final String userId;
   final String firstName;
   final String lastName;
-  final String email;
-  final String? phone;
-  final String? photoUrl;
-  final String profession;
-  final String? address;
-  final DateTime joinDate;
-  final MemberStatus status;
-  final int contributionMonths;
+  final String phone1;
+  final String? phone2;
+  final String? neighborhood;
+  final String? locationDetail;
+  final String? mobileMoneyType;
+  final String? mobileMoneyNumber;
+  final String? sponsorId;
+  // Relations imbriquées
+  final String userRole;
+  final bool userIsActive;
 
   const MemberEntity({
     required this.id,
     required this.memberCode,
+    required this.userId,
     required this.firstName,
     required this.lastName,
-    required this.email,
-    this.phone,
-    this.photoUrl,
-    required this.profession,
-    this.address,
-    required this.joinDate,
-    required this.status,
-    required this.contributionMonths,
+    required this.phone1,
+    this.phone2,
+    this.neighborhood,
+    this.locationDetail,
+    this.mobileMoneyType,
+    this.mobileMoneyNumber,
+    this.sponsorId,
+    required this.userRole,
+    required this.userIsActive,
   });
 
   String get fullName => '$firstName $lastName';
-  bool get isActive => status == MemberStatus.active;
 }

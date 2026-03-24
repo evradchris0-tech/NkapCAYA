@@ -1,10 +1,11 @@
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/member_model.dart';
+import '../models/membership_model.dart';
 
 abstract class ProfileRemoteDataSource {
   Future<MemberModel> getMyProfile();
-  Future<MemberModel> updateProfile(Map<String, dynamic> data);
+  Future<List<MembershipModel>> getMemberships(String profileId);
 }
 
 class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
@@ -16,17 +17,19 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   @override
   Future<MemberModel> getMyProfile() async {
     final response = await _apiClient.get<Map<String, dynamic>>(
-      ApiConstants.myProfile,
+      ApiConstants.memberProfile,
     );
     return MemberModel.fromJson(response.data!);
   }
 
   @override
-  Future<MemberModel> updateProfile(Map<String, dynamic> data) async {
-    final response = await _apiClient.patch<Map<String, dynamic>>(
-      ApiConstants.myProfile,
-      data: data,
+  Future<List<MembershipModel>> getMemberships(String profileId) async {
+    final response = await _apiClient.get<List<dynamic>>(
+      ApiConstants.memberMemberships(profileId),
     );
-    return MemberModel.fromJson(response.data!);
+    return (response.data ?? [])
+        .cast<Map<String, dynamic>>()
+        .map(MembershipModel.fromJson)
+        .toList();
   }
 }

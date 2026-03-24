@@ -4,62 +4,38 @@ class MemberModel extends MemberEntity {
   const MemberModel({
     required super.id,
     required super.memberCode,
+    required super.userId,
     required super.firstName,
     required super.lastName,
-    required super.email,
-    super.phone,
-    super.photoUrl,
-    required super.profession,
-    super.address,
-    required super.joinDate,
-    required super.status,
-    required super.contributionMonths,
+    required super.phone1,
+    super.phone2,
+    super.neighborhood,
+    super.locationDetail,
+    super.mobileMoneyType,
+    super.mobileMoneyNumber,
+    super.sponsorId,
+    required super.userRole,
+    required super.userIsActive,
   });
 
+  // NestJS retourne du camelCase
   factory MemberModel.fromJson(Map<String, dynamic> json) {
+    final user = json['user'] as Map<String, dynamic>? ?? {};
     return MemberModel(
       id: json['id'] as String,
-      memberCode: json['member_code'] as String,
-      firstName: json['first_name'] as String,
-      lastName: json['last_name'] as String,
-      email: json['email'] as String,
-      phone: json['phone'] as String?,
-      photoUrl: json['photo_url'] as String?,
-      profession: json['profession'] as String? ?? '',
-      address: json['address'] as String?,
-      joinDate: DateTime.parse(json['join_date'] as String),
-      status: _parseStatus(json['status'] as String? ?? 'active'),
-      contributionMonths: json['contribution_months'] as int? ?? 0,
+      memberCode: json['memberCode'] as String,
+      userId: json['userId'] as String,
+      firstName: json['firstName'] as String,
+      lastName: json['lastName'] as String,
+      phone1: json['phone1'] as String,
+      phone2: json['phone2'] as String?,
+      neighborhood: json['neighborhood'] as String?,
+      locationDetail: json['locationDetail'] as String?,
+      mobileMoneyType: json['mobileMoneyType'] as String?,
+      mobileMoneyNumber: json['mobileMoneyNumber'] as String?,
+      sponsorId: json['sponsorId'] as String?,
+      userRole: user['role'] as String? ?? 'MEMBRE',
+      userIsActive: user['isActive'] as bool? ?? true,
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'member_code': memberCode,
-      'first_name': firstName,
-      'last_name': lastName,
-      'email': email,
-      'phone': phone,
-      'photo_url': photoUrl,
-      'profession': profession,
-      'address': address,
-      'join_date': joinDate.toIso8601String(),
-      'status': status.name,
-      'contribution_months': contributionMonths,
-    };
-  }
-
-  static MemberStatus _parseStatus(String value) {
-    switch (value.toLowerCase()) {
-      case 'active':
-        return MemberStatus.active;
-      case 'suspended':
-        return MemberStatus.suspended;
-      case 'inactive':
-        return MemberStatus.inactive;
-      default:
-        return MemberStatus.active;
-    }
   }
 }

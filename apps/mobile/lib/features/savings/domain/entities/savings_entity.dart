@@ -1,41 +1,39 @@
-enum SavingsTransactionType { deposit, withdrawal, interest }
-
 class SavingsEntity {
   final String id;
-  final String memberCode;
-  final double balance;
-  final double totalDeposited;
-  final double totalWithdrawn;
-  final DateTime lastUpdated;
+  final String membershipId;
+  final double balance; // principal + intérêts
+  final double principalBalance; // versements bruts
+  final double totalInterestReceived;
+  final DateTime updatedAt;
 
   const SavingsEntity({
     required this.id,
-    required this.memberCode,
+    required this.membershipId,
     required this.balance,
-    required this.totalDeposited,
-    required this.totalWithdrawn,
-    required this.lastUpdated,
+    required this.principalBalance,
+    required this.totalInterestReceived,
+    required this.updatedAt,
   });
 }
 
 class SavingsTransactionEntity {
   final String id;
-  final SavingsTransactionType type;
+  final String type; // TransactionType Prisma (EPARGNE, INTEREST_CREDIT, …)
   final double amount;
-  final String? reference;
-  final String? note;
+  final double balanceAfter;
+  final String reference;
+  final String? notes;
   final DateTime createdAt;
 
   const SavingsTransactionEntity({
     required this.id,
     required this.type,
     required this.amount,
-    this.reference,
-    this.note,
+    required this.balanceAfter,
+    required this.reference,
+    this.notes,
     required this.createdAt,
   });
 
-  bool get isCredit =>
-      type == SavingsTransactionType.deposit ||
-      type == SavingsTransactionType.interest;
+  bool get isCredit => type == 'EPARGNE' || type == 'INTEREST_CREDIT';
 }

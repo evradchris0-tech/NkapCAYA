@@ -3,15 +3,17 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/amount_display.dart';
 
 class RescueFundBalance extends StatelessWidget {
-  final double memberContribution;
-  final double totalFund;
-  final double pendingRequests;
+  final double memberContribution; // total versé par le membre
+  final double totalFund; // solde global du fonds
+  final double memberBalance; // solde net du membre
+  final double refillDebt; // dette de renflouement (0 si aucune)
 
   const RescueFundBalance({
     super.key,
     required this.memberContribution,
     required this.totalFund,
-    required this.pendingRequests,
+    required this.memberBalance,
+    required this.refillDebt,
   });
 
   @override
@@ -45,7 +47,7 @@ class RescueFundBalance extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Ma contribution',
+            'Ma contribution (exercice)',
             style: TextStyle(color: Colors.white70, fontSize: 12),
           ),
           const SizedBox(height: 4),
@@ -54,6 +56,20 @@ class RescueFundBalance extends StatelessWidget {
             amountFontSize: 28,
             amountColor: AppColors.white,
           ),
+          if (refillDebt > 0) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Dette de renflouement : ${refillDebt.toStringAsFixed(0)} XAF',
+                style: const TextStyle(color: Colors.orangeAccent, fontSize: 12),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           const Divider(color: Colors.white24),
           const SizedBox(height: 12),
@@ -61,7 +77,7 @@ class RescueFundBalance extends StatelessWidget {
             children: [
               _FundStat(label: 'Fonds total', amount: totalFund),
               const SizedBox(width: 24),
-              _FundStat(label: 'Demandes en cours', amount: pendingRequests),
+              _FundStat(label: 'Mon solde net', amount: memberBalance),
             ],
           ),
         ],

@@ -1,38 +1,22 @@
-import { IsString, IsNumber, IsOptional, IsEnum, Min } from 'class-validator';
+import { IsUUID, IsEnum, IsDateString, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-export enum RescueFundEventType {
-  CONTRIBUTION = 'CONTRIBUTION',
-  DISBURSEMENT = 'DISBURSEMENT',
-  REIMBURSEMENT = 'REIMBURSEMENT',
-}
+import { RescueEventType } from '@prisma/client';
 
 export class CreateRescueFundEventDto {
-  @ApiProperty({ enum: RescueFundEventType, description: 'Type of rescue fund event' })
-  @IsEnum(RescueFundEventType)
-  eventType: RescueFundEventType;
+  @ApiProperty({ description: 'Membership ID du bénéficiaire' })
+  @IsUUID()
+  beneficiaryMembershipId: string;
 
-  @ApiProperty({ description: 'Amount' })
-  @IsNumber()
-  @Min(0)
-  amount: number;
+  @ApiProperty({ enum: RescueEventType, description: 'Type d\'événement (montant fixé en DB)' })
+  @IsEnum(RescueEventType)
+  eventType: RescueEventType;
 
-  @ApiProperty({ description: 'Membership ID concerned' })
-  @IsString()
-  membershipId: string;
+  @ApiProperty({ description: 'Date de l\'événement (ISO date)' })
+  @IsDateString()
+  eventDate: string;
 
-  @ApiPropertyOptional({ description: 'Beneficiary name (for disbursements)' })
+  @ApiPropertyOptional({ description: 'Description / commentaire' })
   @IsOptional()
   @IsString()
-  beneficiaryName?: string;
-
-  @ApiPropertyOptional({ description: 'Reason for the event' })
-  @IsOptional()
-  @IsString()
-  reason?: string;
-
-  @ApiPropertyOptional({ description: 'Session ID' })
-  @IsOptional()
-  @IsString()
-  sessionId?: string;
+  description?: string;
 }

@@ -1,35 +1,138 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
+import { Prisma, FiscalYearStatus } from '@prisma/client';
 
 @Injectable()
 export class FiscalYearRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(_data: unknown) {
-    throw new Error('Not implemented');
+  create(data: Prisma.FiscalYearUncheckedCreateInput) {
+    return this.prisma.fiscalYear.create({ data });
   }
 
-  async findById(_id: string) {
-    throw new Error('Not implemented');
+  findAll() {
+    return this.prisma.fiscalYear.findMany({
+      include: { config: true },
+      orderBy: { startDate: 'desc' },
+    });
   }
 
-  async findActive() {
-    throw new Error('Not implemented');
+  findById(id: string) {
+    return this.prisma.fiscalYear.findUnique({
+      where: { id },
+      include: { config: true },
+    });
   }
 
-  async updateStatus(_id: string, _status: string) {
-    throw new Error('Not implemented');
+  findActive() {
+    return this.prisma.fiscalYear.findFirst({ where: { status: FiscalYearStatus.ACTIVE } });
   }
 
-  async findMemberships(_fiscalYearId: string) {
-    throw new Error('Not implemented');
+  findOverlapping(startDate: Date, endDate: Date) {
+    return this.prisma.fiscalYear.findFirst({
+      where: {
+        status: { in: [FiscalYearStatus.PENDING, FiscalYearStatus.ACTIVE] },
+        startDate: { lte: endDate },
+        endDate: { gte: startDate },
+      },
+    });
   }
 
-  async createMembership(_data: unknown) {
-    throw new Error('Not implemented');
+  updateStatus(
+    id: string,
+    status: FiscalYearStatus,
+    extra?: Partial<{ openedAt: Date; openedById: string; closedAt: Date; closedById: string }>,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.fiscalYear.update({ where: { id }, data: { status, ...extra } });
   }
 
-  async createShareCommitment(_data: unknown) {
-    throw new Error('Not implemented');
+  findMemberships(fiscalYearId: string) {
+    return this.prisma.membership.findMany({
+      where: { fiscalYearId },
+      include: {
+        profile: {
+          select: { id: true, memberCode: true, firstName: true, lastName: true, phone1: true },
+        },
+        shareCommitment: true,
+      },
+      orderBy: { joinedAt: 'asc' },
+    });
+  }
+
+  findMembership(fiscalYearId: string, profileId: string) {
+    return this.prisma.membership.findUnique({
+      where: { profileId_fiscalYearId: { profileId, fiscalYearId } },
+    });
+  }
+
+  createMembership(
+    data: Prisma.MembershipUncheckedCreateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.membership.create({ data });
+  }
+
+  createShareCommitment(
+    data: Prisma.ShareCommitmentUncheckedCreateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.shareCommitment.create({ data });
+  }
+
+  createMonthlySessions(
+    sessions: Prisma.MonthlySessionUncheckedCreateInput[],
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.monthlySession.createMany({ data: sessions });
+  }
+
+  createRescueFundLedger(
+    data: Prisma.RescueFundLedgerUncheckedCreateInput,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.rescueFundLedger.create({ data });
+  }
+
+  createBeneficiarySchedule(
+    data: Prisma.BeneficiaryScheduleUncheckedCreateInput,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.beneficiarySchedule.create({ data });
+  }
+
+  createSavingsLedger(
+    data: Prisma.SavingsLedgerUncheckedCreateInput,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.savingsLedger.create({ data });
+  }
+
+  createRescueFundPosition(
+    data: Prisma.RescueFundPositionUncheckedCreateInput,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.rescueFundPosition.create({ data });
+  }
+
+  findActiveMemberships(fiscalYearId: string, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    return client.membership.findMany({ where: { fiscalYearId, status: 'ACTIVE' } });
+  }
+
+  findRescueFundLedger(fiscalYearId: string) {
+    return this.prisma.rescueFundLedger.findUnique({ where: { fiscalYearId } });
+  }
+
+  updateRescueFundLedger(
+    id: string,
+    data: Prisma.RescueFundLedgerUpdateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.rescueFundLedger.update({ where: { id }, data });
   }
 }

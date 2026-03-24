@@ -1,38 +1,35 @@
 import apiClient from './client';
-import type { Session, Transaction, PaginatedResponse } from '@/types/api.types';
+import type { MonthlySession, SessionEntry } from '@/types/api.types';
+import type { TransactionType } from '@/types/domain.types';
 
-export interface CreateSessionPayload {
-  month: number;
-  year: number;
-  date: string;
-}
-
-export interface CreateTransactionPayload {
-  memberId: string;
-  type: 'EPARGNE' | 'TONTINE' | 'INTERET' | 'SECOURS' | 'PRET_REMBOURSEMENT';
+export interface RecordEntryPayload {
+  membershipId: string;
+  type: TransactionType;
   amount: number;
-  note?: string;
+  loanId?: string;
+  isOutOfSession?: boolean;
+  outOfSessionRef?: string;
+  notes?: string;
 }
 
 export const sessionsApi = {
-  getAll: (params?: { page?: number; limit?: number }) =>
+  getByFiscalYear: (fiscalYearId: string) =>
     apiClient
-      .get<PaginatedResponse<Session>>('/sessions', { params })
+      .get<MonthlySession[]>(`/fiscal-years/${fiscalYearId}/sessions`)
       .then((r) => r.data),
 
   getById: (id: string) =>
-    apiClient.get<Session>(`/sessions/${id}`).then((r) => r.data),
+    apiClient.get<MonthlySession>(`/sessions/${id}`).then((r) => r.data),
 
-  create: (payload: CreateSessionPayload) =>
-    apiClient.post<Session>('/sessions', payload).then((r) => r.data),
+  open: (id: string) =>
+    apiClient.post<MonthlySession>(`/sessions/${id}/open`).then((r) => r.data),
 
-  addTransaction: (sessionId: string, payload: CreateTransactionPayload) =>
-    apiClient
-      .post<Transaction>(`/sessions/${sessionId}/transactions`, payload)
-      .then((r) => r.data),
+  recordEntry: (id: string, payload: RecordEntryPayload) =>
+    apiClient.post<SessionEntry>(`/sessions/${id}/entries`, payload).then((r) => r.data),
 
-  getTransactions: (sessionId: string) =>
-    apiClient
-      .get<Transaction[]>(`/sessions/${sessionId}/transactions`)
-      .then((r) => r.data),
+  closeForReview: (id: string) =>
+    apiClient.post<MonthlySession>(`/sessions/${id}/close-review`).then((r) => r.data),
+
+  validateAndClose: (id: string) =>
+    apiClient.post<MonthlySession>(`/sessions/${id}/validate`).then((r) => r.data),
 };

@@ -10,6 +10,7 @@ export class UserRepository {
     return this.prisma.user.findFirst({
       where: {
         OR: [{ username: identifier }, { phone: identifier }],
+        deletedAt: null,
       },
     });
   }
@@ -28,5 +29,9 @@ export class UserRepository {
   async exists(id: string): Promise<boolean> {
     const count = await this.prisma.user.count({ where: { id } });
     return count > 0;
+  }
+
+  async updatePassword(id: string, passwordHash: string): Promise<void> {
+    await this.prisma.user.update({ where: { id }, data: { passwordHash } });
   }
 }

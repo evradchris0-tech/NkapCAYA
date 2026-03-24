@@ -1,31 +1,57 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
+import { Prisma, RescueEventType } from '@prisma/client';
 
 @Injectable()
 export class RescueFundRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findGlobalLedger() {
-    throw new Error('Not implemented');
+  findLedgerByFiscalYear(fiscalYearId: string) {
+    return this.prisma.rescueFundLedger.findUnique({
+      where: { fiscalYearId },
+      include: {
+        events: { orderBy: { eventDate: 'desc' } },
+        positions: { include: { membership: { include: { profile: true } } } },
+      },
+    });
   }
 
-  async createEvent(_data: unknown) {
-    throw new Error('Not implemented');
+  findEventsByFiscalYear(fiscalYearId: string) {
+    return this.prisma.rescueFundEvent.findMany({
+      where: { ledger: { fiscalYearId } },
+      orderBy: { eventDate: 'desc' },
+    });
   }
 
-  async findEvents(_fiscalYearId?: string) {
-    throw new Error('Not implemented');
+  findRescueEventAmount(eventType: RescueEventType) {
+    return this.prisma.rescueEventAmount.findUnique({ where: { eventType } });
   }
 
-  async findPositionByMembership(_membershipId: string) {
-    throw new Error('Not implemented');
+  findPositionByMembership(membershipId: string, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    return client.rescueFundPosition.findUnique({ where: { membershipId } });
   }
 
-  async upsertPosition(_data: unknown) {
-    throw new Error('Not implemented');
+  createEvent(data: Prisma.RescueFundEventUncheckedCreateInput, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    return client.rescueFundEvent.create({ data });
   }
 
-  async updateLedgerBalance(_delta: number) {
-    throw new Error('Not implemented');
+  updateLedger(
+    fiscalYearId: string,
+    data: Prisma.RescueFundLedgerUpdateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.rescueFundLedger.update({ where: { fiscalYearId }, data });
+  }
+
+  updatePosition(
+    membershipId: string,
+    data: Prisma.RescueFundPositionUpdateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.rescueFundPosition.update({ where: { membershipId }, data });
   }
 }

@@ -13,9 +13,9 @@ class LoanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(loan.status);
-    final progressValue = loan.amount > 0
-        ? (loan.amount - loan.remainingBalance) / loan.amount
-        : 0.0;
+    final repaidAmount = loan.principalAmount - loan.outstandingBalance;
+    final progressValue =
+        loan.principalAmount > 0 ? repaidAmount / loan.principalAmount : 0.0;
 
     return Card(
       child: InkWell(
@@ -30,7 +30,7 @@ class LoanCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    CurrencyFormatter.format(loan.amount),
+                    CurrencyFormatter.format(loan.principalAmount),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -40,10 +40,10 @@ class LoanCard extends StatelessWidget {
                   _StatusBadge(status: loan.status, color: statusColor),
                 ],
               ),
-              if (loan.purpose != null) ...[
+              if (loan.requestNotes != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  loan.purpose!,
+                  loan.requestNotes!,
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
@@ -54,21 +54,15 @@ class LoanCard extends StatelessWidget {
               Row(
                 children: [
                   _InfoChip(
-                    label: 'Durée',
-                    value: '${loan.durationMonths} mois',
+                    label: 'Taux mensuel',
+                    value:
+                        '${(loan.monthlyRate * 100).toStringAsFixed(0)}%',
                   ),
                   const SizedBox(width: 16),
                   _InfoChip(
-                    label: 'Taux',
-                    value: '${(loan.interestRate * 100).toStringAsFixed(0)}%',
+                    label: 'Échéance',
+                    value: DateFormatter.formatShort(loan.dueBeforeDate),
                   ),
-                  if (loan.dueDate != null) ...[
-                    const SizedBox(width: 16),
-                    _InfoChip(
-                      label: 'Échéance',
-                      value: DateFormatter.formatShort(loan.dueDate!),
-                    ),
-                  ],
                 ],
               ),
               if (loan.isActive) ...[
@@ -77,7 +71,7 @@ class LoanCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Restant : ${CurrencyFormatter.format(loan.remainingBalance)}',
+                      'Restant : ${CurrencyFormatter.format(loan.outstandingBalance)}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
@@ -112,16 +106,10 @@ class LoanCard extends StatelessWidget {
     switch (status) {
       case LoanStatus.active:
         return AppColors.cayaBlue;
-      case LoanStatus.approved:
-        return AppColors.success;
       case LoanStatus.pending:
         return AppColors.warning;
-      case LoanStatus.repaid:
+      case LoanStatus.closed:
         return AppColors.grey500;
-      case LoanStatus.rejected:
-        return AppColors.error;
-      case LoanStatus.overdue:
-        return AppColors.error;
     }
   }
 }
@@ -155,16 +143,10 @@ class _StatusBadge extends StatelessWidget {
     switch (status) {
       case LoanStatus.pending:
         return 'En attente';
-      case LoanStatus.approved:
-        return 'Approuvé';
       case LoanStatus.active:
         return 'En cours';
-      case LoanStatus.repaid:
+      case LoanStatus.closed:
         return 'Soldé';
-      case LoanStatus.rejected:
-        return 'Refusé';
-      case LoanStatus.overdue:
-        return 'En retard';
     }
   }
 }

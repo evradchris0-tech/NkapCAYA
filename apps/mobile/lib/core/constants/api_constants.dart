@@ -1,8 +1,9 @@
 class ApiConstants {
   ApiConstants._();
 
-  static const String baseUrl = 'https://api.caya.cm/api/v1';
-  static const String wsUrl = 'wss://api.caya.cm/ws';
+  // DEV local — remplacer par https://api.caya.cm/api/v1 en production
+  static const String baseUrl = 'http://192.168.1.33:3000/api/v1';
+  static const String wsUrl = 'ws://192.168.1.33:3000/ws';
 
   // Timeouts
   static const int connectTimeoutMs = 10000;
@@ -13,25 +14,28 @@ class ApiConstants {
   static const String login = '/auth/login';
   static const String logout = '/auth/logout';
   static const String tokenRefresh = '/auth/refresh';
-  static const String myProfile = '/auth/me';
+  static const String authMe = '/auth/me';
 
   // Member endpoints
   static const String membersList = '/members';
+  static const String memberProfile = '/members/me'; // résolu depuis JWT
+  static String memberMemberships(String profileId) =>
+      '/members/$profileId/memberships';
 
   // Savings endpoints
-  static const String savingsBalance = '/savings/balance';
-  static const String savingsTransactions = '/savings/transactions';
-  static const String savingsDeposit = '/savings/deposit';
-  static const String savingsWithdrawal = '/savings/withdrawal';
+  static String savings(String membershipId) => '/savings/$membershipId';
 
   // Loans endpoints
-  static const String myLoans = '/loans/my-loans';
+  static const String loans = '/loans'; // GET ?membershipId=X
   static const String loanRequest = '/loans/request';
-  static const String loanRepayment = '/loans/repayment';
+  static String loanRepay(String loanId) => '/loans/$loanId/repay';
+  static String loanDisburse(String loanId) => '/loans/$loanId/disburse';
 
   // Rescue fund endpoints
-  static const String rescueFundBalance = '/rescue-fund/balance';
-  static const String rescueFundContributions = '/rescue-fund/contributions';
+  static const String rescueFund = '/rescue-fund';
+  static const String rescueFundEvents = '/rescue-fund/events';
+  static String rescueFundPosition(String membershipId) =>
+      '/rescue-fund/positions/$membershipId';
 
   // Storage keys
   static const String accessTokenKey = 'caya_access_token';

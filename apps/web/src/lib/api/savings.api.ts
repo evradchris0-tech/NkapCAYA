@@ -1,15 +1,14 @@
 import apiClient from './client';
-import type { SavingsSummary, InterestEntry } from '@/types/api.types';
+import type { SavingsLedger } from '@/types/api.types';
 
 export const savingsApi = {
-  getSummary: () =>
-    apiClient.get<SavingsSummary>('/savings/summary').then((r) => r.data),
-
-  getMemberSavings: (memberId: string) =>
-    apiClient.get<SavingsSummary>(`/savings/members/${memberId}`).then((r) => r.data),
-
-  getInterestHistory: (params?: { memberId?: string; year?: number }) =>
+  getByMembership: (membershipId: string) =>
     apiClient
-      .get<InterestEntry[]>('/savings/interests', { params })
+      .get<SavingsLedger>(`/savings/${membershipId}`)
+      .then((r) => r.data),
+
+  getFiscalYearBalances: (fiscalYearId: string) =>
+    apiClient
+      .get<SavingsLedger[]>(`/fiscal-years/${fiscalYearId}/savings`)
       .then((r) => r.data),
 };

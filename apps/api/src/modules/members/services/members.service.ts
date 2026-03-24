@@ -11,6 +11,8 @@ import { CreateMemberDto } from '../dto/create-member.dto';
 import { UpdateMemberDto } from '../dto/update-member.dto';
 import { EmergencyContactDto } from '../dto/emergency-contact.dto';
 import { NotificationsService } from '../../notifications/services/notifications.service';
+import { FilterMembersDto } from '../dto/filter-members.dto';
+import { PaginatedResult, paginate } from '@common/interfaces/paginated-result.interface';
 
 const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 function generateCode(length = 6): string {
@@ -113,8 +115,11 @@ export class MembersService {
     };
   }
 
-  async findAll(): Promise<MemberProfileSummary[]> {
-    return this.membersRepository.findAll();
+  async findAll(filters: FilterMembersDto): Promise<PaginatedResult<MemberProfileSummary>> {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
+    const { data, total } = await this.membersRepository.findAll({ ...filters, page, limit });
+    return paginate(data, total, page, limit);
   }
 
   async findById(id: string): Promise<MemberProfileWithUser> {
@@ -171,15 +176,35 @@ export class MembersService {
 
   async deactivate(id: string): Promise<void> {
     const profile = await this.findById(id);
-    await this.prisma.user.update({
-      where: { id: profile.user.id },
-      data: { isActive: false },
-    });
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: profile.user.id },
+        data: { isActive: false, deletedAt: new Date() },
+      }),
+      this.prisma.memberProfile.update({
+        where: { id: profile.id },
+        data: { deletedAt: new Date() },
+      })
+    ]);
   }
 
   async getMemberships(id: string) {
     await this.findById(id); // throws 404 si absent
     return this.membersRepository.findMembershipsByProfileId(id);
+  }
+
+  async findByUserId(userId: string): Promise<MemberProfileWithUser> {
+    const profile = await this.prisma.memberProfile.findUnique({
+      where: { userId },
+      include: {
+        user: { select: { id: true, username: true, phone: true, role: true, isActive: true } },
+        emergencyContacts: true,
+      },
+    });
+    if (!profile) {
+      throw new NotFoundException(`Profil membre introuvable pour cet utilisateur`);
+    }
+    return profile as MemberProfileWithUser;
   }
 
   async addEmergencyContact(id: string, dto: EmergencyContactDto) {
@@ -198,6 +223,52 @@ export class MembersService {
 
   async removeEmergencyContact(contactId: string): Promise<void> {
     await this.membersRepository.deleteEmergencyContact(contactId);
+  }
+
+  async reactivate(id: string): Promise<void> {
+    // Cannot use findById() because it filters out deleted items!
+    // We fetch without deletedAt filter
+    const profile = await this.prisma.memberProfile.findUnique({
+       where: { id },
+       include: { user: true }
+    });
+    if (!profile) throw new NotFoundException('Membre introuvable');
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: profile.user.id },
+        data: { isActive: true, deletedAt: null },
+      }),
+      this.prisma.memberProfile.update({
+        where: { id: profile.id },
+        data: { deletedAt: null },
+      })
+    ]);
+  }
+
+  async resetPassword(id: string): Promise<void> {
+    const profile = await this.findById(id);
+    const temporaryPassword = `Caya@${profile.memberCode}`;
+    const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+    
+    await this.prisma.user.update({
+      where: { id: profile.user.id },
+      data: { passwordHash },
+    });
+
+    await this.notificationsService.sendCredentialsSms(profile.phone1, {
+      firstName: profile.firstName,
+      memberCode: profile.memberCode,
+      username: profile.user.username,
+      temporaryPassword,
+    });
+  }
+
+  async changeRole(id: string, role: string): Promise<void> {
+    const profile = await this.findById(id);
+    await this.prisma.user.update({
+      where: { id: profile.user.id },
+      data: { role: role as import('@prisma/client').BureauRole },
+    });
   }
 
   // ── Helpers privés ────────────────────────────────────────────────────────

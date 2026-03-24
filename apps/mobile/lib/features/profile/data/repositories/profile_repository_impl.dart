@@ -1,4 +1,5 @@
 import '../../domain/entities/member_entity.dart';
+import '../../domain/entities/membership_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../datasources/profile_remote_datasource.dart';
 
@@ -13,10 +14,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<MemberEntity> updateProfile({String? phone, String? address}) {
-    final data = <String, dynamic>{};
-    if (phone != null) data['phone'] = phone;
-    if (address != null) data['address'] = address;
-    return _remoteDataSource.updateProfile(data);
+  Future<List<MembershipEntity>> getMemberships(String profileId) {
+    return _remoteDataSource.getMemberships(profileId);
   }
 }

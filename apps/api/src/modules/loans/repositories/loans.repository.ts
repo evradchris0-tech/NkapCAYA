@@ -1,43 +1,121 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
+import { Prisma, LoanStatus } from '@prisma/client';
 
 @Injectable()
 export class LoansRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(_data: unknown) {
-    throw new Error('Not implemented');
+  create(data: Prisma.LoanAccountUncheckedCreateInput, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    return client.loanAccount.create({ data });
   }
 
-  async findById(_id: string) {
-    throw new Error('Not implemented');
+  findById(id: string) {
+    return this.prisma.loanAccount.findUnique({
+      where: { id },
+      include: {
+        monthlyAccruals: { orderBy: { month: 'asc' } },
+        repayments: { orderBy: { recordedAt: 'asc' } },
+        membership: { include: { profile: true } },
+      },
+    });
   }
 
-  async findByMembership(_membershipId: string) {
-    throw new Error('Not implemented');
+  findByFiscalYear(fiscalYearId: string) {
+    return this.prisma.loanAccount.findMany({
+      where: { fiscalYearId },
+      include: { membership: { include: { profile: true } } },
+      orderBy: { requestedAt: 'asc' },
+    });
   }
 
-  async updateStatus(_id: string, _status: string) {
-    throw new Error('Not implemented');
+  findByMembership(membershipId: string) {
+    return this.prisma.loanAccount.findMany({
+      where: { membershipId },
+      orderBy: { requestedAt: 'asc' },
+    });
   }
 
-  async updateBalance(_id: string, _data: unknown) {
-    throw new Error('Not implemented');
+  countActiveLoans(membershipId: string, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    return client.loanAccount.count({
+      where: { membershipId, status: { in: [LoanStatus.ACTIVE, LoanStatus.PARTIALLY_REPAID] } },
+    });
   }
 
-  async createRepayment(_data: unknown) {
-    throw new Error('Not implemented');
+  updateStatus(
+    id: string,
+    status: LoanStatus,
+    extra?: Partial<{ disbursedAt: Date; disbursedById: string }>,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.loanAccount.update({ where: { id }, data: { status, ...extra } });
   }
 
-  async createMonthlyAccrual(_data: unknown) {
-    throw new Error('Not implemented');
+  updateBalance(
+    id: string,
+    data: Prisma.LoanAccountUpdateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.loanAccount.update({ where: { id }, data });
   }
 
-  async findActiveLoans() {
-    throw new Error('Not implemented');
+  createRepayment(data: Prisma.LoanRepaymentUncheckedCreateInput, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    return client.loanRepayment.create({ data });
   }
 
-  async createCarryoverRecord(_data: unknown) {
-    throw new Error('Not implemented');
+  createMonthlyAccrual(
+    data: Prisma.MonthlyLoanAccrualUncheckedCreateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.monthlyLoanAccrual.create({ data });
+  }
+
+  findLatestAccrual(loanId: string, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    return client.monthlyLoanAccrual.findFirst({
+      where: { loanId },
+      orderBy: { month: 'desc' },
+    });
+  }
+
+  findAccrualBySession(loanId: string, sessionId: string, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    return client.monthlyLoanAccrual.findUnique({
+      where: { loanId_sessionId: { loanId, sessionId } },
+    });
+  }
+
+  updateAccrual(
+    id: string,
+    data: Prisma.MonthlyLoanAccrualUpdateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.monthlyLoanAccrual.update({ where: { id }, data });
+  }
+
+  findActiveLoansForFiscalYear(fiscalYearId: string, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    return client.loanAccount.findMany({
+      where: {
+        fiscalYearId,
+        status: { in: [LoanStatus.ACTIVE, LoanStatus.PARTIALLY_REPAID] },
+      },
+      orderBy: { requestedAt: 'asc' },
+    });
+  }
+
+  createCarryoverRecord(
+    data: Prisma.CarryoverLoanRecordUncheckedCreateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.carryoverLoanRecord.create({ data });
   }
 }

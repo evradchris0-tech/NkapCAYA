@@ -24,12 +24,15 @@ const memberSchema = z.object({
 type MemberFormValues = z.infer<typeof memberSchema>;
 
 interface MemberFormProps {
+  memberId?: string;
   defaultValues?: Partial<MemberFormValues>;
   onSuccess?: () => void;
 }
 
-export default function MemberForm({ defaultValues, onSuccess }: MemberFormProps) {
+export default function MemberForm({ memberId, defaultValues, onSuccess }: MemberFormProps) {
   const router = useRouter();
+  const isEdit = Boolean(memberId);
+
   const {
     register,
     handleSubmit,
@@ -41,20 +44,32 @@ export default function MemberForm({ defaultValues, onSuccess }: MemberFormProps
   });
 
   const onSubmit = async (data: MemberFormValues) => {
+    const payload = {
+      ...data,
+      phone2: data.phone2 || undefined,
+      locationDetail: data.locationDetail || undefined,
+      mobileMoneyType: data.mobileMoneyType || undefined,
+      mobileMoneyNumber: data.mobileMoneyNumber || undefined,
+      sponsorId: data.sponsorId || undefined,
+      username: data.username || undefined,
+    };
+
     try {
-      await membersApi.create({
-        ...data,
-        phone2: data.phone2 || undefined,
-        locationDetail: data.locationDetail || undefined,
-        mobileMoneyType: data.mobileMoneyType || undefined,
-        mobileMoneyNumber: data.mobileMoneyNumber || undefined,
-        sponsorId: data.sponsorId || undefined,
-        username: data.username || undefined,
-      });
-      onSuccess?.();
-      router.push('/members');
+      if (isEdit && memberId) {
+        await membersApi.update(memberId, payload);
+        onSuccess?.();
+        router.push(`/members/${memberId}`);
+      } else {
+        await membersApi.create(payload);
+        onSuccess?.();
+        router.push('/members');
+      }
     } catch {
-      setError('root', { message: 'Erreur lors de la création du membre.' });
+      setError('root', {
+        message: isEdit
+          ? 'Erreur lors de la mise à jour du membre.'
+          : 'Erreur lors de la création du membre.',
+      });
     }
   };
 
@@ -120,20 +135,27 @@ export default function MemberForm({ defaultValues, onSuccess }: MemberFormProps
         />
       </div>
 
-      <Input
-        label="Username (optionnel)"
-        placeholder="jdupont"
-        {...register('username')}
-        error={errors.username?.message}
-      />
+      {!isEdit && (
+        <Input
+          label="Username (optionnel)"
+          placeholder="jdupont"
+          {...register('username')}
+          error={errors.username?.message}
+        />
+      )}
 
       {errors.root && (
         <p className="text-red-500 text-sm">{errors.root.message}</p>
       )}
 
-      <Button type="submit" isLoading={isSubmitting} className="w-full">
-        Enregistrer le membre
-      </Button>
+      <div className="flex gap-3">
+        <Button type="button" variant="secondary" onClick={() => router.back()}>
+          Annuler
+        </Button>
+        <Button type="submit" isLoading={isSubmitting} className="flex-1">
+          {isEdit ? 'Enregistrer les modifications' : 'Enregistrer le membre'}
+        </Button>
+      </div>
     </form>
   );
 }
