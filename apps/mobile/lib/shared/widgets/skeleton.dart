@@ -48,12 +48,10 @@ class _SkeletonBoxState extends State<SkeletonBox>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark
-        ? const Color(0xFF2C2C2E)
-        : const Color(0xFFE0E0E0);
-    final highlightColor = isDark
-        ? const Color(0xFF3A3A3C)
-        : const Color(0xFFF5F5F5);
+    final baseColor =
+        isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE0E0E0);
+    final highlightColor =
+        isDark ? const Color(0xFF3A3A3C) : const Color(0xFFF5F5F5);
 
     return AnimatedBuilder(
       animation: _shimmer,
@@ -90,7 +88,7 @@ class SkeletonCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -128,7 +126,8 @@ class SkeletonListTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SkeletonBox(width: double.infinity, height: 14, borderRadius: 6),
+                const SkeletonBox(
+                    width: double.infinity, height: 14, borderRadius: 6),
                 const SizedBox(height: 8),
                 SkeletonBox(
                   width: MediaQuery.of(context).size.width * 0.5,

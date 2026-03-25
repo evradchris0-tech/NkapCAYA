@@ -161,8 +161,8 @@ Widget _slideUpTransition(
   Widget child,
 ) {
   return SlideTransition(
-    position: Tween(begin: const Offset(0, 1), end: Offset.zero)
-        .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+    position: Tween(begin: const Offset(0, 1), end: Offset.zero).animate(
+        CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
     child: child,
   );
 }
@@ -175,8 +175,8 @@ Widget slideHorizontalTransition(
   Widget child,
 ) {
   return SlideTransition(
-    position: Tween(begin: const Offset(1, 0), end: Offset.zero)
-        .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+    position: Tween(begin: const Offset(1, 0), end: Offset.zero).animate(
+        CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
     child: child,
   );
 }

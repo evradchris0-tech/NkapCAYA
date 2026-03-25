@@ -66,7 +66,8 @@ class RescueFundBalance extends StatelessWidget {
               ),
               child: Text(
                 'Dette de renflouement : ${refillDebt.toStringAsFixed(0)} XAF',
-                style: const TextStyle(color: Colors.orangeAccent, fontSize: 12),
+                style:
+                    const TextStyle(color: Colors.orangeAccent, fontSize: 12),
               ),
             ),
           ],

@@ -10,7 +10,8 @@ class AppTheme {
   // ---------------------------------------------------------------------------
   static TextTheme _buildTextTheme({required bool dark}) {
     final onSurface = dark ? AppColors.darkTextPrimary : AppColors.textPrimary;
-    final secondary = dark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final secondary =
+        dark ? AppColors.darkTextSecondary : AppColors.textSecondary;
 
     return TextTheme(
       displayLarge: GoogleFonts.montserrat(
@@ -240,7 +241,8 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.cayaBlueLight, width: 2),
+          borderSide:
+              const BorderSide(color: AppColors.cayaBlueLight, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

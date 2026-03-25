@@ -55,8 +55,7 @@ class LoanCard extends StatelessWidget {
                 children: [
                   _InfoChip(
                     label: 'Taux mensuel',
-                    value:
-                        '${(loan.monthlyRate * 100).toStringAsFixed(0)}%',
+                    value: '${(loan.monthlyRate * 100).toStringAsFixed(0)}%',
                   ),
                   const SizedBox(width: 16),
                   _InfoChip(

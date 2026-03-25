@@ -19,7 +19,7 @@ class SavingsModel extends SavingsEntity {
           double.tryParse(json['principalBalance']?.toString() ?? '0') ?? 0,
       totalInterestReceived:
           double.tryParse(json['totalInterestReceived']?.toString() ?? '0') ??
-          0,
+              0,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
   }

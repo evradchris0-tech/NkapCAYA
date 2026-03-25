@@ -6,10 +6,10 @@ import '../../core/theme/app_colors.dart';
 /// StreamProvider qui émet true si le device est connecté, false sinon.
 final isOnlineProvider = StreamProvider<bool>((ref) {
   return Connectivity().onConnectivityChanged.map(
-    (results) => results.any(
-      (r) => r != ConnectivityResult.none,
-    ),
-  );
+        (results) => results.any(
+          (r) => r != ConnectivityResult.none,
+        ),
+      );
 });
 
 /// Bandeau qui s'affiche en bas de l'écran quand le device est hors ligne.

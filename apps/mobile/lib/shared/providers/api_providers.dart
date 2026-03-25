@@ -16,7 +16,8 @@ final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
 final apiClientProvider = Provider<ApiClient>((ref) {
   final storage = ref.watch(secureStorageProvider);
   final tontine = ref.watch(tontineProvider);
-  final baseUrl =
-      tontine?.baseUrl ?? dotenv.env['API_BASE_URL'] ?? 'http://192.168.1.33:3000/api/v1';
+  final baseUrl = tontine?.baseUrl ??
+      dotenv.env['API_BASE_URL'] ??
+      'http://192.168.1.33:3000/api/v1';
   return ApiClient(baseUrl: baseUrl, storage: storage);
 });

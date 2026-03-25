@@ -35,12 +35,13 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
   /// Convertit un [AppFailure] en message lisible, avec switch exhaustif.
   String _errorMessage(AppFailure failure) => switch (failure) {
-        NetworkFailure()      => 'Pas de connexion réseau. Vérifiez votre connexion.',
+        NetworkFailure() =>
+          'Pas de connexion réseau. Vérifiez votre connexion.',
         UnauthorizedFailure() => 'Identifiant ou mot de passe incorrect.',
-        ValidationFailure()   => 'Données invalides. Vérifiez vos informations.',
-        ServerFailure()       => 'Erreur serveur. Réessayez dans un moment.',
-        NotFoundFailure()     => 'Compte introuvable.',
-        CacheFailure()        => 'Erreur locale. Réessayez.',
+        ValidationFailure() => 'Données invalides. Vérifiez vos informations.',
+        ServerFailure() => 'Erreur serveur. Réessayez dans un moment.',
+        NotFoundFailure() => 'Compte introuvable.',
+        CacheFailure() => 'Erreur locale. Réessayez.',
         UnknownFailure(message: final m) => m,
       };
 
@@ -70,12 +71,14 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.error_outline, color: Colors.red.shade700, size: 18),
+                  Icon(Icons.error_outline,
+                      color: Colors.red.shade700, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       errorMessage,
-                      style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                      style:
+                          TextStyle(color: Colors.red.shade700, fontSize: 13),
                     ),
                   ),
                 ],

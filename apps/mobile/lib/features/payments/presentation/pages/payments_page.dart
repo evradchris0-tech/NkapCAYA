@@ -187,7 +187,7 @@ class _MobileMoneyTabState extends State<_MobileMoneyTab> {
                     Text(
                       'Intégration API en cours',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: provider.brandTextColor.withValues(alpha:0.75),
+                        color: provider.brandTextColor.withValues(alpha: 0.75),
                       ),
                     ),
                   ],
@@ -279,9 +279,7 @@ class _MobileMoneyTabState extends State<_MobileMoneyTab> {
                               )
                             : const Icon(Icons.send_rounded),
                         label: Text(
-                          _isLoading
-                              ? 'Traitement…'
-                              : 'Confirmer le paiement',
+                          _isLoading ? 'Traitement…' : 'Confirmer le paiement',
                         ),
                       ),
                     ),
@@ -309,7 +307,7 @@ class _MobileMoneyTabState extends State<_MobileMoneyTab> {
                 child: Text(
                   'Aucun paiement enregistré',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha:0.45),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
                   ),
                 ),
               ),
@@ -353,19 +351,21 @@ class _PaymentTile extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.success.withValues(alpha:0.12),
+            color: AppColors.success.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.check_circle_outline, color: AppColors.success, size: 20),
+          child: const Icon(Icons.check_circle_outline,
+              color: AppColors.success, size: 20),
         ),
         title: Text(
           CurrencyFormatter.format(item.amount.toDouble()),
-          style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          style:
+              theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
           'Réf : ${item.reference}',
           style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha:0.55),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
           ),
         ),
         trailing: Text(

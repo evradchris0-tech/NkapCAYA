@@ -48,8 +48,9 @@ class AuthNotifierState {
   }
 
   bool get isLoading => result is AsyncLoading<UserEntity>;
-  UserEntity? get user =>
-      result is AsyncSuccess<UserEntity> ? (result as AsyncSuccess<UserEntity>).data : null;
+  UserEntity? get user => result is AsyncSuccess<UserEntity>
+      ? (result as AsyncSuccess<UserEntity>).data
+      : null;
 }
 
 // ---------------------------------------------------------------------------

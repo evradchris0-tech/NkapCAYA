@@ -16,11 +16,9 @@ class RescueFundPositionModel extends RescueFundPositionEntity {
       id: json['id'] as String,
       membershipId: json['membershipId'] as String,
       fiscalYearId: json['fiscalYearId'] as String,
-      paidAmount:
-          double.tryParse(json['paidAmount']?.toString() ?? '0') ?? 0,
+      paidAmount: double.tryParse(json['paidAmount']?.toString() ?? '0') ?? 0,
       balance: double.tryParse(json['balance']?.toString() ?? '0') ?? 0,
-      refillDebt:
-          double.tryParse(json['refillDebt']?.toString() ?? '0') ?? 0,
+      refillDebt: double.tryParse(json['refillDebt']?.toString() ?? '0') ?? 0,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
   }

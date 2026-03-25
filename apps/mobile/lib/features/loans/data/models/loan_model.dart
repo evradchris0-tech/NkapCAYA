@@ -35,8 +35,7 @@ class LoanModel extends LoanEntity {
       dueBeforeDate: DateTime.parse(json['dueBeforeDate'] as String),
       totalInterestAccrued:
           double.tryParse(json['totalInterestAccrued']?.toString() ?? '0') ?? 0,
-      totalRepaid:
-          double.tryParse(json['totalRepaid']?.toString() ?? '0') ?? 0,
+      totalRepaid: double.tryParse(json['totalRepaid']?.toString() ?? '0') ?? 0,
       requestNotes: json['requestNotes'] as String?,
     );
   }

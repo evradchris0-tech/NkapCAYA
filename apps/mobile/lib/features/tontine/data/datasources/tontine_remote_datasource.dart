@@ -33,7 +33,8 @@ class TontineRemoteDataSourceImpl implements TontineRemoteDataSource {
         dotenv.env['API_BASE_URL'] ?? 'http://192.168.1.33:3000/api/v1';
     final dio = _buildPublicDio(discoveryUrl);
 
-    final response = await dio.get<Map<String, dynamic>>('/public/tontine-info');
+    final response =
+        await dio.get<Map<String, dynamic>>('/public/tontine-info');
     final data = response.data!;
     return [TontineEntity.fromJson(data)];
   }

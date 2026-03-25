@@ -62,11 +62,11 @@ final class UnknownFailure extends AppFailure {
 
 /// Convertit un [AppFailure] en message lisible par l'utilisateur.
 String failureMessage(AppFailure failure) => switch (failure) {
-      NetworkFailure(message: final m)      => m,
+      NetworkFailure(message: final m) => m,
       UnauthorizedFailure(message: final m) => m,
-      ValidationFailure(message: final m)   => m,
-      ServerFailure(message: final m)       => m,
-      NotFoundFailure(message: final m)     => m,
-      CacheFailure(message: final m)        => m,
-      UnknownFailure(message: final m)      => m,
+      ValidationFailure(message: final m) => m,
+      ServerFailure(message: final m) => m,
+      NotFoundFailure(message: final m) => m,
+      CacheFailure(message: final m) => m,
+      UnknownFailure(message: final m) => m,
     };
