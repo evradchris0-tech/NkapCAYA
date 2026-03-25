@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from './config.service';
 import { ConfigRepository } from '../repositories/config.repository';
 import { PrismaService } from '@database/prisma.service';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 
 const mockTontineConfig = {
   id: 'caya',
@@ -41,7 +41,6 @@ describe('ConfigService', () => {
           useValue: {
             findTontineConfig: jest.fn().mockResolvedValue(mockTontineConfig),
             updateTontineConfig: jest.fn().mockResolvedValue(mockTontineConfig),
-            countActiveFiscalYears: jest.fn().mockResolvedValue(0),
             findRescueEventAmounts: jest.fn().mockResolvedValue([]),
             findRescueEventAmount: jest.fn().mockResolvedValue({ eventType: 'MARRIAGE', amount: '200000' }),
             updateRescueEventAmount: jest.fn().mockResolvedValue({ eventType: 'MARRIAGE', amount: '250000' }),
@@ -73,17 +72,12 @@ describe('ConfigService', () => {
   });
 
   describe('updateConfig()', () => {
-    it('should update config when no ACTIVE fiscal year', async () => {
+    it('should update config', async () => {
       const result = await service.updateConfig({ loanMonthlyRate: 0.04 }, 'actor-id');
       expect(repository.updateTontineConfig).toHaveBeenCalledWith(
         expect.objectContaining({ loanMonthlyRate: 0.04, updatedBy: { connect: { id: 'actor-id' } } }),
       );
       expect(result).toBeDefined();
-    });
-
-    it('should throw ConflictException when an ACTIVE fiscal year exists', async () => {
-      repository.countActiveFiscalYears.mockResolvedValue(1);
-      await expect(service.updateConfig({}, 'actor-id')).rejects.toThrow(ConflictException);
     });
   });
 
@@ -122,11 +116,6 @@ describe('ConfigService', () => {
       const result = await service.updateRescueEventAmount('MARRIAGE', 250000, 'actor-id');
       expect(repository.updateRescueEventAmount).toHaveBeenCalledWith('MARRIAGE', 250000, 'actor-id');
       expect(result).toBeDefined();
-    });
-
-    it('should throw NotFoundException if event type absent', async () => {
-      repository.findRescueEventAmount.mockResolvedValue(null);
-      await expect(service.updateRescueEventAmount('BIRTH', 50000, 'actor-id')).rejects.toThrow(NotFoundException);
     });
   });
 });

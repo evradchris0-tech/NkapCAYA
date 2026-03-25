@@ -10,7 +10,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "lint": "eslint \"{src,test}/**/*.ts\" --fix"
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+    "seed": "ts-node -r tsconfig-paths/register ../../database/seeds/index.ts"
+  },
+  "prisma": {
+    "seed": "ts-node -r tsconfig-paths/register ../../database/seeds/index.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

@@ -13,12 +13,14 @@ import { BeneficiariesModule } from './modules/beneficiaries/beneficiaries.modul
 import { CassationModule } from './modules/cassation/cassation.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { PublicModule } from './modules/public/public.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
     // Modules métier — ordre respectant les dépendances
+    PublicModule,
     AuthModule,
     TontineConfigModule,
     MembersModule,

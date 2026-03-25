@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
 import { ConfigRepository } from '../repositories/config.repository';
 import { UpdateConfigDto } from '../dto/update-config.dto';
@@ -21,12 +21,6 @@ export class ConfigService {
   }
 
   async updateConfig(dto: UpdateConfigDto, actorId: string) {
-    const activeCount = await this.configRepository.countActiveFiscalYears();
-    if (activeCount > 0) {
-      throw new ConflictException(
-        'La configuration ne peut pas être modifiée pendant un exercice ACTIVE',
-      );
-    }
     const data: Prisma.TontineConfigUpdateInput = { ...dto, updatedBy: { connect: { id: actorId } } };
     return this.configRepository.updateTontineConfig(data);
   }

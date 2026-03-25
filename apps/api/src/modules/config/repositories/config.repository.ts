@@ -11,10 +11,9 @@ export class ConfigRepository {
   }
 
   updateTontineConfig(data: Prisma.TontineConfigUpdateInput) {
-    return this.prisma.tontineConfig.upsert({
+    return this.prisma.tontineConfig.update({
       where: { id: 'caya' },
-      create: { id: 'caya', ...(data as any) },
-      update: data,
+      data,
     });
   }
 
