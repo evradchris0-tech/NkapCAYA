@@ -49,6 +49,7 @@ jobs:
       - name: Build API
         run: pnpm --filter api build
         env:
+          NODE_ENV: production
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
           JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.STAGING_JWT_REFRESH_SECRET }}
@@ -56,6 +57,7 @@ jobs:
       - name: Run Migrations
         run: pnpm exec prisma migrate deploy --schema=database/schema.prisma
         env:
+          NODE_ENV: production
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
 
       # ── Adapter selon votre hébergeur ──────────────────────────────────────
@@ -111,6 +113,7 @@ jobs:
       - name: Build API
         run: pnpm --filter api build
         env:
+          NODE_ENV: production
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
           JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.PROD_JWT_REFRESH_SECRET }}
@@ -118,6 +121,7 @@ jobs:
       - name: Run Migrations
         run: pnpm exec prisma migrate deploy --schema=database/schema.prisma
         env:
+          NODE_ENV: production
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
 
       - name: Notify
