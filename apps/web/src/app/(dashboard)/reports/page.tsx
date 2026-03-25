@@ -39,13 +39,13 @@ export default function ReportsPage() {
     try {
       if (type === 'savings') {
         if (!savingsData?.length) return alert('Aucune donnée d\'épargne disponible.');
-        format === 'excel' ? exportSavingsToExcel(savingsData, fyLabel) : exportSavingsToPdf(savingsData, fyLabel);
+        if (format === 'excel') { exportSavingsToExcel(savingsData, fyLabel); } else { exportSavingsToPdf(savingsData, fyLabel); }
       } else if (type === 'sessions') {
         if (!sessionsData?.length) return alert('Aucune session disponible.');
-        format === 'excel' ? exportSessionsToExcel(sessionsData, fyLabel) : exportSessionsToPdf(sessionsData, fyLabel);
+        if (format === 'excel') { exportSessionsToExcel(sessionsData, fyLabel); } else { exportSessionsToPdf(sessionsData, fyLabel); }
       } else if (type === 'beneficiaries') {
         if (!beneficiariesData) return alert('Aucun tableau de bénéficiaires disponible.');
-        format === 'excel' ? exportBeneficiariesToExcel(beneficiariesData, fyLabel) : exportBeneficiariesToPdf(beneficiariesData, fyLabel);
+        if (format === 'excel') { exportBeneficiariesToExcel(beneficiariesData, fyLabel); } else { exportBeneficiariesToPdf(beneficiariesData, fyLabel); }
       }
     } finally {
       setLoading(null);

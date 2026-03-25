@@ -44,7 +44,7 @@ export default function MemberForm({ memberId, defaultValues, onSuccess }: Membe
   });
 
   /** Supprime les espaces, tirets, parenthèses et points d'un numéro */
-  const normalizePhone = (v?: string) => v ? v.replace(/[\s\-\(\)\.]/g, '') : undefined;
+  const normalizePhone = (v?: string) => v ? v.replace(/[\s\-.()]/g, '') : undefined;
 
   const onSubmit = async (data: MemberFormValues) => {
     const payload = {

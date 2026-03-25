@@ -192,7 +192,9 @@ function loadCompleted(): Set<string> {
 function saveCompleted(set: Set<string>) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...set]));
-  } catch {}
+  } catch (_e) {
+    // localStorage non disponible (mode privé, SSR)
+  }
 }
 
 export default function GuidePage() {
@@ -207,7 +209,7 @@ export default function GuidePage() {
   const toggle = (id: string) => {
     setCompleted((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       saveCompleted(next);
       return next;
     });
