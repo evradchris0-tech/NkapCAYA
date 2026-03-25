@@ -22,12 +22,18 @@ class AppConstants {
   static const String apiDateFormat = 'yyyy-MM-dd';
   static const String displayDateTimeFormat = 'dd/MM/yyyy HH:mm';
 
+  // Versioning
+  static const String appVersion = '1.0.0';
+  static const int buildNumber = 1;
+
   // Navigation route names
   static const String routeSplash = '/';
+  static const String routeTontineSearch = '/tontine-search';
   static const String routeLogin = '/login';
   static const String routeDashboard = '/dashboard';
   static const String routeSavings = '/savings';
   static const String routeLoans = '/loans';
+  static const String routePayments = '/payments';
   static const String routeRescueFund = '/rescue-fund';
   static const String routeProfile = '/profile';
 }

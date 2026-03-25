@@ -1,3 +1,5 @@
+import '../../../../core/errors/exceptions.dart';
+import '../../../../core/errors/failures.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
@@ -12,16 +14,35 @@ class AuthRepositoryImpl implements AuthRepository {
     required String identifier,
     required String password,
   }) async {
-    final result = await _remoteDataSource.login(
-      identifier: identifier,
-      password: password,
-    );
-    return result.user;
+    try {
+      final result = await _remoteDataSource.login(
+        identifier: identifier,
+        password: password,
+      );
+      return result.user;
+    } on NetworkException catch (e) {
+      throw NetworkFailure(message: e.message);
+    } on UnauthorizedException catch (e) {
+      throw UnauthorizedFailure(message: e.message);
+    } on ValidationException catch (e) {
+      throw ValidationFailure(message: e.message, fieldErrors: e.fieldErrors);
+    } on ServerException catch (e) {
+      throw ServerFailure(
+        message: e.message,
+        statusCode: e.statusCode ?? 500,
+      );
+    } catch (e) {
+      throw UnknownFailure(message: e.toString());
+    }
   }
 
   @override
   Future<void> logout() async {
-    await _remoteDataSource.logout();
+    try {
+      await _remoteDataSource.logout();
+    } catch (_) {
+      // Logout silencieux — on efface les tokens côté client quoi qu'il arrive
+    }
   }
 
   @override

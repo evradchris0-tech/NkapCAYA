@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../features/profile/domain/entities/membership_entity.dart';
 import '../../features/profile/presentation/providers/profile_provider.dart';
 
 /// Contexte résolu pour l'utilisateur connecté : profileId + membershipId actif.

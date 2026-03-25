@@ -1,6 +1,8 @@
+import 'package:equatable/equatable.dart';
+
 enum LoanStatus { pending, active, closed }
 
-class LoanEntity {
+class LoanEntity extends Equatable {
   final String id;
   final String membershipId;
   final String fiscalYearId;
@@ -34,4 +36,53 @@ class LoanEntity {
   bool get isActive => status == LoanStatus.active;
   bool get isPending => status == LoanStatus.pending;
   bool get isClosed => status == LoanStatus.closed;
+
+  LoanEntity copyWith({
+    String? id,
+    String? membershipId,
+    String? fiscalYearId,
+    double? principalAmount,
+    double? outstandingBalance,
+    double? monthlyRate,
+    LoanStatus? status,
+    DateTime? requestedAt,
+    DateTime? disbursedAt,
+    DateTime? dueBeforeDate,
+    double? totalInterestAccrued,
+    double? totalRepaid,
+    String? requestNotes,
+  }) {
+    return LoanEntity(
+      id: id ?? this.id,
+      membershipId: membershipId ?? this.membershipId,
+      fiscalYearId: fiscalYearId ?? this.fiscalYearId,
+      principalAmount: principalAmount ?? this.principalAmount,
+      outstandingBalance: outstandingBalance ?? this.outstandingBalance,
+      monthlyRate: monthlyRate ?? this.monthlyRate,
+      status: status ?? this.status,
+      requestedAt: requestedAt ?? this.requestedAt,
+      disbursedAt: disbursedAt ?? this.disbursedAt,
+      dueBeforeDate: dueBeforeDate ?? this.dueBeforeDate,
+      totalInterestAccrued: totalInterestAccrued ?? this.totalInterestAccrued,
+      totalRepaid: totalRepaid ?? this.totalRepaid,
+      requestNotes: requestNotes ?? this.requestNotes,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        membershipId,
+        fiscalYearId,
+        principalAmount,
+        outstandingBalance,
+        monthlyRate,
+        status,
+        requestedAt,
+        disbursedAt,
+        dueBeforeDate,
+        totalInterestAccrued,
+        totalRepaid,
+        requestNotes,
+      ];
 }

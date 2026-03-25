@@ -4,6 +4,7 @@ import '../../../../shared/providers/current_membership_provider.dart';
 import '../../data/datasources/rescue_fund_remote_datasource.dart';
 import '../../data/repositories/rescue_fund_repository_impl.dart';
 import '../../domain/entities/rescue_fund_entity.dart';
+import '../../domain/repositories/rescue_fund_repository.dart';
 
 final _rescueFundRemoteDataSourceProvider =
     Provider<RescueFundRemoteDataSource>((ref) {
@@ -12,8 +13,8 @@ final _rescueFundRemoteDataSourceProvider =
   );
 });
 
-final _rescueFundRepositoryProvider =
-    Provider<RescueFundRepositoryImpl>((ref) {
+// Expose l'interface abstraite — respecte le principe d'inversion des dépendances
+final _rescueFundRepositoryProvider = Provider<RescueFundRepository>((ref) {
   return RescueFundRepositoryImpl(
     ref.watch(_rescueFundRemoteDataSourceProvider),
   );

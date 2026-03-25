@@ -46,4 +46,13 @@ class AppColors {
   static const Color textDisabled = Color(0xFFBDBDBD);
   static const Color textOnPrimary = Color(0xFFFFFFFF);
   static const Color textOnGold = Color(0xFF1A1A2E);
+
+  // ── Dark mode palette ────────────────────────────────────────────────────
+  static const Color darkBackground = Color(0xFF0F1117);
+  static const Color darkSurface = Color(0xFF1C1F26);
+  static const Color darkSurfaceVariant = Color(0xFF252830);
+  static const Color darkTextPrimary = Color(0xFFE8EAF0);
+  static const Color darkTextSecondary = Color(0xFF9BA3B2);
+  // Brand colors restent identiques en dark mode
+  // Semantic colors restent identiques (success/error/warning/info)
 }

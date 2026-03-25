@@ -7,11 +7,11 @@ class ApiClient {
   late final Dio _dio;
   final FlutterSecureStorage _storage;
 
-  ApiClient({FlutterSecureStorage? storage})
+  ApiClient({required String baseUrl, FlutterSecureStorage? storage})
       : _storage = storage ?? const FlutterSecureStorage() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: ApiConstants.baseUrl,
+        baseUrl: baseUrl,
         connectTimeout: const Duration(
           milliseconds: ApiConstants.connectTimeoutMs,
         ),
@@ -26,7 +26,7 @@ class ApiClient {
       ),
     );
     _dio.interceptors.addAll([
-      _AuthInterceptor(_storage, _dio),
+      _AuthInterceptor(_storage, _dio, baseUrl),
       LogInterceptor(requestBody: true, responseBody: true, error: true),
     ]);
   }
@@ -154,11 +154,11 @@ class _AuthInterceptor extends Interceptor {
   late final Dio _refreshDio;
   bool _isRefreshing = false;
 
-  _AuthInterceptor(this._storage, this._dio) {
+  _AuthInterceptor(this._storage, this._dio, String baseUrl) {
     // Dio séparé sans interceptor pour le refresh — évite les boucles infinies
     _refreshDio = Dio(
       BaseOptions(
-        baseUrl: ApiConstants.baseUrl,
+        baseUrl: baseUrl,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

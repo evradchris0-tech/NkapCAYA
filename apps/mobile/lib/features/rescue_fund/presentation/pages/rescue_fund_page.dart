@@ -51,7 +51,7 @@ class RescueFundPage extends ConsumerWidget {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 12),
-                      _InfoItem(
+                      const _InfoItem(
                         icon: Icons.percent,
                         color: AppColors.cayaBlue,
                         title: 'Contribution automatique',
@@ -59,7 +59,7 @@ class RescueFundPage extends ConsumerWidget {
                             'Une part fixe est versée chaque mois au fonds de secours.',
                       ),
                       const SizedBox(height: 12),
-                      _InfoItem(
+                      const _InfoItem(
                         icon: Icons.medical_services_outlined,
                         color: AppColors.success,
                         title: 'Cas éligibles',
@@ -67,7 +67,7 @@ class RescueFundPage extends ConsumerWidget {
                             'Décès, maladie grave, mariage, naissance, promotion.',
                       ),
                       const SizedBox(height: 12),
-                      _InfoItem(
+                      const _InfoItem(
                         icon: Icons.how_to_vote_outlined,
                         color: AppColors.warning,
                         title: 'Validation',

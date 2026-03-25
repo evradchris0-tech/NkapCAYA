@@ -1,4 +1,6 @@
-class SavingsEntity {
+import 'package:equatable/equatable.dart';
+
+class SavingsEntity extends Equatable {
   final String id;
   final String membershipId;
   final double balance; // principal + intérêts
@@ -14,9 +16,38 @@ class SavingsEntity {
     required this.totalInterestReceived,
     required this.updatedAt,
   });
+
+  SavingsEntity copyWith({
+    String? id,
+    String? membershipId,
+    double? balance,
+    double? principalBalance,
+    double? totalInterestReceived,
+    DateTime? updatedAt,
+  }) {
+    return SavingsEntity(
+      id: id ?? this.id,
+      membershipId: membershipId ?? this.membershipId,
+      balance: balance ?? this.balance,
+      principalBalance: principalBalance ?? this.principalBalance,
+      totalInterestReceived:
+          totalInterestReceived ?? this.totalInterestReceived,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        membershipId,
+        balance,
+        principalBalance,
+        totalInterestReceived,
+        updatedAt,
+      ];
 }
 
-class SavingsTransactionEntity {
+class SavingsTransactionEntity extends Equatable {
   final String id;
   final String type; // TransactionType Prisma (EPARGNE, INTEREST_CREDIT, …)
   final double amount;
@@ -36,4 +67,28 @@ class SavingsTransactionEntity {
   });
 
   bool get isCredit => type == 'EPARGNE' || type == 'INTEREST_CREDIT';
+
+  SavingsTransactionEntity copyWith({
+    String? id,
+    String? type,
+    double? amount,
+    double? balanceAfter,
+    String? reference,
+    String? notes,
+    DateTime? createdAt,
+  }) {
+    return SavingsTransactionEntity(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      amount: amount ?? this.amount,
+      balanceAfter: balanceAfter ?? this.balanceAfter,
+      reference: reference ?? this.reference,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  List<Object?> get props =>
+      [id, type, amount, balanceAfter, reference, notes, createdAt];
 }

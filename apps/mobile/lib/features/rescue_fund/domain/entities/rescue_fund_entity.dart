@@ -1,5 +1,7 @@
+import 'package:equatable/equatable.dart';
+
 /// Position individuelle du membre dans le fonds de secours.
-class RescueFundPositionEntity {
+class RescueFundPositionEntity extends Equatable {
   final String id;
   final String membershipId;
   final String fiscalYearId;
@@ -17,10 +19,41 @@ class RescueFundPositionEntity {
     required this.refillDebt,
     required this.updatedAt,
   });
+
+  RescueFundPositionEntity copyWith({
+    String? id,
+    String? membershipId,
+    String? fiscalYearId,
+    double? paidAmount,
+    double? balance,
+    double? refillDebt,
+    DateTime? updatedAt,
+  }) {
+    return RescueFundPositionEntity(
+      id: id ?? this.id,
+      membershipId: membershipId ?? this.membershipId,
+      fiscalYearId: fiscalYearId ?? this.fiscalYearId,
+      paidAmount: paidAmount ?? this.paidAmount,
+      balance: balance ?? this.balance,
+      refillDebt: refillDebt ?? this.refillDebt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        membershipId,
+        fiscalYearId,
+        paidAmount,
+        balance,
+        refillDebt,
+        updatedAt,
+      ];
 }
 
 /// Solde global du fonds de secours pour l'exercice.
-class RescueFundLedgerEntity {
+class RescueFundLedgerEntity extends Equatable {
   final String id;
   final String fiscalYearId;
   final double totalBalance;
@@ -36,4 +69,32 @@ class RescueFundLedgerEntity {
     required this.minimumPerMember,
     required this.targetPerMember,
   });
+
+  RescueFundLedgerEntity copyWith({
+    String? id,
+    String? fiscalYearId,
+    double? totalBalance,
+    int? memberCount,
+    double? minimumPerMember,
+    double? targetPerMember,
+  }) {
+    return RescueFundLedgerEntity(
+      id: id ?? this.id,
+      fiscalYearId: fiscalYearId ?? this.fiscalYearId,
+      totalBalance: totalBalance ?? this.totalBalance,
+      memberCount: memberCount ?? this.memberCount,
+      minimumPerMember: minimumPerMember ?? this.minimumPerMember,
+      targetPerMember: targetPerMember ?? this.targetPerMember,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        fiscalYearId,
+        totalBalance,
+        memberCount,
+        minimumPerMember,
+        targetPerMember,
+      ];
 }

@@ -4,13 +4,15 @@ import '../../../../shared/providers/current_membership_provider.dart';
 import '../../data/datasources/loans_remote_datasource.dart';
 import '../../data/repositories/loans_repository_impl.dart';
 import '../../domain/entities/loan_entity.dart';
+import '../../domain/repositories/loans_repository.dart';
 import '../../domain/usecases/get_my_loans_usecase.dart';
 
 final _loansRemoteDataSourceProvider = Provider<LoansRemoteDataSource>((ref) {
   return LoansRemoteDataSourceImpl(apiClient: ref.watch(apiClientProvider));
 });
 
-final _loansRepositoryProvider = Provider<LoansRepositoryImpl>((ref) {
+// Expose l'interface abstraite — respecte le principe d'inversion des dépendances
+final _loansRepositoryProvider = Provider<LoansRepository>((ref) {
   return LoansRepositoryImpl(ref.watch(_loansRemoteDataSourceProvider));
 });
 

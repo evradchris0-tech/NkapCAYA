@@ -1,35 +1,32 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../../../../core/network/api_client.dart';
+// AsyncLoading est défini dans notre async_result.dart ET dans flutter_riverpod.
+// On masque la version Riverpod pour éviter l'ambiguïté — StateNotifier n'en a pas besoin.
+import 'package:flutter_riverpod/flutter_riverpod.dart' hide AsyncLoading;
+import '../../../../core/errors/failures.dart';
+import '../../../../core/utils/async_result.dart';
+import '../../../../shared/providers/api_providers.dart';
 import '../../../../shared/providers/auth_provider.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/user_entity.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
 
-// --- Infrastructure providers ---
-final _storageProvider = Provider<FlutterSecureStorage>((ref) {
-  return const FlutterSecureStorage();
-});
-
-final _apiClientProvider = Provider<ApiClient>((ref) {
-  final storage = ref.watch(_storageProvider);
-  return ApiClient(storage: storage);
-});
-
+// ---------------------------------------------------------------------------
+// Infrastructure providers (réutilisent les providers partagés)
+// ---------------------------------------------------------------------------
 final _authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
   return AuthRemoteDataSourceImpl(
-    apiClient: ref.watch(_apiClientProvider),
-    storage: ref.watch(_storageProvider),
+    apiClient: ref.watch(apiClientProvider),
+    storage: ref.watch(secureStorageProvider),
   );
 });
 
-final _authRepositoryProvider = Provider<AuthRepositoryImpl>((ref) {
+// Expose l'interface abstraite — respecte le DIP
+final _authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl(ref.watch(_authRemoteDataSourceProvider));
 });
 
-// --- Use case providers ---
 final _loginUseCaseProvider = Provider<LoginUseCase>((ref) {
   return LoginUseCase(ref.watch(_authRepositoryProvider));
 });
@@ -38,33 +35,26 @@ final _logoutUseCaseProvider = Provider<LogoutUseCase>((ref) {
   return LogoutUseCase(ref.watch(_authRepositoryProvider));
 });
 
-// --- Auth notifier state ---
-enum AuthStatus { idle, loading, success, failure }
-
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
 class AuthNotifierState {
-  final AuthStatus status;
-  final UserEntity? user;
-  final String? errorMessage;
+  final AsyncResult<UserEntity> result;
 
-  const AuthNotifierState({
-    this.status = AuthStatus.idle,
-    this.user,
-    this.errorMessage,
-  });
+  const AuthNotifierState({this.result = const AsyncIdle()});
 
-  AuthNotifierState copyWith({
-    AuthStatus? status,
-    UserEntity? user,
-    String? errorMessage,
-  }) {
-    return AuthNotifierState(
-      status: status ?? this.status,
-      user: user ?? this.user,
-      errorMessage: errorMessage,
-    );
+  AuthNotifierState copyWith({AsyncResult<UserEntity>? result}) {
+    return AuthNotifierState(result: result ?? this.result);
   }
+
+  bool get isLoading => result is AsyncLoading<UserEntity>;
+  UserEntity? get user =>
+      result is AsyncSuccess<UserEntity> ? (result as AsyncSuccess<UserEntity>).data : null;
 }
 
+// ---------------------------------------------------------------------------
+// Notifier
+// ---------------------------------------------------------------------------
 class AuthNotifier extends StateNotifier<AuthNotifierState> {
   final LoginUseCase _loginUseCase;
   final LogoutUseCase _logoutUseCase;
@@ -83,17 +73,18 @@ class AuthNotifier extends StateNotifier<AuthNotifierState> {
     required String identifier,
     required String password,
   }) async {
-    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    state = state.copyWith(result: const AsyncLoading());
     try {
       final user = await _loginUseCase(
         LoginParams(identifier: identifier, password: password),
       );
       _globalAuthState.setAuthenticated(userId: user.id, role: user.role);
-      state = state.copyWith(status: AuthStatus.success, user: user);
+      state = state.copyWith(result: AsyncSuccess(user));
+    } on AppFailure catch (f) {
+      state = state.copyWith(result: AsyncFailure(f));
     } catch (e) {
       state = state.copyWith(
-        status: AuthStatus.failure,
-        errorMessage: e.toString(),
+        result: AsyncFailure(UnknownFailure(message: e.toString())),
       );
     }
   }
@@ -105,6 +96,9 @@ class AuthNotifier extends StateNotifier<AuthNotifierState> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
 final authNotifierProvider =
     StateNotifierProvider<AuthNotifier, AuthNotifierState>((ref) {
   return AuthNotifier(

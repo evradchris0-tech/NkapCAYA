@@ -1,9 +1,8 @@
 class ApiConstants {
   ApiConstants._();
 
-  // DEV local — remplacer par https://api.caya.cm/api/v1 en production
-  static const String baseUrl = 'http://192.168.1.33:3000/api/v1';
-  static const String wsUrl = 'ws://192.168.1.33:3000/ws';
+  // baseUrl est géré dynamiquement par tontineProvider → apiClientProvider
+  // (fallback : variable d'environnement API_BASE_URL dans .env)
 
   // Timeouts
   static const int connectTimeoutMs = 10000;
