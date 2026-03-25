@@ -16,10 +16,10 @@ on:
 
 jobs:
   # ─────────────────────────────────────────────────
-  # STAGING
+  # STAGING — API
   # ─────────────────────────────────────────────────
-  deploy-staging:
-    name: Deploy → Staging
+  deploy-api-staging:
+    name: API → Staging
     runs-on: ubuntu-latest
     if: github.event.inputs.environment == 'staging'
     environment:
@@ -61,10 +61,6 @@ jobs:
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
 
       # ── Adapter selon votre hébergeur ──────────────────────────────────────
-      # Exemple Render :
-      # - name: Deploy to Render
-      #   run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}
-      #
       # Exemple VPS via SSH :
       # - name: Deploy to VPS
       #   uses: appleboy/ssh-action@v1
@@ -77,13 +73,65 @@ jobs:
       #       pnpm db:generate && pnpm --filter api build && pm2 restart caya-api
 
       - name: Notify
-        run: echo "✅ Staging deployed — ${{ github.sha }}"
+        run: echo "✅ API Staging deployed — ${{ github.sha }}"
 
   # ─────────────────────────────────────────────────
-  # PRODUCTION
+  # STAGING — Web (Vercel Preview)
   # ─────────────────────────────────────────────────
-  deploy-production:
-    name: Deploy → Production
+  deploy-web-staging:
+    name: Web → Vercel Staging
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment == 'staging'
+    environment:
+      name: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment (preview)
+        working-directory: apps/web
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build (preview)
+        working-directory: apps/web
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          NEXT_PUBLIC_API_URL: https://api-staging.caya.cm/api/v1
+
+      - name: Deploy to Vercel (preview)
+        working-directory: apps/web
+        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  # ─────────────────────────────────────────────────
+  # PRODUCTION — API
+  # ─────────────────────────────────────────────────
+  deploy-api-production:
+    name: API → Production
     runs-on: ubuntu-latest
     if: github.event.inputs.environment == 'production'
     environment:
@@ -125,4 +173,58 @@ jobs:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
 
       - name: Notify
-        run: echo "🚀 Production deployed — ${{ github.sha }}"
+        run: echo "🚀 API Production deployed — ${{ github.sha }}"
+
+  # ─────────────────────────────────────────────────
+  # PRODUCTION — Web (Vercel Production)
+  # ─────────────────────────────────────────────────
+  deploy-web-production:
+    name: Web → Vercel Production
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment == 'production'
+    needs: deploy-api-production
+    environment:
+      name: production
+      url: https://caya.cm
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment (production)
+        working-directory: apps/web
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build (production)
+        working-directory: apps/web
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          NEXT_PUBLIC_API_URL: https://api.caya.cm/api/v1
+
+      - name: Deploy to Vercel (production)
+        working-directory: apps/web
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
