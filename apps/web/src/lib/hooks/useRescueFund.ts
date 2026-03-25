@@ -1,7 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { rescueFundApi, RecordRescueEventPayload } from '@lib/api/rescue-fund.api';
 
 const RF_KEY = ['rescue-fund'] as const;
+
+const apiError = (error: unknown): string => {
+  const msg = (error as any)?.response?.data?.message ?? 'Une erreur est survenue.';
+  return Array.isArray(msg) ? msg[0] : msg;
+};
 
 export function useRescueFundLedger(fiscalYearId: string) {
   return useQuery({
@@ -27,6 +33,8 @@ export function useRecordRescueEvent(fiscalYearId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...RF_KEY, fiscalYearId] });
       queryClient.invalidateQueries({ queryKey: [...RF_KEY, fiscalYearId, 'events'] });
+      toast.success('Événement de secours enregistré.');
     },
+    onError: (error) => toast.error(apiError(error)),
   });
 }

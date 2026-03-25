@@ -2,12 +2,14 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Bell, LogOut, Clock, AlertCircle, Gift, Gavel, X } from 'lucide-react';
+import { Bell, LogOut, Clock, AlertCircle, Gift, Gavel, X, Lock, CalendarRange, ChevronDown } from 'lucide-react';
 import { useCurrentUser, useLogout } from '@lib/hooks/useCurrentUser';
 import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
 import { useSessionsByFiscalYear } from '@lib/hooks/useSessions';
 import { useBeneficiarySchedule } from '@lib/hooks/useBeneficiaries';
 import { BUREAU_ROLE_LABELS, BureauRole } from '@/types/domain.types';
+
+const FY_SECRET = 'CAYA2000';
 
 function avatarColor(initials: string): string {
   const colors = [
@@ -33,6 +35,14 @@ const ROLE_BADGE_COLORS: Partial<Record<BureauRole, string>> = {
   [BureauRole.MEMBRE]:                  'bg-gray-100 text-gray-500',
 };
 
+const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
+  ACTIVE:    { label: 'ACTIF',     cls: 'bg-emerald-100 text-emerald-700' },
+  PENDING:   { label: 'EN ATTENTE', cls: 'bg-amber-100 text-amber-700' },
+  CASSATION: { label: 'CASSATION', cls: 'bg-orange-100 text-orange-700' },
+  CLOSED:    { label: 'CLÔTURÉ',   cls: 'bg-gray-100 text-gray-600' },
+  ARCHIVED:  { label: 'ARCHIVÉ',   cls: 'bg-gray-100 text-gray-400' },
+};
+
 const BADGE_STYLES = {
   warning: 'bg-amber-100 text-amber-700',
   info:    'bg-blue-100 text-blue-700',
@@ -50,6 +60,10 @@ interface Notification {
   badge: NotifBadge;
 }
 
+function formatDate(d: string | Date) {
+  return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 export default function Header() {
   const { data: user } = useCurrentUser();
   const logout = useLogout();
@@ -57,10 +71,17 @@ export default function Header() {
   const { data: sessions } = useSessionsByFiscalYear(selectedFyId);
   const { data: schedule } = useBeneficiarySchedule(selectedFyId);
 
-  const [showNotifPanel, setShowNotifPanel] = useState<boolean>(false);
+  // Notification panel
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
-  // Close panel on outside click
+  // FY switch modal
+  const [pendingFyId, setPendingFyId] = useState<string | null>(null);
+  const [codeInput, setCodeInput] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const codeInputRef = useRef<HTMLInputElement>(null);
+
+  // Close notif panel on outside click
   useEffect(() => {
     if (!showNotifPanel) return;
     function handleClick(e: MouseEvent) {
@@ -72,10 +93,16 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [showNotifPanel]);
 
+  // Focus code input when modal opens
+  useEffect(() => {
+    if (pendingFyId) {
+      setTimeout(() => codeInputRef.current?.focus(), 100);
+    }
+  }, [pendingFyId]);
+
   const notifications = useMemo<Notification[]>(() => {
     const items: Notification[] = [];
 
-    // Sessions OPEN
     const openSessions = sessions?.filter((s) => s.status === 'OPEN') ?? [];
     for (const s of openSessions) {
       items.push({
@@ -88,7 +115,6 @@ export default function Header() {
       });
     }
 
-    // Sessions REVIEWING
     const reviewingSessions = sessions?.filter((s) => s.status === 'REVIEWING') ?? [];
     for (const s of reviewingSessions) {
       items.push({
@@ -101,7 +127,6 @@ export default function Header() {
       });
     }
 
-    // Unassigned beneficiary slots
     const unassignedCount = schedule?.slots?.filter((sl) => sl.status === 'UNASSIGNED').length ?? 0;
     if (unassignedCount > 0) {
       items.push({
@@ -114,7 +139,6 @@ export default function Header() {
       });
     }
 
-    // Cassation within 30 days
     if (selectedFy?.cassationDate) {
       const daysLeft = Math.ceil(
         (new Date(selectedFy.cassationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
@@ -134,154 +158,291 @@ export default function Header() {
   }, [sessions, schedule, selectedFy]);
 
   const openSession = sessions?.find((s) => s.status === 'OPEN');
-
   const isSuperAdmin = user?.role === BureauRole.SUPER_ADMIN;
   const roleLabel = user?.role ? BUREAU_ROLE_LABELS[user.role as BureauRole] ?? user.role : null;
   const initials = user?.username.slice(0, 2).toUpperCase() ?? '??';
   const avatarCls = avatarColor(initials);
   const roleBadgeCls = user?.role ? (ROLE_BADGE_COLORS[user.role as BureauRole] ?? 'bg-gray-100 text-gray-600') : '';
 
+  // Computed FY descriptive info
+  const fyStatus = selectedFy ? STATUS_LABELS[selectedFy.status] ?? { label: selectedFy.status, cls: 'bg-gray-100 text-gray-600' } : null;
+
+  // FY selector change handler — intercept to require code
+  function handleFyChange(newId: string) {
+    if (newId === selectedFyId) return;
+    setPendingFyId(newId);
+    setCodeInput('');
+    setCodeError('');
+  }
+
+  // Modal confirm handler
+  function handleCodeConfirm() {
+    if (codeInput.trim() !== FY_SECRET) {
+      setCodeError('Code incorrect. Veuillez réessayer.');
+      setCodeInput('');
+      codeInputRef.current?.focus();
+      return;
+    }
+    if (pendingFyId) {
+      setSelectedFyId(pendingFyId);
+    }
+    setPendingFyId(null);
+    setCodeInput('');
+    setCodeError('');
+  }
+
+  function handleModalCancel() {
+    setPendingFyId(null);
+    setCodeInput('');
+    setCodeError('');
+  }
+
+  const pendingFy = pendingFyId ? fiscalYears?.find((f) => f.id === pendingFyId) : null;
+
   return (
-    <header className="h-14 shrink-0 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm gap-3">
+    <>
+      <header className="h-14 shrink-0 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm gap-3">
 
-      {/* Zone gauche — session ouverte + sélecteur FY super admin */}
-      <div className="flex items-center gap-3 min-w-0">
-        {/* Indicateur session ouverte */}
-        {openSession && (
-          <Link
-            href={`/sessions/${openSession.id}`}
-            className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-colors shrink-0"
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            Session #{openSession.sessionNumber} en cours
-          </Link>
-        )}
+        {/* Zone gauche */}
+        <div className="flex items-center gap-3 min-w-0 flex-1">
 
-        {/* Sélecteur exercice fiscal — super admin uniquement */}
-        {isSuperAdmin && fiscalYears && fiscalYears.length > 0 && (
-          <select
-            value={selectedFyId}
-            onChange={(e) => setSelectedFyId(e.target.value)}
-            className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-gray-50 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent max-w-[180px] truncate"
-            aria-label="Sélectionner l'exercice fiscal"
-          >
-            {fiscalYears.map((fy) => (
-              <option key={fy.id} value={fy.id}>
-                {fy.label} {fy.status === 'ACTIVE' ? '(actif)' : fy.status === 'CASSATION' ? '(cassation)' : ''}
-              </option>
-            ))}
-          </select>
-        )}
-        {/* Label exercice courant pour les non super-admins */}
-        {!isSuperAdmin && selectedFy && (
-          <span className="text-xs text-gray-400 hidden sm:inline truncate">
-            {selectedFy.label}
-          </span>
-        )}
-      </div>
+          {/* Session ouverte */}
+          {openSession && (
+            <Link
+              href={`/sessions/${openSession.id}`}
+              className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-colors shrink-0"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              Session #{openSession.sessionNumber} en cours
+            </Link>
+          )}
 
-      {/* Zone droite — notifications + user + logout */}
-      <div className="flex items-center gap-3 shrink-0">
-
-        {/* Notification bell with dropdown */}
-        <div className="relative" ref={notifRef}>
-          <button
-            aria-label="Notifications"
-            onClick={() => setShowNotifPanel((prev) => !prev)}
-            className="relative p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-          >
-            <Bell className="h-5 w-5" strokeWidth={1.8} />
-            {notifications.length > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none">
-                {notifications.length > 9 ? '9+' : notifications.length}
-              </span>
-            )}
-          </button>
-
-          {showNotifPanel && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden">
-              {/* Panel header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
-                <span className="text-sm font-semibold text-gray-800">Notifications</span>
-                <button
-                  aria-label="Fermer"
-                  onClick={() => setShowNotifPanel(false)}
-                  className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          {/* Sélecteur exercice fiscal (super admin) */}
+          {isSuperAdmin && fiscalYears && fiscalYears.length > 0 && (
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="relative">
+                <select
+                  value={selectedFyId}
+                  onChange={(e) => handleFyChange(e.target.value)}
+                  className="appearance-none text-xs border border-gray-200 rounded-lg pl-2.5 pr-7 py-1.5 bg-gray-50 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent max-w-[160px] truncate cursor-pointer"
+                  aria-label="Sélectionner l'exercice fiscal"
                 >
-                  <X className="h-4 w-4" />
-                </button>
+                  {fiscalYears.map((fy) => (
+                    <option key={fy.id} value={fy.id}>
+                      {fy.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
               </div>
 
-              {/* Notification list */}
-              {notifications.length === 0 ? (
-                <div className="px-4 py-8 text-center text-sm text-gray-400">
-                  Aucune notification
+              {/* Descriptive text */}
+              {selectedFy && (
+                <div className="hidden md:flex items-center gap-2 text-xs text-gray-500 min-w-0">
+                  {fyStatus && (
+                    <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-semibold shrink-0 ${fyStatus.cls}`}>
+                      {fyStatus.label}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1 text-gray-400 shrink-0">
+                    <CalendarRange className="h-3 w-3" />
+                    {formatDate(selectedFy.startDate)} – {formatDate(selectedFy.endDate)}
+                  </span>
+                  {selectedFy.notes && (
+                    <span className="truncate text-gray-400 italic hidden lg:inline">
+                      {selectedFy.notes}
+                    </span>
+                  )}
                 </div>
-              ) : (
-                <ul className="divide-y divide-gray-100 max-h-72 overflow-y-auto">
-                  {notifications.map((notif) => {
-                    const inner = (
-                      <div className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
-                        <span className={`mt-0.5 ${notif.color}`}>{notif.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-800 leading-snug">{notif.message}</p>
-                        </div>
-                        <span className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full ${BADGE_STYLES[notif.badge]}`}>
-                          {notif.badge === 'warning' ? 'Attention' : notif.badge === 'info' ? 'Info' : 'Urgent'}
-                        </span>
-                      </div>
-                    );
-
-                    return (
-                      <li key={notif.id}>
-                        {notif.href ? (
-                          <Link href={notif.href} onClick={() => setShowNotifPanel(false)}>
-                            {inner}
-                          </Link>
-                        ) : (
-                          inner
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
               )}
+            </div>
+          )}
+
+          {/* Label exercice courant pour non super-admin */}
+          {!isSuperAdmin && selectedFy && (
+            <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500">
+              <span className="text-gray-600 font-medium">{selectedFy.label}</span>
+              {fyStatus && (
+                <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-semibold ${fyStatus.cls}`}>
+                  {fyStatus.label}
+                </span>
+              )}
+              <span className="text-gray-400 hidden lg:inline">
+                {formatDate(selectedFy.startDate)} – {formatDate(selectedFy.endDate)}
+              </span>
             </div>
           )}
         </div>
 
-        <div className="h-6 w-px bg-gray-200" />
+        {/* Zone droite */}
+        <div className="flex items-center gap-3 shrink-0">
 
-        {user && (
-          <Link
-            href="/profile"
-            className="flex items-center gap-2.5 pl-1 pr-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors group"
-          >
-            <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full font-semibold text-xs shrink-0 ${avatarCls}`}>
-              {initials}
-            </span>
-            <div className="text-left leading-none hidden sm:block">
-              <p className="text-sm font-medium text-gray-800 group-hover:text-blue-600 transition-colors">
-                {user.username}
-              </p>
-              {roleLabel && (
-                <span className={`inline-block text-[11px] font-medium px-1.5 py-0.5 rounded-full mt-0.5 ${roleBadgeCls}`}>
-                  {roleLabel}
+          {/* Notification bell */}
+          <div className="relative" ref={notifRef}>
+            <button
+              aria-label="Notifications"
+              onClick={() => setShowNotifPanel((prev) => !prev)}
+              className="relative p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <Bell className="h-5 w-5" strokeWidth={1.8} />
+              {notifications.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none">
+                  {notifications.length > 9 ? '9+' : notifications.length}
                 </span>
               )}
-            </div>
-          </Link>
-        )}
+            </button>
 
-        <button
-          onClick={logout}
-          aria-label="Déconnexion"
-          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-500 px-2 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
-        >
-          <LogOut className="h-4 w-4" strokeWidth={1.8} />
-          <span className="hidden sm:inline text-xs font-medium">Déconnexion</span>
-        </button>
-      </div>
-    </header>
+            {showNotifPanel && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
+                  <span className="text-sm font-semibold text-gray-800">Notifications</span>
+                  <button
+                    aria-label="Fermer"
+                    onClick={() => setShowNotifPanel(false)}
+                    className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-sm text-gray-400">
+                    Aucune notification
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-gray-100 max-h-72 overflow-y-auto">
+                    {notifications.map((notif) => {
+                      const inner = (
+                        <div className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                          <span className={`mt-0.5 ${notif.color}`}>{notif.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-800 leading-snug">{notif.message}</p>
+                          </div>
+                          <span className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full ${BADGE_STYLES[notif.badge]}`}>
+                            {notif.badge === 'warning' ? 'Attention' : notif.badge === 'info' ? 'Info' : 'Urgent'}
+                          </span>
+                        </div>
+                      );
+                      return (
+                        <li key={notif.id}>
+                          {notif.href ? (
+                            <Link href={notif.href} onClick={() => setShowNotifPanel(false)}>{inner}</Link>
+                          ) : inner}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="h-6 w-px bg-gray-200" />
+
+          {user && (
+            <Link
+              href="/profile"
+              className="flex items-center gap-2.5 pl-1 pr-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors group"
+            >
+              <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full font-semibold text-xs shrink-0 ${avatarCls}`}>
+                {initials}
+              </span>
+              <div className="text-left leading-none hidden sm:block">
+                <p className="text-sm font-medium text-gray-800 group-hover:text-blue-600 transition-colors">
+                  {user.username}
+                </p>
+                {roleLabel && (
+                  <span className={`inline-block text-[11px] font-medium px-1.5 py-0.5 rounded-full mt-0.5 ${roleBadgeCls}`}>
+                    {roleLabel}
+                  </span>
+                )}
+              </div>
+            </Link>
+          )}
+
+          <button
+            onClick={logout}
+            aria-label="Déconnexion"
+            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-500 px-2 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            <LogOut className="h-4 w-4" strokeWidth={1.8} />
+            <span className="hidden sm:inline text-xs font-medium">Déconnexion</span>
+          </button>
+        </div>
+      </header>
+
+      {/* ── FY Switch confirmation modal ────────────────────────────── */}
+      {pendingFyId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={handleModalCancel}
+          />
+
+          {/* Panel */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-5">
+            {/* Header */}
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-50">
+                <Lock className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">Changement d'exercice</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Authentification requise</p>
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 leading-relaxed">
+              Vous souhaitez passer à l'exercice{' '}
+              <span className="font-semibold">{pendingFy?.label ?? '...'}</span>.
+              <br />
+              Entrez le code d'accès pour confirmer le changement.
+            </div>
+
+            {/* Code input */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-gray-700">Code d'accès</label>
+              <input
+                ref={codeInputRef}
+                type="password"
+                placeholder="••••••••"
+                value={codeInput}
+                onChange={(e) => { setCodeInput(e.target.value); setCodeError(''); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleCodeConfirm(); if (e.key === 'Escape') handleModalCancel(); }}
+                className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent tracking-widest"
+                autoComplete="off"
+              />
+              {codeError && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <span>⚠</span> {codeError}
+                </p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={handleModalCancel}
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleCodeConfirm}
+                disabled={!codeInput}
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                <Lock className="h-4 w-4" />
+                Changer d&apos;exercice
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

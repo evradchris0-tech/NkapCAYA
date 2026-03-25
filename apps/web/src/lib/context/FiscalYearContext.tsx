@@ -1,8 +1,10 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useFiscalYears } from '@lib/hooks/useFiscalYear';
 import type { FiscalYear } from '@/types/api.types';
+
+export const SELECTED_FY_STORAGE_KEY = 'caya_selected_fy';
 
 interface FiscalYearContextValue {
   selectedFyId: string;
@@ -22,9 +24,23 @@ const FiscalYearContext = createContext<FiscalYearContextValue>({
 
 export function FiscalYearProvider({ children }: { children: ReactNode }) {
   const { data: fiscalYears, isLoading } = useFiscalYears();
-  const [selectedFyId, setSelectedFyId] = useState('');
 
-  // Auto-select ACTIVE > CASSATION > first on load
+  // Initialise depuis localStorage pour survivre aux rechargements
+  const [selectedFyId, setSelectedFyIdState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(SELECTED_FY_STORAGE_KEY) ?? '';
+    }
+    return '';
+  });
+
+  const setSelectedFyId = useCallback((id: string) => {
+    setSelectedFyIdState(id);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SELECTED_FY_STORAGE_KEY, id);
+    }
+  }, []);
+
+  // Auto-select ACTIVE > CASSATION > premier — uniquement si aucune valeur stockée
   useEffect(() => {
     if (!selectedFyId && fiscalYears && fiscalYears.length > 0) {
       const pick =
@@ -33,7 +49,7 @@ export function FiscalYearProvider({ children }: { children: ReactNode }) {
         fiscalYears[0];
       setSelectedFyId(pick.id);
     }
-  }, [fiscalYears, selectedFyId]);
+  }, [fiscalYears, selectedFyId, setSelectedFyId]);
 
   const selectedFy = fiscalYears?.find((fy) => fy.id === selectedFyId);
 

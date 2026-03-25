@@ -1,7 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { membersApi, CreateMemberPayload, AddEmergencyContactPayload } from '@lib/api/members.api';
 
 const MEMBERS_KEY = ['members'] as const;
+
+const apiError = (error: unknown): string => {
+  const msg = (error as any)?.response?.data?.message ?? 'Une erreur est survenue.';
+  return Array.isArray(msg) ? msg[0] : msg;
+};
 
 export function useMembers(params?: { page?: number; limit?: number; search?: string; role?: string; isActive?: boolean }) {
   return useQuery({
@@ -24,7 +30,9 @@ export function useCreateMember() {
     mutationFn: (payload: CreateMemberPayload) => membersApi.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MEMBERS_KEY });
+      toast.success('Membre créé avec succès.');
     },
+    onError: (error) => toast.error(apiError(error)),
   });
 }
 
@@ -36,7 +44,9 @@ export function useUpdateMember() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: MEMBERS_KEY });
       queryClient.invalidateQueries({ queryKey: [...MEMBERS_KEY, variables.id] });
+      toast.success('Membre mis à jour.');
     },
+    onError: (error) => toast.error(apiError(error)),
   });
 }
 
@@ -46,7 +56,9 @@ export function useDeactivateMember() {
     mutationFn: (id: string) => membersApi.deactivate(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MEMBERS_KEY });
+      toast.success('Membre désactivé.');
     },
+    onError: (error) => toast.error(apiError(error)),
   });
 }
 
@@ -57,7 +69,9 @@ export function useReactivateMember() {
     onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: MEMBERS_KEY });
       queryClient.invalidateQueries({ queryKey: [...MEMBERS_KEY, id] });
+      toast.success('Membre réactivé.');
     },
+    onError: (error) => toast.error(apiError(error)),
   });
 }
 
@@ -78,7 +92,9 @@ export function useAddEmergencyContact(memberId: string) {
       queryClient.invalidateQueries({
         queryKey: [...MEMBERS_KEY, memberId, 'emergency-contacts'],
       });
+      toast.success('Contact d\'urgence ajouté.');
     },
+    onError: (error) => toast.error(apiError(error)),
   });
 }
 
@@ -91,7 +107,9 @@ export function useRemoveEmergencyContact(memberId: string) {
       queryClient.invalidateQueries({
         queryKey: [...MEMBERS_KEY, memberId, 'emergency-contacts'],
       });
+      toast.success('Contact supprimé.');
     },
+    onError: (error) => toast.error(apiError(error)),
   });
 }
 
@@ -110,6 +128,8 @@ export function useChangeRole(memberId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MEMBERS_KEY });
       queryClient.invalidateQueries({ queryKey: [...MEMBERS_KEY, memberId] });
+      toast.success('Rôle mis à jour.');
     },
+    onError: (error) => toast.error(apiError(error)),
   });
 }

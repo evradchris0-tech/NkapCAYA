@@ -9,6 +9,7 @@ import Badge from '@components/ui/Badge';
 import EmptyState from '@components/ui/EmptyState';
 import { SkeletonRow } from '@components/ui/Skeleton';
 import { useMembers } from '@lib/hooks/useMembers';
+import { BUREAU_ROLE_LABELS, BureauRole } from '@/types/domain.types';
 
 const LIMIT = 20;
 
@@ -93,6 +94,7 @@ export default function MembersPage() {
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase tracking-wide text-xs">Nom complet</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase tracking-wide text-xs">Téléphone</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase tracking-wide text-xs">Quartier</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase tracking-wide text-xs">Rôle</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase tracking-wide text-xs">Statut</th>
                   <th className="px-4 py-3" />
                 </tr>
@@ -100,11 +102,11 @@ export default function MembersPage() {
               <tbody className="divide-y divide-gray-100">
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <SkeletonRow key={i} cols={6} />
+                    <SkeletonRow key={i} cols={7} />
                   ))
                 ) : !data || data.data.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>
+                    <td colSpan={7}>
                       <EmptyState
                         icon={Users}
                         title={debouncedSearch ? 'Aucun résultat' : 'Aucun membre enregistré'}
@@ -136,6 +138,9 @@ export default function MembersPage() {
                       </td>
                       <td className="px-4 py-3 text-gray-600">{member.phone1}</td>
                       <td className="px-4 py-3 text-gray-600">{member.neighborhood}</td>
+                      <td className="px-4 py-3 text-gray-600 text-xs">
+                        {BUREAU_ROLE_LABELS[member.user.role as BureauRole] ?? member.user.role}
+                      </td>
                       <td className="px-4 py-3">
                         <Badge
                           variant={member.user.isActive ? 'success' : 'danger'}

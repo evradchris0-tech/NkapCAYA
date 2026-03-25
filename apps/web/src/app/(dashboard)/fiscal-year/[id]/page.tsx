@@ -52,7 +52,7 @@ export default function FiscalYearDetailPage({ params }: Props) {
   const router = useRouter();
   const { data: fy, isLoading, isError } = useFiscalYear(params.id);
   const { data: memberships } = useFiscalYearMemberships(params.id);
-  const { data: allMembers } = useMembers({ limit: 200 });
+  const { data: allMembers, isLoading: isMembersLoading } = useMembers({ limit: 100 });
   const { data: currentUser } = useCurrentUser();
   const activate = useActivateFiscalYear();
   const openCassation = useOpenCassation();
@@ -253,7 +253,7 @@ export default function FiscalYearDetailPage({ params }: Props) {
           </h2>
           {canAddMember && fy.status !== 'CLOSED' && (
             <Button size="sm" onClick={() => setShowAddMember(!showAddMember)}>
-              + Inscrire un membre
+              {showAddMember ? '− Fermer' : '+ Inscrire un membre'}
             </Button>
           )}
         </div>
@@ -268,14 +268,23 @@ export default function FiscalYearDetailPage({ params }: Props) {
                   value={form.profileId}
                   onChange={(e) => setForm({ ...form, profileId: e.target.value })}
                   aria-label="Sélectionner un membre"
-                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white"
+                  disabled={isMembersLoading}
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white disabled:bg-gray-50 disabled:text-gray-400"
                 >
-                  <option value="">Sélectionner…</option>
-                  {availableMembers.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.lastName} {m.firstName} — {m.memberCode}
-                    </option>
-                  ))}
+                  {isMembersLoading ? (
+                    <option value="">Chargement des membres…</option>
+                  ) : availableMembers.length === 0 ? (
+                    <option value="">Tous les membres sont déjà inscrits</option>
+                  ) : (
+                    <>
+                      <option value="">Sélectionner…</option>
+                      {availableMembers.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.lastName} {m.firstName} — {m.memberCode}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
               </div>
 
