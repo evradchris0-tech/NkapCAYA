@@ -1,22 +1,38 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/tontine/domain/entities/tontine_entity.dart';
 import '../../features/tontine/data/datasources/tontine_remote_datasource.dart';
 
 // ---------------------------------------------------------------------------
-// Static fallback — utilisé si l'API n'est pas disponible
+// Tontines connues — fallback si l'API /public/tontine-info est indisponible.
+// En mode debug, une entrée locale est ajoutée si LOCAL_BASE_URL est défini
+// dans le fichier .env (ex: LOCAL_BASE_URL=http://192.168.1.X:3000/api/v1).
 // ---------------------------------------------------------------------------
-const List<TontineEntity> kKnownTontines = [
-  TontineEntity(
-    id: 'caya',
-    name: 'Caisse Autonome des Yaourtiers Associés',
-    code: 'CAYA',
-    city: 'Yaoundé',
-    baseUrl: 'https://nkapcaya-prod.up.railway.app/api/v1',
-    activeMembersCount: null,
-  ),
-];
+List<TontineEntity> get kKnownTontines {
+  final localUrl = kDebugMode ? dotenv.env['LOCAL_BASE_URL'] : null;
+  return [
+    if (localUrl != null && localUrl.isNotEmpty)
+      TontineEntity(
+        id: 'caya-local',
+        name: 'CAYA — Serveur local',
+        code: 'CAYA-DEV',
+        city: 'Dev · ${localUrl.replaceAll(RegExp(r'https?://'), '').split('/').first}',
+        baseUrl: localUrl,
+        activeMembersCount: null,
+      ),
+    const TontineEntity(
+      id: 'caya',
+      name: 'Caisse Autonome des Yaourtiers Associés',
+      code: 'CAYA',
+      city: 'Yaoundé',
+      baseUrl: 'https://nkapcaya-prod.up.railway.app/api/v1',
+      activeMembersCount: null,
+    ),
+  ];
+}
 
 // ---------------------------------------------------------------------------
 // Tontine search provider — appelle GET /public/tontine-info

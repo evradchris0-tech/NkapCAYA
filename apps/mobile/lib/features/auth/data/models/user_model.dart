@@ -14,7 +14,7 @@ class UserModel extends UserEntity {
     return UserModel(
       id: json['id'] as String,
       username: json['username'] as String,
-      phone: json['phone'] as String,
+      phone: (json['phone'] as String?) ?? '',
       role: json['role'] as String? ?? 'MEMBRE',
       isActive: json['isActive'] as bool? ?? true,
       lastLoginAt: json['lastLoginAt'] as String?,

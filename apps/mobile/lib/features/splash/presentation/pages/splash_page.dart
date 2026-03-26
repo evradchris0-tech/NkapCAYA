@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/api_constants.dart';
 import '../../../../core/constants/app_constants.dart';
-import '../../../../shared/providers/auth_provider.dart';
+import '../../../../shared/providers/api_providers.dart';
 import '../../../../shared/providers/tontine_provider.dart';
+import '../../../auth/presentation/providers/auth_notifier.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
@@ -66,26 +68,37 @@ class _SplashPageState extends ConsumerState<SplashPage>
   Future<void> _navigate() async {
     if (!mounted) return;
 
+    // 1. Onboarding — premier lancement
     final prefs = ref.read(sharedPreferencesProvider);
-    final onboardingDone = prefs.getBool('onboarding_done') ?? false;
-
-    if (!onboardingDone) {
+    if (!(prefs.getBool('onboarding_done') ?? false)) {
       context.go(AppConstants.routeOnboarding);
       return;
     }
 
+    // 2. Tontine non sélectionnée
     final tontine = ref.read(tontineProvider);
     if (tontine == null) {
       context.go(AppConstants.routeTontineSearch);
       return;
     }
 
-    final authState = ref.read(authStateProvider);
-    context.go(
-      authState.isAuthenticated
-          ? AppConstants.routeDashboard
-          : AppConstants.routeLogin,
-    );
+    // 3. Tentative de restauration de session depuis les tokens stockés
+    final storage = ref.read(secureStorageProvider);
+    final storedToken = await storage.read(key: ApiConstants.accessTokenKey);
+
+    if (storedToken != null) {
+      // Token présent → appelle /auth/me pour valider et reconstruire l'état
+      final restored = await ref
+          .read(authNotifierProvider.notifier)
+          .restoreSession();
+      if (restored && mounted) {
+        context.go(AppConstants.routeDashboard);
+        return;
+      }
+    }
+
+    // 4. Pas de session valide → login
+    if (mounted) context.go(AppConstants.routeLogin);
   }
 
   @override

@@ -60,14 +60,17 @@ class AuthNotifier extends StateNotifier<AuthNotifierState> {
   final LoginUseCase _loginUseCase;
   final LogoutUseCase _logoutUseCase;
   final AuthStateNotifier _globalAuthState;
+  final AuthRepository _authRepository;
 
   AuthNotifier({
     required LoginUseCase loginUseCase,
     required LogoutUseCase logoutUseCase,
     required AuthStateNotifier globalAuthState,
+    required AuthRepository authRepository,
   })  : _loginUseCase = loginUseCase,
         _logoutUseCase = logoutUseCase,
         _globalAuthState = globalAuthState,
+        _authRepository = authRepository,
         super(const AuthNotifierState());
 
   Future<void> login({
@@ -90,6 +93,21 @@ class AuthNotifier extends StateNotifier<AuthNotifierState> {
     }
   }
 
+  /// Restaure la session depuis les tokens stockés (appelé au démarrage).
+  /// Appelle GET /auth/me — si le token est expiré, le refresh interceptor
+  /// tente automatiquement le renouvellement. En cas d'échec, retourne false.
+  Future<bool> restoreSession() async {
+    try {
+      final user = await _authRepository.getCurrentUser();
+      if (user == null) return false;
+      _globalAuthState.setAuthenticated(userId: user.id, role: user.role);
+      state = state.copyWith(result: AsyncSuccess(user));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     await _logoutUseCase();
     _globalAuthState.setUnauthenticated();
@@ -106,5 +124,6 @@ final authNotifierProvider =
     loginUseCase: ref.watch(_loginUseCaseProvider),
     logoutUseCase: ref.watch(_logoutUseCaseProvider),
     globalAuthState: ref.watch(authStateProvider.notifier),
+    authRepository: ref.watch(_authRepositoryProvider),
   );
 });
