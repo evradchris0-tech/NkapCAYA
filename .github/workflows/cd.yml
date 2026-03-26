@@ -106,7 +106,6 @@ jobs:
         run: npm install --global vercel@latest
 
       - name: Deploy to Vercel (preview)
-        working-directory: apps/web
         run: |
           vercel deploy \
             --build-env NEXT_PUBLIC_API_URL=https://api-staging.caya.cm/api/v1 \
@@ -196,7 +195,6 @@ jobs:
         run: npm install --global vercel@latest
 
       - name: Deploy to Vercel (production)
-        working-directory: apps/web
         run: |
           vercel deploy --prod \
             --build-env NEXT_PUBLIC_API_URL=https://api.caya.cm/api/v1 \
