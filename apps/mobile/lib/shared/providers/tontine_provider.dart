@@ -9,12 +9,12 @@ import '../../features/tontine/data/datasources/tontine_remote_datasource.dart';
 // ---------------------------------------------------------------------------
 const List<TontineEntity> kKnownTontines = [
   TontineEntity(
-    id: 'caya2000',
-    name: 'CAYA 2000',
-    code: 'CAYA2000',
+    id: 'caya',
+    name: 'Caisse Autonome des Yaourtiers Associés',
+    code: 'CAYA',
     city: 'Yaoundé',
-    baseUrl: 'http://192.168.1.108:3000/api/v1',
-    activeMembersCount: 42,
+    baseUrl: 'https://nkapcaya-prod.up.railway.app/api/v1',
+    activeMembersCount: null,
   ),
 ];
 
