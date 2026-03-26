@@ -1,10 +1,10 @@
 name: CD — NkapCAYA
 
 on:
-  # Déclenchement manuel depuis GitHub Actions → Run workflow
-  # Passer en push automatique une fois les environments et secrets configurés :
-  #   push:
-  #     branches: [develop, main]
+  push:
+    branches:
+      - develop   # → staging automatique
+      - master    # → production automatique
   workflow_dispatch:
     inputs:
       environment:
@@ -21,7 +21,7 @@ jobs:
   deploy-api-staging:
     name: API → Staging
     runs-on: ubuntu-latest
-    if: github.event.inputs.environment == 'staging'
+    if: github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'staging'
     environment:
       name: staging
       url: https://api-staging.caya.cm
@@ -81,7 +81,7 @@ jobs:
   deploy-web-staging:
     name: Web → Vercel Staging
     runs-on: ubuntu-latest
-    if: github.event.inputs.environment == 'staging'
+    if: github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'staging'
     environment:
       name: staging
 
@@ -121,7 +121,7 @@ jobs:
   deploy-api-production:
     name: API → Production
     runs-on: ubuntu-latest
-    if: github.event.inputs.environment == 'production'
+    if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'production'
     environment:
       name: production
       url: https://api.caya.cm
@@ -169,7 +169,7 @@ jobs:
   deploy-web-production:
     name: Web → Vercel Production
     runs-on: ubuntu-latest
-    if: github.event.inputs.environment == 'production'
+    if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'production'
     needs: deploy-api-production
     environment:
       name: production
