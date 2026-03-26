@@ -51,7 +51,7 @@ export class BeneficiariesService {
   }
 
   /** Marquer un slot ASSIGNED → DELIVERED */
-  async markDelivered(slotId: string, actorId: string) {
+  async markDelivered(slotId: string, _actorId: string) {
     const slot = await this.beneficiariesRepository.findSlotById(slotId);
     if (!slot) throw new NotFoundException(`Slot ${slotId} not found`);
 

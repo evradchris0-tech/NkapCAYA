@@ -97,6 +97,7 @@ describe('ConfigService', () => {
     });
 
     it('should forward the transaction client to createFiscalYearConfig', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockTx = {} as any;
       await service.snapshotForFiscalYear('fy-id', 'actor-id', mockTx);
       expect(repository.createFiscalYearConfig).toHaveBeenCalledWith(

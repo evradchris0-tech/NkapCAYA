@@ -37,6 +37,7 @@ export class MembersRepository {
       ];
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userFilters: any = { deletedAt: null };
     if (role) userFilters.role = role;
     if (isActive !== undefined) userFilters.isActive = isActive;

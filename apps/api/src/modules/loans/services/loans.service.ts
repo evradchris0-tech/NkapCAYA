@@ -19,7 +19,7 @@ export class LoansService {
     private readonly loansRepository: LoansRepository,
   ) {}
 
-  async requestLoan(dto: RequestLoanDto, actorId: string) {
+  async requestLoan(dto: RequestLoanDto, _actorId: string) {
     return this.prisma.$transaction(async (tx) => {
       const membership = await tx.membership.findUnique({
         where: { id: dto.membershipId },
@@ -170,6 +170,7 @@ export class LoansService {
   async computeAccrualsForSession(fiscalYearId: string, sessionId: string) {
     return this.prisma.$transaction(async (tx) => {
       const activeLoans = await this.loansRepository.findActiveLoansForFiscalYear(fiscalYearId, tx);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const results: any[] = [];
       for (const loan of activeLoans) {
         const accrual = await this.computeMonthlyAccrual(loan.id, sessionId, tx);

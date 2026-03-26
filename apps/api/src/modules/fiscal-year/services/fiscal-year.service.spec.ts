@@ -36,6 +36,7 @@ describe('FiscalYearService', () => {
 
   beforeEach(async () => {
     prisma = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       $transaction: jest.fn().mockImplementation((fn: (tx: any) => any) =>
         fn({
           beneficiarySlot: { createMany: jest.fn().mockResolvedValue({}) },
@@ -109,6 +110,7 @@ describe('FiscalYearService', () => {
     });
 
     it('should throw ConflictException if overlapping fiscal year exists', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findOverlapping.mockResolvedValue(pendingFY as any);
       await expect(service.create(validDto, 'actor-id')).rejects.toThrow(ConflictException);
     });
@@ -132,11 +134,13 @@ describe('FiscalYearService', () => {
     });
 
     it('should throw ConflictException if status is not PENDING', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findById.mockResolvedValue(activeFY as any);
       await expect(service.activate('fy-1', 'actor-id')).rejects.toThrow(ConflictException);
     });
 
     it('should throw ConflictException if another ACTIVE fiscal year exists', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findActive.mockResolvedValue(activeFY as any);
       await expect(service.activate('fy-1', 'actor-id')).rejects.toThrow(ConflictException);
     });
@@ -144,6 +148,7 @@ describe('FiscalYearService', () => {
 
   describe('openCassation()', () => {
     it('should transition ACTIVE → CASSATION', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findById.mockResolvedValue(activeFY as any);
       await service.openCassation('fy-1', 'actor-id');
       expect(repository.updateStatus).toHaveBeenCalledWith('fy-1', FiscalYearStatus.CASSATION);
@@ -182,11 +187,13 @@ describe('FiscalYearService', () => {
     });
 
     it('should throw ForbiddenException if fiscal year is CASSATION', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findById.mockResolvedValue({ ...pendingFY, status: FiscalYearStatus.CASSATION } as any);
       await expect(service.addMember('fy-1', dto, 'actor-id')).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw ConflictException if member already enrolled', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findMembership.mockResolvedValue({ id: 'existing' } as any);
       await expect(service.addMember('fy-1', dto, 'actor-id')).rejects.toThrow(ConflictException);
     });

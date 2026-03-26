@@ -11,7 +11,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /** Supprime les caractères de formatage d'un numéro de téléphone */
 const normalizePhone = (value: unknown): string =>
-  typeof value === 'string' ? value.replace(/[\s\-\(\)\.]/g, '') : (value as string);
+  typeof value === 'string' ? value.replace(/[\s\-()\\.]/g, '') : (value as string);
 
 export class CreateMemberDto {
   // ── Identité ──────────────────────────────────────────────────────────────

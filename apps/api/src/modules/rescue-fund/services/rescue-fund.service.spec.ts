@@ -22,6 +22,7 @@ describe('RescueFundService', () => {
 
   beforeEach(async () => {
     prisma = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       $transaction: jest.fn().mockImplementation((fn: (tx: any) => any) =>
         fn({
           rescueFundLedger: { findUnique: jest.fn().mockResolvedValue(makeLedger()) },
@@ -75,6 +76,7 @@ describe('RescueFundService', () => {
 
     it('should throw BadRequestException if balance would fall below minimum threshold', async () => {
       // totalBalance = 250000, amount = 50000 → new = 200000 < min (25000 × 10 = 250000)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       prisma.$transaction.mockImplementationOnce((fn: (tx: any) => any) =>
         fn({
           rescueFundLedger: {

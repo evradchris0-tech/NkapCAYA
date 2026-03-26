@@ -92,6 +92,7 @@ export class FiscalYearService {
         meetingDate: dayjs(fy.startDate).add(i, 'month').startOf('month').toDate(),
         status: 'DRAFT' as const,
       }));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await this.fiscalYearRepository.createMonthlySessions(sessions as any, tx);
 
       // 3. Créer le fond de secours

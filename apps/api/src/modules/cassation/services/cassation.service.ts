@@ -232,9 +232,10 @@ export class CassationService {
     return cassationRecord;
   }
 
-  private async sendCassationNotifications(fiscalYearId: string, actorId: string) {
+  private async sendCassationNotifications(_fiscalYearId: string, _actorId: string) {
     const bureauUsers = await this.prisma.user.findMany({
       where: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         role: { in: ['PRESIDENT', 'TRESORIER', 'SECRETAIRE_GENERAL'] as any },
         isActive: true,
       },

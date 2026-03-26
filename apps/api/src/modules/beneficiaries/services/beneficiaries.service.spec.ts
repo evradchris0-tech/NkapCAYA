@@ -75,6 +75,7 @@ describe('BeneficiariesService', () => {
     });
 
     it('should throw ConflictException if slot is already assigned', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findSlotById.mockResolvedValue(makeSlot({ status: BeneficiaryStatus.ASSIGNED }) as any);
       await expect(service.assignSlot('slot-1', { membershipId: 'mem-1' }, 'actor')).rejects.toThrow(ConflictException);
     });
@@ -82,12 +83,14 @@ describe('BeneficiariesService', () => {
 
   describe('markDelivered()', () => {
     it('should mark an ASSIGNED slot as DELIVERED', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findSlotById.mockResolvedValue(makeSlot({ status: BeneficiaryStatus.ASSIGNED }) as any);
       const result = await service.markDelivered('slot-1', 'actor-id');
       expect(result.status).toBe(BeneficiaryStatus.DELIVERED);
     });
 
     it('should throw ConflictException if slot is not ASSIGNED', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findSlotById.mockResolvedValue(makeSlot({ status: BeneficiaryStatus.UNASSIGNED }) as any);
       await expect(service.markDelivered('slot-1', 'actor')).rejects.toThrow(ConflictException);
     });

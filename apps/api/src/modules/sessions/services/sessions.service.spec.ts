@@ -3,7 +3,7 @@ import { SessionsService } from './sessions.service';
 import { SessionsRepository } from '../repositories/sessions.repository';
 import { PrismaService } from '@database/prisma.service';
 import { NotFoundException, ConflictException } from '@nestjs/common';
-import { SessionStatus, TransactionType } from '@prisma/client';
+import { SessionStatus } from '@prisma/client';
 
 const makeFiscalYear = () => ({
   id: 'fy-1',
@@ -28,6 +28,7 @@ describe('SessionsService', () => {
 
   beforeEach(async () => {
     prisma = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       $transaction: jest.fn().mockImplementation((fn: (tx: any) => any) => fn({
         monthlySession: { findUnique: jest.fn().mockResolvedValue(makeSession()) },
         membership: { findFirst: jest.fn().mockResolvedValue({ id: 'mem-1' }) },
@@ -85,21 +86,26 @@ describe('SessionsService', () => {
     });
 
     it('should throw ConflictException if session is not DRAFT', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findById.mockResolvedValue(makeSession({ status: SessionStatus.OPEN }) as any);
       await expect(service.openSession('sess-1', 'actor')).rejects.toThrow(ConflictException);
     });
 
     it('should throw ConflictException if previous session is not CLOSED (SESS-04)', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findById.mockResolvedValue(makeSession({ sessionNumber: 2 }) as any);
       repository.findPreviousSession.mockResolvedValue(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeSession({ sessionNumber: 1, status: SessionStatus.OPEN }) as any,
       );
       await expect(service.openSession('sess-1', 'actor')).rejects.toThrow(ConflictException);
     });
 
     it('should succeed when previous session is CLOSED', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findById.mockResolvedValue(makeSession({ sessionNumber: 2 }) as any);
       repository.findPreviousSession.mockResolvedValue(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeSession({ sessionNumber: 1, status: SessionStatus.CLOSED }) as any,
       );
       const result = await service.openSession('sess-1', 'actor');
@@ -109,6 +115,7 @@ describe('SessionsService', () => {
 
   describe('closeForReview()', () => {
     it('should transition OPEN → REVIEWING', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findById.mockResolvedValue(makeSession({ status: SessionStatus.OPEN }) as any);
       await service.closeForReview('sess-1', 'actor');
       expect(repository.updateStatus).toHaveBeenCalledWith(
@@ -119,6 +126,7 @@ describe('SessionsService', () => {
     });
 
     it('should throw ConflictException if not OPEN', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findById.mockResolvedValue(makeSession({ status: SessionStatus.DRAFT }) as any);
       await expect(service.closeForReview('sess-1', 'actor')).rejects.toThrow(ConflictException);
     });
@@ -126,6 +134,7 @@ describe('SessionsService', () => {
 
   describe('validateAndClose()', () => {
     it('should transition REVIEWING → CLOSED', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findById.mockResolvedValue(makeSession({ status: SessionStatus.REVIEWING }) as any);
       await service.validateAndClose('sess-1', 'actor');
       expect(repository.updateStatus).toHaveBeenCalledWith(
@@ -137,6 +146,7 @@ describe('SessionsService', () => {
     });
 
     it('should throw ConflictException if not REVIEWING', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findById.mockResolvedValue(makeSession({ status: SessionStatus.OPEN }) as any);
       await expect(service.validateAndClose('sess-1', 'actor')).rejects.toThrow(ConflictException);
     });

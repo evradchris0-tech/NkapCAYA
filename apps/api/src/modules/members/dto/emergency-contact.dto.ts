@@ -3,7 +3,7 @@ import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 const normalizePhone = (value: unknown): string =>
-  typeof value === 'string' ? value.replace(/[\s\-\(\)\.]/g, '') : (value as string);
+  typeof value === 'string' ? value.replace(/[\s\-()\\.]/g, '') : (value as string);
 
 export class EmergencyContactDto {
   @ApiProperty({ example: 'Marie MBARGA', description: 'Nom complet du contact' })

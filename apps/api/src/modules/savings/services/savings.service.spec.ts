@@ -29,6 +29,7 @@ describe('SavingsService', () => {
           fiscalYear: { config: { interestPoolMethod: 'THEORETICAL' } },
         }),
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       $transaction: jest.fn().mockImplementation((fn: (tx: any) => any) =>
         fn({
           sessionEntry: { findMany: jest.fn().mockResolvedValue([]) },
