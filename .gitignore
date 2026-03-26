@@ -55,3 +55,6 @@ desktop.ini
 *.swp
 *.swo
 .idea/
+
+.vercel
+.env*.local
