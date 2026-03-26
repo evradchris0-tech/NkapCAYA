@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, LogIn, Users, PiggyBank, Banknote, Shield, AlertCircle, Loader2 } from 'lucide-react';
@@ -24,6 +25,13 @@ const FEATURES = [
 export default function LoginPage() {
   const { login, isLoading, error } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (localStorage.getItem('caya_access_token')) {
+      router.replace('/');
+    }
+  }, [router]);
 
   const {
     register,
