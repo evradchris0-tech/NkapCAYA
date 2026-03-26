@@ -60,20 +60,15 @@ jobs:
           NODE_ENV: production
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
 
-      # ── Adapter selon votre hébergeur ──────────────────────────────────────
-      # Exemple VPS via SSH :
-      # - name: Deploy to VPS
-      #   uses: appleboy/ssh-action@v1
-      #   with:
-      #     host: ${{ secrets.STAGING_HOST }}
-      #     username: ${{ secrets.STAGING_USER }}
-      #     key: ${{ secrets.STAGING_SSH_KEY }}
-      #     script: |
-      #       cd /srv/caya && git pull && pnpm install --frozen-lockfile
-      #       pnpm db:generate && pnpm --filter api build && pm2 restart caya-api
+      - name: Deploy to Railway (staging)
+        run: |
+          npm install -g @railway/cli --silent
+          railway up --service ${{ secrets.RAILWAY_STAGING_SERVICE_ID }} --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Notify
-        run: echo "✅ API Staging deployed — ${{ github.sha }}"
+        run: echo "✅ API Staging deployed to Railway — ${{ github.sha }}"
 
   # ─────────────────────────────────────────────────
   # STAGING — Web (Vercel Preview)
@@ -159,8 +154,15 @@ jobs:
           NODE_ENV: production
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
 
+      - name: Deploy to Railway (production)
+        run: |
+          npm install -g @railway/cli --silent
+          railway up --service ${{ secrets.RAILWAY_PROD_SERVICE_ID }} --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
       - name: Notify
-        run: echo "🚀 API Production deployed — ${{ github.sha }}"
+        run: echo "🚀 API Production deployed to Railway — ${{ github.sha }}"
 
   # ─────────────────────────────────────────────────
   # PRODUCTION — Web (Vercel Production)
