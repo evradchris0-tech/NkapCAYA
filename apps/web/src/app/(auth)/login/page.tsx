@@ -52,26 +52,18 @@ export default function LoginPage() {
         <div className="absolute -bottom-32 -left-16 w-80 h-80 rounded-full opacity-10"
           style={{ background: 'radial-gradient(circle, #93c5fd 0%, transparent 70%)' }} />
 
-        {/* Logo */}
+        {/* Centre */}
         <div className="relative z-10">
-          <div className="flex items-center gap-3">
+          {/* Logo large */}
+          <div className="mb-10">
             <Image
               src="/caya_logo.png"
               alt="CAYA"
-              width={40}
-              height={40}
-              className="rounded-xl"
+              width={110}
+              height={110}
               priority
             />
-            <div>
-              <p className="text-white font-bold text-xl tracking-tight">CAYA</p>
-              <p className="text-blue-200 text-xs">Plateforme de tontine</p>
-            </div>
           </div>
-        </div>
-
-        {/* Centre */}
-        <div className="relative z-10">
           <h2 className="text-3xl font-bold text-white leading-snug mb-4">
             Gérez votre tontine<br />en toute simplicité.
           </h2>
@@ -100,9 +92,8 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center bg-gray-50 p-6">
         <div className="w-full max-w-sm animate-fade-in">
           {/* Logo mobile */}
-          <div className="lg:hidden flex items-center gap-2 mb-8">
-            <Image src="/caya_logo.png" alt="CAYA" width={32} height={32} className="rounded-lg" />
-            <span className="font-bold text-gray-900 text-lg">CAYA</span>
+          <div className="lg:hidden flex justify-center mb-8">
+            <Image src="/caya_logo.png" alt="CAYA" width={72} height={72} />
           </div>
 
           {/* En-tête */}

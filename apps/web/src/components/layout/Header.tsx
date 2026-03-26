@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Bell, LogOut, Clock, AlertCircle, Gift, Gavel, X, Lock, CalendarRange, ChevronDown } from 'lucide-react';
 import { useCurrentUser, useLogout } from '@lib/hooks/useCurrentUser';
@@ -75,6 +75,10 @@ export default function Header() {
   const [showNotifPanel, setShowNotifPanel] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
+  // FY custom dropdown
+  const [showFyDropdown, setShowFyDropdown] = useState(false);
+  const fyDropdownRef = useRef<HTMLDivElement>(null);
+
   // FY switch modal
   const [pendingFyId, setPendingFyId] = useState<string | null>(null);
   const [codeInput, setCodeInput] = useState('');
@@ -92,6 +96,18 @@ export default function Header() {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [showNotifPanel]);
+
+  // Close FY dropdown on outside click
+  useEffect(() => {
+    if (!showFyDropdown) return;
+    function handleClick(e: MouseEvent) {
+      if (fyDropdownRef.current && !fyDropdownRef.current.contains(e.target as Node)) {
+        setShowFyDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showFyDropdown]);
 
   // Focus code input when modal opens
   useEffect(() => {
@@ -168,12 +184,13 @@ export default function Header() {
   const fyStatus = selectedFy ? STATUS_LABELS[selectedFy.status] ?? { label: selectedFy.status, cls: 'bg-gray-100 text-gray-600' } : null;
 
   // FY selector change handler — intercept to require code
-  function handleFyChange(newId: string) {
+  const handleFyChange = useCallback((newId: string) => {
+    setShowFyDropdown(false);
     if (newId === selectedFyId) return;
     setPendingFyId(newId);
     setCodeInput('');
     setCodeError('');
-  }
+  }, [selectedFyId]);
 
   // Modal confirm handler
   function handleCodeConfirm() {
@@ -217,43 +234,81 @@ export default function Header() {
             </Link>
           )}
 
-          {/* Sélecteur exercice fiscal (super admin) */}
+          {/* Sélecteur exercice fiscal (super admin) — dropdown custom */}
           {isSuperAdmin && fiscalYears && fiscalYears.length > 0 && (
             <div className="flex items-center gap-2 min-w-0">
-              <div className="relative">
-                <select
-                  value={selectedFyId}
-                  onChange={(e) => handleFyChange(e.target.value)}
-                  className="appearance-none text-xs border border-gray-200 rounded-lg pl-2.5 pr-7 py-1.5 bg-gray-50 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent max-w-[160px] truncate cursor-pointer"
-                  aria-label="Sélectionner l'exercice fiscal"
+              <div className="relative" ref={fyDropdownRef}>
+                {/* Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setShowFyDropdown((v) => !v)}
+                  aria-haspopup="listbox"
+                  aria-expanded={showFyDropdown}
+                  className={`flex items-center gap-2 text-xs border rounded-lg pl-3 pr-2.5 py-1.5 bg-white transition-all cursor-pointer shrink-0
+                    ${showFyDropdown
+                      ? 'border-blue-400 ring-2 ring-blue-100 text-blue-700'
+                      : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
                 >
-                  {fiscalYears.map((fy) => (
-                    <option key={fy.id} value={fy.id}>
-                      {fy.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-              </div>
-
-              {/* Descriptive text */}
-              {selectedFy && (
-                <div className="hidden md:flex items-center gap-2 text-xs text-gray-500 min-w-0">
+                  <CalendarRange className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                  <span className="font-medium max-w-[130px] truncate">
+                    {selectedFy?.label ?? 'Exercice…'}
+                  </span>
                   {fyStatus && (
-                    <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-semibold shrink-0 ${fyStatus.cls}`}>
+                    <span className={`hidden sm:inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${fyStatus.cls}`}>
                       {fyStatus.label}
                     </span>
                   )}
-                  <span className="flex items-center gap-1 text-gray-400 shrink-0">
-                    <CalendarRange className="h-3 w-3" />
-                    {formatDate(selectedFy.startDate)} – {formatDate(selectedFy.endDate)}
-                  </span>
-                  {selectedFy.notes && (
-                    <span className="truncate text-gray-400 italic hidden lg:inline">
-                      {selectedFy.notes}
-                    </span>
-                  )}
-                </div>
+                  <ChevronDown className={`h-3.5 w-3.5 text-gray-400 shrink-0 transition-transform duration-150 ${showFyDropdown ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Dropdown list */}
+                {showFyDropdown && (
+                  <div className="absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden py-1">
+                    <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                      Exercices fiscaux
+                    </p>
+                    <ul role="listbox">
+                      {fiscalYears.map((fy) => {
+                        const st = STATUS_LABELS[fy.status] ?? { label: fy.status, cls: 'bg-gray-100 text-gray-600' };
+                        const isSelected = fy.id === selectedFyId;
+                        return (
+                          <li key={fy.id} role="option" aria-selected={isSelected}>
+                            <button
+                              type="button"
+                              onClick={() => handleFyChange(fy.id)}
+                              className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors
+                                ${isSelected
+                                  ? 'bg-blue-50 text-blue-700'
+                                  : 'text-gray-700 hover:bg-gray-50'
+                                }`}
+                            >
+                              <div className={`w-2 h-2 rounded-full shrink-0 ${isSelected ? 'bg-blue-500' : 'bg-transparent border border-gray-300'}`} />
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-xs font-semibold truncate ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
+                                  {fy.label}
+                                </p>
+                                <p className="text-[11px] text-gray-400 mt-0.5">
+                                  {formatDate(fy.startDate)} – {formatDate(fy.endDate)}
+                                </p>
+                              </div>
+                              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${st.cls}`}>
+                                {st.label}
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Notes de l'exercice */}
+              {selectedFy?.notes && (
+                <span className="hidden lg:inline text-xs text-gray-400 italic truncate max-w-[180px]">
+                  {selectedFy.notes}
+                </span>
               )}
             </div>
           )}
