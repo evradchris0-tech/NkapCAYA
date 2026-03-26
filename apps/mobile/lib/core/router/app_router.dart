@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
+import '../../features/onboarding/presentation/pages/onboarding_page.dart';
+import '../../features/splash/presentation/pages/splash_page.dart';
 import '../../features/loans/presentation/pages/loans_page.dart';
 import '../../features/payments/presentation/pages/payments_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
@@ -20,9 +22,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final tontine = ref.watch(tontineProvider);
 
   return GoRouter(
-    initialLocation: AppConstants.routeTontineSearch,
+    initialLocation: AppConstants.routeSplash,
     redirect: (context, state) {
       final location = state.matchedLocation;
+
+      // Splash et onboarding gèrent leur propre navigation — pas de redirect
+      if (location == AppConstants.routeSplash) return null;
+      if (location == AppConstants.routeOnboarding) return null;
+
       final hasTontine = tontine != null;
       final isAuthenticated = authState.isAuthenticated;
 
@@ -47,6 +54,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // ── Splash ───────────────────────────────────────────────────────────
+      GoRoute(
+        path: AppConstants.routeSplash,
+        name: 'splash',
+        pageBuilder: (context, state) => NoTransitionPage(
+          key: state.pageKey,
+          child: const SplashPage(),
+        ),
+      ),
+
+      // ── Onboarding (premier lancement) ───────────────────────────────────
+      GoRoute(
+        path: AppConstants.routeOnboarding,
+        name: 'onboarding',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const OnboardingPage(),
+          transitionsBuilder: _fadeTransition,
+        ),
+      ),
+
       // ── Tontine search (pre-login) ───────────────────────────────────────
       GoRoute(
         path: AppConstants.routeTontineSearch,

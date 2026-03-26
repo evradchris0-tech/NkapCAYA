@@ -28,6 +28,7 @@ class AppConstants {
 
   // Navigation route names
   static const String routeSplash = '/';
+  static const String routeOnboarding = '/onboarding';
   static const String routeTontineSearch = '/tontine-search';
   static const String routeLogin = '/login';
   static const String routeDashboard = '/dashboard';

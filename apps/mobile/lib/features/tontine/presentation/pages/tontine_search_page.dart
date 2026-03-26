@@ -63,22 +63,10 @@ class _TontineSearchPageState extends ConsumerState<TontineSearchPage> {
               child: Column(
                 children: [
                   // Logo
-                  Container(
+                  Image.asset(
+                    'assets/images/caya_logo.png',
                     width: 80,
                     height: 80,
-                    decoration: BoxDecoration(
-                      color: AppColors.cayaBlue,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'C',
-                        style: theme.textTheme.displaySmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(

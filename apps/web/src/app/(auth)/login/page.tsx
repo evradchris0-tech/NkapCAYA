@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, LogIn, Users, PiggyBank, Banknote, Shield, AlertCircle, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import { useAuth } from '@lib/hooks/useAuth';
 
 const loginSchema = z.object({
@@ -54,9 +55,14 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              <span className="text-white font-bold text-lg">C</span>
-            </div>
+            <Image
+              src="/caya_logo.png"
+              alt="CAYA"
+              width={40}
+              height={40}
+              className="rounded-xl"
+              priority
+            />
             <div>
               <p className="text-white font-bold text-xl tracking-tight">CAYA</p>
               <p className="text-blue-200 text-xs">Plateforme de tontine</p>
@@ -95,9 +101,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm animate-fade-in">
           {/* Logo mobile */}
           <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">C</span>
-            </div>
+            <Image src="/caya_logo.png" alt="CAYA" width={32} height={32} className="rounded-lg" />
             <span className="font-bold text-gray-900 text-lg">CAYA</span>
           </div>
 

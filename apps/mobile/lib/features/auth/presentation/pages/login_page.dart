@@ -14,11 +14,11 @@ class LoginPage extends StatelessWidget {
           child: Column(
             children: [
               // Header
-              const SizedBox(height: 60),
-              const Icon(
-                Icons.account_balance,
-                size: 64,
-                color: AppColors.cayaGold,
+              const SizedBox(height: 52),
+              Image.asset(
+                'assets/images/caya_logo.png',
+                width: 100,
+                height: 100,
               ),
               const SizedBox(height: 16),
               const Text(
@@ -30,10 +30,11 @@ class LoginPage extends StatelessWidget {
                   letterSpacing: 4,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               const Text(
-                'Club des Amis de Yaoundé',
-                style: TextStyle(color: AppColors.cayaGoldLight, fontSize: 14),
+                'Caisse Autonome des Yaourtiers Associés',
+                style: TextStyle(color: AppColors.cayaGoldLight, fontSize: 12),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
               // Form card
