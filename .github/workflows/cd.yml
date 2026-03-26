@@ -104,7 +104,7 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          NEXT_PUBLIC_API_URL: https://nkapcaya-production.up.railway.app/api/v1
+          NEXT_PUBLIC_API_URL: https://nkapcaya-prod.up.railway.app/api/v1
 
       - name: Deploy to Vercel (preview)
         run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
