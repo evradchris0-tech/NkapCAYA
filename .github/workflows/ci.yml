@@ -157,6 +157,10 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Create .env for CI
+        working-directory: apps/mobile
+        run: echo "API_BASE_URL=http://localhost:3000/api/v1" > .env
+
       - name: Install Flutter dependencies
         working-directory: apps/mobile
         run: flutter pub get
