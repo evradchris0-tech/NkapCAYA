@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,6 +23,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
   late final Animation<double> _logoScale;
   late final Animation<double> _textOpacity;
   late final Animation<double> _loaderOpacity;
+  Timer? _navTimer;
 
   @override
   void initState() {
@@ -56,11 +59,12 @@ class _SplashPageState extends ConsumerState<SplashPage>
     );
 
     _ctrl.forward();
-    Future.delayed(const Duration(milliseconds: 2800), _navigate);
+    _navTimer = Timer(const Duration(milliseconds: 2800), _navigate);
   }
 
   @override
   void dispose() {
+    _navTimer?.cancel();
     _ctrl.dispose();
     super.dispose();
   }

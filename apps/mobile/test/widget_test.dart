@@ -21,6 +21,9 @@ void main() {
       ),
     );
 
+    // Drain splash timer (2800 ms) so no pending timers remain after test
+    await tester.pump(const Duration(seconds: 3));
+
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 }
