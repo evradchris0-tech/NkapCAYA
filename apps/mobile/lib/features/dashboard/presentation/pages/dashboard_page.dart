@@ -157,7 +157,8 @@ class _DashboardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final shimmerColor = isDark ? AppColors.darkSurfaceVariant : AppColors.grey200;
+    final shimmerColor =
+        isDark ? AppColors.darkSurfaceVariant : AppColors.grey200;
     return Column(
       children: [
         GridView.count(

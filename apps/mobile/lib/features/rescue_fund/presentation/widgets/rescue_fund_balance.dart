@@ -75,7 +75,8 @@ class RescueFundBalance extends StatelessWidget {
               ),
               child: Text(
                 'Dette de renflouement : ${refillDebt!.toStringAsFixed(0)} XAF',
-                style: const TextStyle(color: Colors.orangeAccent, fontSize: 12),
+                style:
+                    const TextStyle(color: Colors.orangeAccent, fontSize: 12),
               ),
             ),
           ],
@@ -107,7 +108,8 @@ class _FundStat extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 11)),
+          Text(label,
+              style: const TextStyle(color: Colors.white60, fontSize: 11)),
           const SizedBox(height: 2),
           amount != null
               ? AmountDisplay(

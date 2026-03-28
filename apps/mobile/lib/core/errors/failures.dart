@@ -30,7 +30,8 @@ final class ServerFailure extends AppFailure {
   final int statusCode;
   const ServerFailure({required this.message, this.statusCode = 500});
   @override
-  String toString() => message.isNotEmpty ? message : 'Erreur serveur ($statusCode).';
+  String toString() =>
+      message.isNotEmpty ? message : 'Erreur serveur ($statusCode).';
 }
 
 final class UnauthorizedFailure extends AppFailure {
@@ -71,7 +72,8 @@ final class UnknownFailure extends AppFailure {
   final String message;
   const UnknownFailure({this.message = 'Une erreur inattendue est survenue.'});
   @override
-  String toString() => message.isNotEmpty ? message : 'Une erreur inattendue est survenue.';
+  String toString() =>
+      message.isNotEmpty ? message : 'Une erreur inattendue est survenue.';
 }
 
 /// Convertit un [AppFailure] en message lisible par l'utilisateur.

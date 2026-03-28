@@ -19,7 +19,8 @@ List<TontineEntity> get kKnownTontines {
         id: 'caya-local',
         name: 'CAYA — Serveur local',
         code: 'CAYA-DEV',
-        city: 'Dev · ${localUrl.replaceAll(RegExp(r'https?://'), '').split('/').first}',
+        city:
+            'Dev · ${localUrl.replaceAll(RegExp(r'https?://'), '').split('/').first}',
         baseUrl: localUrl,
         activeMembersCount: null,
       ),

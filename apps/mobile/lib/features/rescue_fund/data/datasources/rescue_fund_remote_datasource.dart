@@ -4,7 +4,8 @@ import '../models/rescue_fund_model.dart';
 
 abstract class RescueFundRemoteDataSource {
   Future<RescueFundLedgerModel> getLedger(String fyId);
-  Future<RescueFundPositionModel?> getPosition(String fyId, String membershipId);
+  Future<RescueFundPositionModel?> getPosition(
+      String fyId, String membershipId);
 }
 
 class RescueFundRemoteDataSourceImpl implements RescueFundRemoteDataSource {

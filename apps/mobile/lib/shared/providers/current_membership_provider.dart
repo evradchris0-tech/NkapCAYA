@@ -43,9 +43,8 @@ final currentMembershipProvider =
     final profile = await ref.watch(myProfileProvider.future);
 
     // 2. Adhésions du profil
-    final memberships = await ref
-        .watch(profileRepositoryProvider)
-        .getMemberships(profile.id);
+    final memberships =
+        await ref.watch(profileRepositoryProvider).getMemberships(profile.id);
 
     // 3. Sélectionner l'adhésion active
     MembershipEntity? active;

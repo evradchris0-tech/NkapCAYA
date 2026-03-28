@@ -88,9 +88,8 @@ class _SplashPageState extends ConsumerState<SplashPage>
 
     if (storedToken != null) {
       // Token présent → appelle /auth/me pour valider et reconstruire l'état
-      final restored = await ref
-          .read(authNotifierProvider.notifier)
-          .restoreSession();
+      final restored =
+          await ref.read(authNotifierProvider.notifier).restoreSession();
       if (restored && mounted) {
         context.go(AppConstants.routeDashboard);
         return;

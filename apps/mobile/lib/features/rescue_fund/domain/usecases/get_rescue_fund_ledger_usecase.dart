@@ -5,5 +5,6 @@ class GetRescueFundLedgerUseCase {
   final RescueFundRepository _repository;
   const GetRescueFundLedgerUseCase(this._repository);
 
-  Future<RescueFundLedgerEntity> call(String fyId) => _repository.getLedger(fyId);
+  Future<RescueFundLedgerEntity> call(String fyId) =>
+      _repository.getLedger(fyId);
 }
