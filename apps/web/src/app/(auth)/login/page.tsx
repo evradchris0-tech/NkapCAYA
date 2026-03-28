@@ -55,21 +55,18 @@ export default function LoginPage() {
         {/* Centre */}
         <div className="relative z-10">
           {/* Logo large */}
-          <div className="mb-10">
+          <div className="mb-8">
             <Image
               src="/caya_logo.png"
               alt="CAYA"
-              width={110}
-              height={110}
+              width={120}
+              height={120}
               priority
             />
           </div>
-          <h2 className="text-3xl font-bold text-white leading-snug mb-4">
-            Gérez votre tontine<br />en toute simplicité.
+          <h2 className="text-3xl font-bold text-white leading-snug mb-8">
+            CAYA
           </h2>
-          <p className="text-blue-200 text-sm leading-relaxed mb-8 max-w-xs">
-            Une plateforme complète pour administrer les sessions, épargnes, prêts et distributions de votre groupe.
-          </p>
           <ul className="space-y-3">
             {FEATURES.map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-center gap-3">
@@ -91,15 +88,14 @@ export default function LoginPage() {
       {/* ── Panneau droit — formulaire ── */}
       <div className="flex-1 flex items-center justify-center bg-gray-50 p-6">
         <div className="w-full max-w-sm animate-fade-in">
-          {/* Logo mobile */}
-          <div className="lg:hidden flex justify-center mb-8">
-            <Image src="/caya_logo.png" alt="CAYA" width={72} height={72} />
+          {/* Logo — visible sur tous les écrans */}
+          <div className="flex justify-center mb-8">
+            <Image src="/caya_logo.png" alt="CAYA" width={80} height={80} priority />
           </div>
 
           {/* En-tête */}
-          <div className="mb-8">
+          <div className="mb-8 text-center">
             <h1 className="text-2xl font-bold text-gray-900">Connexion</h1>
-            <p className="text-gray-500 text-sm mt-1">Accédez à votre espace tontine</p>
           </div>
 
           {/* Message d'erreur global */}

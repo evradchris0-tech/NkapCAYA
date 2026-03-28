@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { Activity, Calendar, Users, CreditCard, Shield, Gavel } from 'lucide-react';
 import PageHeader from '@components/layout/PageHeader';
+import Select from '@components/ui/Select';
 import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
 import { useSessionsByFiscalYear } from '@lib/hooks/useSessions';
 import { Skeleton } from '@components/ui/Skeleton';
@@ -88,7 +89,7 @@ export default function AuditPage() {
       }
     });
 
-    return list.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return list.sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [selectedFy, sessions]);
 
   return (
@@ -99,17 +100,16 @@ export default function AuditPage() {
       />
 
       {/* Sélecteur exercice */}
-      <div className="flex items-center gap-3">
-        <label className="text-sm font-medium text-gray-700 shrink-0">Exercice :</label>
-        <select
+      <div className="flex items-center gap-3 flex-wrap">
+        <Select
           value={selectedFyId}
           onChange={(e) => setSelectedFyId(e.target.value)}
-          className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-blue-500"
+          className="min-w-[180px]"
         >
           {fiscalYears?.map((fy) => (
             <option key={fy.id} value={fy.id}>{fy.label} — {fy.status}</option>
           ))}
-        </select>
+        </Select>
         <span className="text-xs text-gray-400">{events.length} événement{events.length > 1 ? 's' : ''}</span>
       </div>
 

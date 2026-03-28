@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import {
   Users,
@@ -8,10 +9,12 @@ import {
   TrendingUp,
   ArrowRight,
   Lightbulb,
-  Zap,
+  Info,
   AlertCircle,
   CheckCircle2,
   Clock,
+  Activity,
+  Medal,
   type LucideIcon,
 } from 'lucide-react';
 import PageHeader from '@components/layout/PageHeader';
@@ -22,6 +25,8 @@ import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
 import { useRescueFundLedger } from '@lib/hooks/useRescueFund';
 import { useSessionsByFiscalYear } from '@lib/hooks/useSessions';
 import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
+import { useFiscalYearSavings } from '@lib/hooks/useSavings';
+import { useFiscalYearLoans } from '@lib/hooks/useLoans';
 import type { MonthlySession } from '@/types/api.types';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -43,27 +48,29 @@ interface KpiCardProps {
   icon: LucideIcon;
   iconBg: string;
   iconColor: string;
+  borderColor: string;
   label: string;
   value: string | number;
   isLoading?: boolean;
-  sub?: string;
+  description: string;
 }
 
-function KpiCard({ icon: Icon, iconBg, iconColor, label, value, isLoading, sub }: KpiCardProps) {
+function KpiCard({ icon: Icon, iconBg, iconColor, borderColor, label, value, isLoading, description }: KpiCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-card hover:shadow-card-hover transition-shadow p-5 flex items-start gap-4">
-      <div className={`p-2.5 rounded-xl shrink-0 ${iconBg}`}>
-        <Icon className={`h-5 w-5 ${iconColor}`} strokeWidth={2} />
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
-        <div className="text-2xl font-bold text-gray-900 mt-0.5 tabular-nums">
-          {isLoading ? <Skeleton className="h-7 w-20 mt-1" /> : value}
+    <div className={`bg-white rounded-xl border shadow-card hover:shadow-card-hover transition-shadow p-5 ${borderColor}`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className={`p-2 rounded-lg shrink-0 ${iconBg}`}>
+          <Icon className={`h-4 w-4 ${iconColor}`} strokeWidth={2} />
         </div>
-        {sub && !isLoading && (
-          <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
-        )}
+        <span title={description} className="cursor-help">
+          <Info className="h-3.5 w-3.5 text-gray-300 hover:text-gray-500 transition-colors" />
+        </span>
       </div>
+      <div className="text-2xl font-bold text-gray-900 tabular-nums">
+        {isLoading ? <Skeleton className="h-7 w-20" /> : value}
+      </div>
+      <p className="text-xs font-medium text-gray-500 mt-0.5">{label}</p>
+      <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">{description}</p>
     </div>
   );
 }
@@ -75,12 +82,14 @@ function formatAmount(n: number): string {
 }
 
 // ── Tooltip personnalisé ──────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: any) {
+interface TooltipPayloadEntry { name: string; value: number; color: string }
+interface TooltipProps { active?: boolean; payload?: TooltipPayloadEntry[]; label?: string }
+function CustomTooltip({ active, payload, label }: TooltipProps) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-sm">
       <p className="font-medium text-gray-700 mb-1">{label}</p>
-      {payload.map((entry: any) => (
+      {payload.map((entry) => (
         <p key={entry.name} style={{ color: entry.color }} className="tabular-nums">
           {entry.name} : {Number(entry.value).toLocaleString('fr-FR')} XAF
         </p>
@@ -166,6 +175,8 @@ export default function DashboardPage() {
     useFiscalYearMemberships(selectedFyId);
   const { data: rescueLedger, isLoading: loadingRescue } = useRescueFundLedger(selectedFyId);
   const { data: sessions, isLoading: loadingSessions } = useSessionsByFiscalYear(selectedFyId);
+  const { data: savingsLedgers } = useFiscalYearSavings(selectedFyId ?? '');
+  const { data: fyLoans } = useFiscalYearLoans(selectedFyId ?? '');
 
   const totalMembers  = membersData?.total ?? 0;
   const enrolledCount = memberships?.length ?? 0;
@@ -195,10 +206,68 @@ export default function DashboardPage() {
   // ── Suggestions ────────────────────────────────────────────────────────
   const suggestions = buildSuggestions(sessions, totalMembers, enrolledCount);
 
+  // ── Map membershipId → nom ──────────────────────────────────────────────
+  const membershipNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const m of memberships ?? []) {
+      const name = [m.profile?.lastName, m.profile?.firstName].filter(Boolean).join(' ');
+      map[m.id] = name || m.profile?.memberCode || m.id.slice(-6);
+    }
+    return map;
+  }, [memberships]);
+
+  // ── Top 5 épargnants ──────────────────────────────────────────────────
+  const top5Savers = useMemo(() =>
+    [...(savingsLedgers ?? [])]
+      .sort((a, b) => parseFloat(b.balance) - parseFloat(a.balance))
+      .slice(0, 5),
+  [savingsLedgers]);
+
+  // ── Top 5 emprunteurs (en cours) ──────────────────────────────────────
+  const top5Loans = useMemo(() =>
+    [...(fyLoans ?? [])]
+      .filter((l) => l.status !== 'CLOSED')
+      .sort((a, b) => parseFloat(b.principalAmount) - parseFloat(a.principalAmount))
+      .slice(0, 5),
+  [fyLoans]);
+
   // ── 5 sessions récentes ────────────────────────────────────────────────
   const recentSessions = [...(sessions ?? [])]
     .sort((a, b) => b.sessionNumber - a.sessionNumber)
     .slice(0, 5);
+
+  // ── Dernières actions (dérivées des sessions) ────────────────────────
+  type ActionItem = { id: string; icon: LucideIcon; iconCls: string; label: string; sub: string; href?: string; date: Date };
+  const recentActions = useMemo<ActionItem[]>(() => {
+    const items: ActionItem[] = [];
+    for (const s of sessions ?? []) {
+      if (s.closedAt) {
+        items.push({
+          id: `closed-${s.id}`,
+          icon: CheckCircle2,
+          iconCls: 'text-emerald-600',
+          label: `Session #${s.sessionNumber} clôturée`,
+          sub: s.location ?? 'Sans lieu',
+          href: `/sessions/${s.id}`,
+          date: new Date(s.closedAt),
+        });
+      }
+      if (s.openedAt) {
+        items.push({
+          id: `opened-${s.id}`,
+          icon: Calendar,
+          iconCls: 'text-blue-600',
+          label: `Session #${s.sessionNumber} ouverte`,
+          sub: s.location ?? 'Sans lieu',
+          href: `/sessions/${s.id}`,
+          date: new Date(s.openedAt),
+        });
+      }
+    }
+    return items
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 8);
+  }, [sessions]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -240,60 +309,64 @@ export default function DashboardPage() {
         <KpiCard
           icon={Users}
           iconBg="bg-blue-50" iconColor="text-blue-600"
+          borderColor="border-blue-100"
           label="Membres enregistrés"
           value={totalMembers}
           isLoading={loadingMembers}
+          description="Nombre total de membres inscrits dans le système."
         />
         <KpiCard
           icon={Calendar}
           iconBg="bg-emerald-50" iconColor="text-emerald-600"
-          label="Exercice en cours"
+          borderColor="border-emerald-100"
+          label="Exercice fiscal actif"
           value={selectedFy?.label ?? '—'}
           isLoading={loadingFY}
-          sub={selectedFy ? selectedFy.status : 'Aucun exercice actif'}
+          description={selectedFy ? `Statut : ${selectedFy.status}` : 'Aucun exercice actif en cours.'}
         />
         <KpiCard
           icon={TrendingUp}
-          iconBg="bg-amber-50" iconColor="text-amber-600"
+          iconBg="bg-indigo-50" iconColor="text-indigo-600"
+          borderColor="border-indigo-100"
           label="Membres inscrits (FY)"
           value={selectedFy ? enrolledCount : '—'}
           isLoading={loadingMemberships && !!selectedFy}
-          sub={selectedFy ? selectedFy.label : undefined}
+          description={selectedFy ? `Inscrits pour ${selectedFy.label}` : 'Sélectionnez un exercice actif.'}
         />
         <KpiCard
           icon={Shield}
           iconBg="bg-violet-50" iconColor="text-violet-600"
+          borderColor="border-violet-100"
           label="Caisse de secours"
-          value={selectedFy ? `${formatAmount(rescueBalance)} XAF` : '—'}
+          value={selectedFy ? `${rescueBalance.toLocaleString('fr-FR')} XAF` : '—'}
           isLoading={loadingRescue && !!selectedFy}
-          sub={selectedFy ? undefined : 'Aucun exercice actif'}
+          description="Solde total disponible dans la caisse de secours."
         />
       </div>
 
       {/* ── Actions rapides ── */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-card p-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-          <Zap className="h-4 w-4 text-amber-500" />
-          Actions rapides
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">
+          Accès rapides
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { label: 'Sessions',       href: '/sessions',      icon: Calendar,  bg: 'bg-emerald-50', iconCls: 'text-emerald-600' },
-            { label: 'Membres',        href: '/members',       icon: Users,     bg: 'bg-blue-50',    iconCls: 'text-blue-600'    },
-            { label: 'Prêts',          href: '/loans',         icon: TrendingUp,bg: 'bg-amber-50',   iconCls: 'text-amber-600'   },
-            { label: 'Caisse secours', href: '/rescue-fund',   icon: Shield,    bg: 'bg-violet-50',  iconCls: 'text-violet-600'  },
-            { label: 'Bénéficiaires',  href: '/beneficiaries', icon: CheckCircle2, bg: 'bg-teal-50', iconCls: 'text-teal-600'   },
-            { label: 'Épargne',        href: '/savings',       icon: Clock,     bg: 'bg-rose-50',    iconCls: 'text-rose-600'    },
-          ].map(({ label, href, icon: Icon, bg, iconCls }) => (
+            { label: 'Sessions',       href: '/sessions',      icon: Calendar,     bg: 'bg-emerald-50', hoverBg: 'group-hover:bg-emerald-100', iconCls: 'text-emerald-600', hoverText: 'group-hover:text-emerald-700', border: 'hover:border-emerald-200' },
+            { label: 'Membres',        href: '/members',       icon: Users,        bg: 'bg-blue-50',    hoverBg: 'group-hover:bg-blue-100',    iconCls: 'text-blue-600',    hoverText: 'group-hover:text-blue-700',    border: 'hover:border-blue-200'    },
+            { label: 'Prêts',          href: '/loans',         icon: TrendingUp,   bg: 'bg-orange-50',  hoverBg: 'group-hover:bg-orange-100',  iconCls: 'text-orange-500',  hoverText: 'group-hover:text-orange-600',  border: 'hover:border-orange-200'  },
+            { label: 'Caisse secours', href: '/rescue-fund',   icon: Shield,       bg: 'bg-violet-50',  hoverBg: 'group-hover:bg-violet-100',  iconCls: 'text-violet-600',  hoverText: 'group-hover:text-violet-700',  border: 'hover:border-violet-200'  },
+            { label: 'Bénéficiaires',  href: '/beneficiaries', icon: CheckCircle2, bg: 'bg-teal-50',    hoverBg: 'group-hover:bg-teal-100',    iconCls: 'text-teal-600',    hoverText: 'group-hover:text-teal-700',    border: 'hover:border-teal-200'    },
+            { label: 'Épargne',        href: '/savings',       icon: Clock,        bg: 'bg-rose-50',    hoverBg: 'group-hover:bg-rose-100',    iconCls: 'text-rose-500',    hoverText: 'group-hover:text-rose-600',    border: 'hover:border-rose-200'    },
+          ].map(({ label, href, icon: Icon, bg, hoverBg, iconCls, hoverText, border }) => (
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center gap-2 rounded-xl border border-gray-100 p-3.5 hover:shadow-card-hover hover:border-gray-200 transition-all group"
+              className={`flex flex-col items-center gap-2 rounded-xl border border-gray-100 p-3.5 bg-white hover:shadow-md transition-all duration-200 group ${border}`}
             >
-              <div className={`p-2.5 rounded-xl ${bg} group-hover:scale-105 transition-transform`}>
-                <Icon className={`h-5 w-5 ${iconCls}`} strokeWidth={2} />
+              <div className={`p-2.5 rounded-xl transition-all duration-200 ${bg} ${hoverBg} group-hover:scale-110`}>
+                <Icon className={`h-5 w-5 transition-colors duration-200 ${iconCls}`} strokeWidth={2} />
               </div>
-              <span className="text-xs font-medium text-gray-700 text-center leading-tight">
+              <span className={`text-xs font-medium text-center leading-tight transition-colors duration-200 text-gray-600 ${hoverText}`}>
                 {label}
               </span>
             </Link>
@@ -367,8 +440,8 @@ export default function DashboardPage() {
                     <Legend
                       iconType="circle"
                       iconSize={8}
-                      formatter={(value: string, entry: any) => (
-                        <span className="text-xs text-gray-600">{value} ({entry.payload.value})</span>
+                      formatter={(value: string, entry: { payload?: { value?: number } }) => (
+                        <span className="text-xs text-gray-600">{value} ({entry.payload?.value ?? 0})</span>
                       )}
                     />
                     <Tooltip
@@ -406,8 +479,8 @@ export default function DashboardPage() {
 
       {/* ── Résumé exercice actif ── */}
       {selectedFy && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-card p-5 animate-slide-up">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">
+        <div className="rounded-xl border border-teal-100 shadow-card p-5 animate-slide-up" style={{ background: 'linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)' }}>
+          <h2 className="text-sm font-semibold text-teal-800 mb-4">
             Exercice actif — {selectedFy.label}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
@@ -426,11 +499,107 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* ── Top 5 Épargne + Prêts ── */}
+      {selectedFy && (top5Savers.length > 0 || top5Loans.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-slide-up">
+
+          {/* Top 5 épargnants */}
+          {top5Savers.length > 0 && (
+            <div className="bg-white rounded-xl border border-emerald-100 shadow-card overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-emerald-100 flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #f0fdf4 0%, #dcfce7 100%)' }}>
+                <div className="p-1.5 bg-emerald-100 rounded-lg">
+                  <Medal className="h-4 w-4 text-emerald-600" strokeWidth={2} />
+                </div>
+                <h2 className="text-sm font-semibold text-emerald-800">Top 5 — Épargne</h2>
+                <Link href="/savings" className="ml-auto text-xs text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-1">
+                  Voir tout <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+              <ul className="divide-y divide-gray-100">
+                {top5Savers.map((ledger, i) => {
+                  const name = membershipNameMap[ledger.membershipId] ?? ledger.membershipId.slice(-6);
+                  const balance = parseFloat(ledger.balance);
+                  const maxBalance = parseFloat(top5Savers[0].balance);
+                  const pct = maxBalance > 0 ? (balance / maxBalance) * 100 : 0;
+                  return (
+                    <li key={ledger.membershipId} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50">
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                        i === 0 ? 'bg-amber-100 text-amber-700' :
+                        i === 1 ? 'bg-gray-100 text-gray-500' :
+                        i === 2 ? 'bg-orange-100 text-orange-600' :
+                        'bg-gray-50 text-gray-400'
+                      }`}>{i + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{name}</p>
+                        <div className="mt-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-1 bg-emerald-400 rounded-full" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                      <span className="text-sm font-semibold tabular-nums text-emerald-700 shrink-0">
+                        {balance.toLocaleString('fr-FR')} <span className="text-xs font-normal text-gray-400">XAF</span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {/* Top 5 emprunteurs */}
+          {top5Loans.length > 0 && (
+            <div className="bg-white rounded-xl border border-orange-100 shadow-card overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-orange-100 flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #fff7ed 0%, #fed7aa 100%)' }}>
+                <div className="p-1.5 bg-orange-100 rounded-lg">
+                  <TrendingUp className="h-4 w-4 text-orange-500" strokeWidth={2} />
+                </div>
+                <h2 className="text-sm font-semibold text-orange-800">Top 5 — Prêts en cours</h2>
+                <Link href="/loans" className="ml-auto text-xs text-orange-600 hover:text-orange-800 font-medium flex items-center gap-1">
+                  Voir tout <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+              <ul className="divide-y divide-gray-100">
+                {top5Loans.map((loan, i) => {
+                  const name = membershipNameMap[loan.membershipId] ?? loan.membershipId.slice(-6);
+                  const principal = parseFloat(loan.principalAmount);
+                  const outstanding = parseFloat(loan.outstandingBalance);
+                  const maxPrincipal = parseFloat(top5Loans[0].principalAmount);
+                  const pct = maxPrincipal > 0 ? (principal / maxPrincipal) * 100 : 0;
+                  const repaidPct = principal > 0 ? Math.round(((principal - outstanding) / principal) * 100) : 0;
+                  return (
+                    <li key={loan.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50">
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                        i === 0 ? 'bg-amber-100 text-amber-700' :
+                        i === 1 ? 'bg-gray-100 text-gray-500' :
+                        i === 2 ? 'bg-orange-100 text-orange-600' :
+                        'bg-gray-50 text-gray-400'
+                      }`}>{i + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{name}</p>
+                        <div className="mt-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-1 bg-orange-400 rounded-full" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-semibold tabular-nums text-orange-700">
+                          {principal.toLocaleString('fr-FR')} <span className="text-xs font-normal text-gray-400">XAF</span>
+                        </p>
+                        <p className="text-[11px] text-gray-400">{repaidPct}% remboursé</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+        </div>
+      )}
+
       {/* ── Sessions récentes ── */}
       {selectedFy && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-card overflow-hidden animate-slide-up">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-700">Sessions récentes</h2>
+        <div className="rounded-xl border border-blue-100 shadow-card overflow-hidden animate-slide-up" style={{ background: 'linear-gradient(135deg, #ffffff 0%, #eff6ff 100%)' }}>
+          <div className="px-6 py-4 border-b border-blue-100 flex items-center justify-between" style={{ background: 'linear-gradient(90deg, #eff6ff 0%, #dbeafe 100%)' }}>
+            <h2 className="text-sm font-semibold text-blue-800">Sessions récentes</h2>
             <Link
               href="/sessions"
               className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
@@ -495,6 +664,60 @@ export default function DashboardPage() {
                 ))}
               </tbody>
             </table>
+          )}
+        </div>
+      )}
+
+      {/* ── Dernières actions ── */}
+      {selectedFy && (
+        <div className="rounded-xl border border-emerald-100 shadow-card overflow-hidden animate-slide-up" style={{ background: 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)' }}>
+          <div className="px-6 py-4 border-b border-emerald-100 flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #f0fdf4 0%, #dcfce7 100%)' }}>
+            <Activity className="h-4 w-4 text-emerald-500" strokeWidth={2} />
+            <h2 className="text-sm font-semibold text-emerald-800">Dernières actions</h2>
+          </div>
+
+          {loadingSessions ? (
+            <div className="divide-y divide-gray-100">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="px-6 py-3.5 flex items-center gap-3">
+                  <Skeleton className="h-7 w-7 rounded-lg shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-3.5 w-48" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
+                  <Skeleton className="h-3 w-20 shrink-0" />
+                </div>
+              ))}
+            </div>
+          ) : recentActions.length === 0 ? (
+            <div className="px-6 py-8 text-center text-gray-400 text-sm">
+              Aucune action récente pour cet exercice.
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {recentActions.map((action) => {
+                const Icon = action.icon;
+                const row = (
+                  <div className="flex items-center gap-3 px-6 py-3.5 hover:bg-gray-50 transition-colors group">
+                    <div className="p-1.5 rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors shrink-0">
+                      <Icon className={`h-3.5 w-3.5 ${action.iconCls}`} strokeWidth={2} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">{action.label}</p>
+                      <p className="text-xs text-gray-400 truncate">{action.sub}</p>
+                    </div>
+                    <span className="text-xs text-gray-400 shrink-0 tabular-nums">
+                      {action.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    </span>
+                  </div>
+                );
+                return (
+                  <li key={action.id}>
+                    {action.href ? <Link href={action.href}>{row}</Link> : row}
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
       )}

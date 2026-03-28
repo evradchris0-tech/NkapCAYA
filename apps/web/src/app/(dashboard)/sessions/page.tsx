@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import PageHeader from '@components/layout/PageHeader';
+import Select from '@components/ui/Select';
+import { SkeletonRow } from '@components/ui/Skeleton';
 import { useFiscalYears } from '@lib/hooks/useFiscalYear';
 import { useSessionsByFiscalYear } from '@lib/hooks/useSessions';
 import type { FiscalYearStatus, MonthlySession } from '@/types/api.types';
@@ -23,7 +25,7 @@ const SESSION_STATUS_COLORS: Record<string, string> = {
 
 const FY_STATUS_PRIORITY: FiscalYearStatus[] = ['ACTIVE', 'CASSATION', 'PENDING', 'CLOSED', 'ARCHIVED'];
 
-function SessionRow({ session }: { session: MonthlySession }) {
+function SessionRow({ session, index }: { session: MonthlySession; index: number }) {
   const total = [
     session.totalCotisation,
     session.totalPot,
@@ -38,6 +40,7 @@ function SessionRow({ session }: { session: MonthlySession }) {
 
   return (
     <tr className="hover:bg-gray-50 transition">
+      <td className="px-6 py-3 text-gray-400 text-xs tabular-nums w-10">{index + 1}</td>
       <td className="px-6 py-3 font-medium text-gray-900">
         Session #{session.sessionNumber}
       </td>
@@ -90,21 +93,18 @@ export default function SessionsPage() {
       {/* Sélecteur exercice fiscal */}
       {fiscalYears && fiscalYears.length > 0 && (
         <div className="flex items-center gap-3">
-          <label htmlFor="fy-select" className="text-sm font-medium text-gray-700">
-            Exercice fiscal :
-          </label>
-          <select
+          <Select
             id="fy-select"
             value={activeFyId}
             onChange={(e) => setSelectedFyId(e.target.value)}
-            className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-blue-500"
+            className="py-1.5 w-52"
           >
             {fiscalYears.map((fy) => (
               <option key={fy.id} value={fy.id}>
                 {fy.label} — {fy.status}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       )}
 
@@ -113,8 +113,24 @@ export default function SessionsPage() {
           Aucun exercice fiscal trouvé. Créez et activez un exercice d&apos;abord.
         </div>
       ) : isLoading ? (
-        <div className="flex items-center justify-center py-24 text-gray-400 text-sm">
-          Chargement…
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[560px]">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left px-6 py-3 font-medium text-gray-600 w-10">#</th>
+                  <th className="text-left px-6 py-3 font-medium text-gray-600">Session</th>
+                  <th className="text-left px-6 py-3 font-medium text-gray-600">Date prévue</th>
+                  <th className="text-left px-6 py-3 font-medium text-gray-600">Statut</th>
+                  <th className="text-right px-6 py-3 font-medium text-gray-600">Total collecté</th>
+                  <th className="px-6 py-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} cols={6} />)}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : !sessions || sessions.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-500 text-sm">
@@ -122,22 +138,24 @@ export default function SessionsPage() {
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Session</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Date prévue</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Statut</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Total collecté</th>
-                <th className="px-6 py-3"><span className="sr-only">Actions</span></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {sessions.map((s) => (
-                <SessionRow key={s.id} session={s} />
-              ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[560px]">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left px-6 py-3 font-medium text-gray-600">Session</th>
+                  <th className="text-left px-6 py-3 font-medium text-gray-600">Date prévue</th>
+                  <th className="text-left px-6 py-3 font-medium text-gray-600">Statut</th>
+                  <th className="text-right px-6 py-3 font-medium text-gray-600">Total collecté</th>
+                  <th className="px-6 py-3"><span className="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {sessions.map((s, i) => (
+                  <SessionRow key={s.id} session={s} index={i} />
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

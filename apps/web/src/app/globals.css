@@ -15,9 +15,13 @@ textarea {
 
 /* ── Focus visible accessible (clavier) ── */
 :focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid #3b82f6;
   outline-offset: 2px;
-  border-radius: 4px;
+}
+
+/* ── Désactive l'outline browser par défaut si outline-none est présent ── */
+.outline-none:focus-visible {
+  outline: none !important;
 }
 
 /* ── Scroll fluide ── */

@@ -16,6 +16,14 @@ export function useMembers(params?: { page?: number; limit?: number; search?: st
   });
 }
 
+export function useMyMemberProfile() {
+  return useQuery({
+    queryKey: ['members', 'me'],
+    queryFn: () => membersApi.getMe(),
+    retry: false, // Don't retry 404 for admin accounts without member profile
+  });
+}
+
 export function useMember(id: string) {
   return useQuery({
     queryKey: [...MEMBERS_KEY, id],

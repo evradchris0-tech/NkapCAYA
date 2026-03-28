@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
+import Select from '@components/ui/Select';
 import ConfirmDialog from '@components/ui/ConfirmDialog';
 import {
   useFiscalYear,
@@ -11,6 +12,10 @@ import {
   useActivateFiscalYear,
   useOpenCassation,
   useAddMember,
+  useUpdateMembership,
+  useUpdateFiscalYear,
+  useDeleteFiscalYear,
+  useCloseFiscalYear,
 } from '@lib/hooks/useFiscalYear';
 import { useMembers } from '@lib/hooks/useMembers';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
@@ -57,6 +62,7 @@ export default function FiscalYearDetailPage({ params }: Props) {
   const activate = useActivateFiscalYear();
   const openCassation = useOpenCassation();
   const addMember = useAddMember(params.id);
+  const updateMembership = useUpdateMembership(params.id);
 
   const isSuperAdmin = currentUser?.role === BureauRole.SUPER_ADMIN;
   const canAddMember =
@@ -66,8 +72,23 @@ export default function FiscalYearDetailPage({ params }: Props) {
     currentUser?.role === BureauRole.SECRETAIRE_GENERAL ||
     currentUser?.role === BureauRole.SECRETAIRE_ADJOINT;
 
+  const updateFy = useUpdateFiscalYear(params.id);
+  const deleteFy = useDeleteFiscalYear();
+  const closeFy = useCloseFiscalYear();
+
   const [confirmActivate, setConfirmActivate] = useState(false);
   const [confirmCassation, setConfirmCassation] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [editForm, setEditForm] = useState({
+    label: fy?.label ?? '',
+    startDate: fy?.startDate?.substring(0, 10) ?? '',
+    endDate: fy?.endDate?.substring(0, 10) ?? '',
+    cassationDate: fy?.cassationDate?.substring(0, 10) ?? '',
+    loanDueDate: fy?.loanDueDate?.substring(0, 10) ?? '',
+    notes: fy?.notes ?? '',
+  });
   const [showAddMember, setShowAddMember] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -78,6 +99,9 @@ export default function FiscalYearDetailPage({ params }: Props) {
     joinedAtMonth: 1,
   });
 
+  const [editingMembershipId, setEditingMembershipId] = useState<string | null>(null);
+  const [editMembershipForm, setEditMembershipForm] = useState({ joinedAt: '', joinedAtMonth: 1, sharesCount: 1 });
+
   const enrolledIds = new Set(memberships?.map((m) => m.profileId) ?? []);
   const availableMembers = allMembers?.data.filter((m) => !enrolledIds.has(m.id)) ?? [];
 
@@ -87,6 +111,34 @@ export default function FiscalYearDetailPage({ params }: Props) {
 
   const handleOpenCassation = async () => {
     await openCassation.mutateAsync(params.id);
+  };
+
+  const handleEditOpen = () => {
+    setEditForm({
+      label: fy!.label,
+      startDate: fy!.startDate.substring(0, 10),
+      endDate: fy!.endDate.substring(0, 10),
+      cassationDate: fy!.cassationDate.substring(0, 10),
+      loanDueDate: fy!.loanDueDate.substring(0, 10),
+      notes: fy!.notes ?? '',
+    });
+    setShowEdit(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await updateFy.mutateAsync(editForm);
+    setShowEdit(false);
+  };
+
+  const handleClose = async () => {
+    await closeFy.mutateAsync(params.id);
+    setConfirmClose(false);
+  };
+
+  const handleDelete = async () => {
+    await deleteFy.mutateAsync(params.id);
+    router.push('/fiscal-year');
   };
 
   const handleAddMember = async (e: React.FormEvent) => {
@@ -103,6 +155,22 @@ export default function FiscalYearDetailPage({ params }: Props) {
     } catch {
       setAddError('Erreur lors de l\'inscription du membre.');
     }
+  };
+
+  const handleEditMembership = (m: { id: string; joinedAt: string; joinedAtMonth: number; shareCommitment?: { sharesCount: string | number } | null }) => {
+    setEditingMembershipId(m.id);
+    setEditMembershipForm({
+      joinedAt: new Date(m.joinedAt).toISOString().substring(0, 10),
+      joinedAtMonth: m.joinedAtMonth,
+      sharesCount: Number(m.shareCommitment?.sharesCount ?? 1),
+    });
+  };
+
+  const handleUpdateMembership = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMembershipId) return;
+    await updateMembership.mutateAsync({ membershipId: editingMembershipId, payload: editMembershipForm });
+    setEditingMembershipId(null);
   };
 
   if (isLoading) {
@@ -124,24 +192,57 @@ export default function FiscalYearDetailPage({ params }: Props) {
         ]}
         action={
           isSuperAdmin && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {fy.status === 'PENDING' && (
-                <Button
-                  size="sm"
-                  onClick={() => setConfirmActivate(true)}
-                  isLoading={activate.isPending}
-                >
-                  Activer l&apos;exercice
-                </Button>
+                <>
+                  <Button size="sm" variant="secondary" onClick={handleEditOpen}>
+                    Modifier
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => setConfirmDelete(true)}
+                    isLoading={deleteFy.isPending}
+                  >
+                    Supprimer
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setConfirmActivate(true)}
+                    isLoading={activate.isPending}
+                  >
+                    Activer l&apos;exercice
+                  </Button>
+                </>
               )}
               {fy.status === 'ACTIVE' && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setConfirmCassation(true)}
+                    isLoading={openCassation.isPending}
+                  >
+                    Ouvrir la cassation
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => setConfirmClose(true)}
+                    isLoading={closeFy.isPending}
+                  >
+                    Clôturer
+                  </Button>
+                </>
+              )}
+              {fy.status === 'CASSATION' && (
                 <Button
                   size="sm"
-                  variant="secondary"
-                  onClick={() => setConfirmCassation(true)}
-                  isLoading={openCassation.isPending}
+                  variant="danger"
+                  onClick={() => setConfirmClose(true)}
+                  isLoading={closeFy.isPending}
                 >
-                  Ouvrir la cassation
+                  Clôturer l&apos;exercice
                 </Button>
               )}
             </div>
@@ -166,6 +267,60 @@ export default function FiscalYearDetailPage({ params }: Props) {
         </div>
       </div>
 
+      {/* ── Formulaire de modification ── */}
+      {showEdit && (
+        <div className="bg-white rounded-xl border border-indigo-200 p-6">
+          <h2 className="text-base font-semibold text-gray-800 mb-4">Modifier l&apos;exercice fiscal</h2>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div>
+              <label className="text-xs font-medium text-gray-700 block mb-1">Libellé</label>
+              <input
+                type="text"
+                required
+                value={editForm.label}
+                onChange={(e) => setEditForm({ ...editForm, label: e.target.value })}
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-1">Date de début</label>
+                <input type="date" required value={editForm.startDate} onChange={(e) => setEditForm({ ...editForm, startDate: e.target.value })} className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-1">Date limite prêts</label>
+                <input type="date" required value={editForm.loanDueDate} onChange={(e) => setEditForm({ ...editForm, loanDueDate: e.target.value })} className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-1">Date de cassation</label>
+                <input type="date" required value={editForm.cassationDate} onChange={(e) => setEditForm({ ...editForm, cassationDate: e.target.value })} className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-1">Date de fin</label>
+                <input type="date" required value={editForm.endDate} onChange={(e) => setEditForm({ ...editForm, endDate: e.target.value })} className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-700 block mb-1">Notes (optionnel)</label>
+              <textarea
+                rows={2}
+                value={editForm.notes}
+                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" isLoading={updateFy.isPending}>
+                Enregistrer
+              </Button>
+              <Button type="button" size="sm" variant="secondary" onClick={() => setShowEdit(false)}>
+                Annuler
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Modales de confirmation */}
       <ConfirmDialog
         isOpen={confirmActivate}
@@ -176,6 +331,26 @@ export default function FiscalYearDetailPage({ params }: Props) {
         isLoading={activate.isPending}
         onConfirm={async () => { await handleActivate(); setConfirmActivate(false); }}
         onCancel={() => setConfirmActivate(false)}
+      />
+      <ConfirmDialog
+        isOpen={confirmClose}
+        title="Clôturer cet exercice"
+        message={`Voulez-vous vraiment clôturer l'exercice "${fy.label}" ? L'exercice passera en statut CLÔTURÉ et sera accessible uniquement en lecture seule.`}
+        confirmLabel="Clôturer"
+        variant="danger"
+        isLoading={closeFy.isPending}
+        onConfirm={handleClose}
+        onCancel={() => setConfirmClose(false)}
+      />
+      <ConfirmDialog
+        isOpen={confirmDelete}
+        title="Supprimer cet exercice"
+        message={`Voulez-vous vraiment supprimer l'exercice "${fy.label}" ? Cette action est irréversible.`}
+        confirmLabel="Supprimer"
+        variant="danger"
+        isLoading={deleteFy.isPending}
+        onConfirm={async () => { await handleDelete(); setConfirmDelete(false); }}
+        onCancel={() => setConfirmDelete(false)}
       />
       <ConfirmDialog
         isOpen={confirmCassation}
@@ -252,7 +427,11 @@ export default function FiscalYearDetailPage({ params }: Props) {
             </span>
           </h2>
           {canAddMember && fy.status !== 'CLOSED' && (
-            <Button size="sm" onClick={() => setShowAddMember(!showAddMember)}>
+            <Button
+              size="sm"
+              variant={showAddMember ? 'secondary' : 'primary'}
+              onClick={() => setShowAddMember(!showAddMember)}
+            >
               {showAddMember ? '− Fermer' : '+ Inscrire un membre'}
             </Button>
           )}
@@ -263,13 +442,13 @@ export default function FiscalYearDetailPage({ params }: Props) {
           <form onSubmit={handleAddMember} className="px-6 py-4 bg-blue-50 border-b border-blue-100 space-y-3">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="col-span-2">
-                <label className="text-xs font-medium text-gray-700 block mb-1">Membre</label>
-                <select
+                <Select
+                  label="Membre"
                   value={form.profileId}
                   onChange={(e) => setForm({ ...form, profileId: e.target.value })}
                   aria-label="Sélectionner un membre"
                   disabled={isMembersLoading}
-                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                  className="py-1.5 text-xs"
                 >
                   {isMembersLoading ? (
                     <option value="">Chargement des membres…</option>
@@ -285,20 +464,20 @@ export default function FiscalYearDetailPage({ params }: Props) {
                       ))}
                     </>
                   )}
-                </select>
+                </Select>
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-700 block mb-1">Type</label>
-                <select
+                <Select
+                  label="Type"
                   value={form.enrollmentType}
                   onChange={(e) => setForm({ ...form, enrollmentType: e.target.value as 'NEW' | 'RETURNING' })}
                   aria-label="Type d'inscription"
-                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white"
+                  className="py-1.5 text-xs"
                 >
                   <option value="NEW">Nouveau</option>
                   <option value="RETURNING">Ré-inscription</option>
-                </select>
+                </Select>
               </div>
 
               <div>
@@ -321,6 +500,8 @@ export default function FiscalYearDetailPage({ params }: Props) {
                   id="joined-at"
                   type="date"
                   value={form.joinedAt}
+                  min={fy?.startDate?.substring(0, 10)}
+                  max={fy?.cassationDate?.substring(0, 10) ?? fy?.endDate?.substring(0, 10)}
                   onChange={(e) => setForm({ ...form, joinedAt: e.target.value })}
                   className="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5"
                 />
@@ -362,41 +543,107 @@ export default function FiscalYearDetailPage({ params }: Props) {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
+                <th className="text-left px-6 py-3 font-medium text-gray-600 w-10">#</th>
                 <th className="text-left px-6 py-3 font-medium text-gray-600">Membre</th>
                 <th className="text-left px-6 py-3 font-medium text-gray-600">Code</th>
                 <th className="text-left px-6 py-3 font-medium text-gray-600">Type</th>
                 <th className="text-left px-6 py-3 font-medium text-gray-600">Parts</th>
                 <th className="text-left px-6 py-3 font-medium text-gray-600">Inscrit le</th>
+                {canAddMember && fy.status === 'ACTIVE' && <th className="px-6 py-3" />}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {memberships.map((m) => (
-                <tr key={m.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-3 font-medium text-gray-900">
-                    {m.profile
-                      ? `${m.profile.lastName} ${m.profile.firstName}`
-                      : m.profileId}
-                  </td>
-                  <td className="px-6 py-3 font-mono text-gray-600 text-xs">
-                    {m.profile?.memberCode ?? '—'}
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                      m.enrollmentType === 'NEW'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {m.enrollmentType === 'NEW' ? 'Nouveau' : 'Ré-inscription'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 text-gray-700">
-                    {m.shareCommitment?.sharesCount ?? '—'}
-                  </td>
-                  <td className="px-6 py-3 text-gray-600">
-                    {new Date(m.joinedAt).toLocaleDateString('fr-FR')}
-                  </td>
-                </tr>
-              ))}
+              {memberships.map((m, index) => {
+                const isEditing = editingMembershipId === m.id;
+                const isLocked = (m.shareCommitment as any)?.isLocked === true;
+                return isEditing ? (
+                  <tr key={m.id} className="bg-blue-50">
+                    <td className="px-6 py-3 text-gray-400 text-xs">{index + 1}</td>
+                    <td colSpan={2} className="px-6 py-3 font-medium text-gray-900 text-sm">
+                      {m.profile ? `${m.profile.lastName} ${m.profile.firstName}` : m.profileId}
+                    </td>
+                    <td colSpan={4} className="px-6 py-2">
+                      <form onSubmit={handleUpdateMembership} className="flex items-end gap-2 flex-wrap">
+                        <div>
+                          <label className="text-[11px] text-gray-500 block mb-0.5">Date</label>
+                          <input
+                            type="date"
+                            value={editMembershipForm.joinedAt}
+                            min={fy?.startDate?.substring(0, 10)}
+                            max={fy?.cassationDate?.substring(0, 10) ?? fy?.endDate?.substring(0, 10)}
+                            onChange={(e) => setEditMembershipForm({ ...editMembershipForm, joinedAt: e.target.value })}
+                            className="text-xs border border-gray-300 rounded px-2 py-1"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-gray-500 block mb-0.5">Mois</label>
+                          <input
+                            type="number" min="1" max="12"
+                            value={editMembershipForm.joinedAtMonth}
+                            onChange={(e) => setEditMembershipForm({ ...editMembershipForm, joinedAtMonth: parseInt(e.target.value) })}
+                            className="text-xs border border-gray-300 rounded px-2 py-1 w-14"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-gray-500 block mb-0.5">Parts</label>
+                          <input
+                            type="number" step="0.25" min="0.25" max="10"
+                            value={editMembershipForm.sharesCount}
+                            onChange={(e) => setEditMembershipForm({ ...editMembershipForm, sharesCount: parseFloat(e.target.value) })}
+                            className="text-xs border border-gray-300 rounded px-2 py-1 w-16"
+                          />
+                        </div>
+                        <button type="submit" className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded font-medium hover:bg-blue-700">
+                          Sauvegarder
+                        </button>
+                        <button type="button" onClick={() => setEditingMembershipId(null)} className="text-xs text-gray-500 px-3 py-1.5 rounded hover:bg-gray-100">
+                          Annuler
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={m.id} className="hover:bg-gray-50 transition">
+                    <td className="px-6 py-3 text-gray-400 text-xs tabular-nums">{index + 1}</td>
+                    <td className="px-6 py-3 font-medium text-gray-900">
+                      {m.profile
+                        ? `${m.profile.lastName} ${m.profile.firstName}`
+                        : m.profileId}
+                    </td>
+                    <td className="px-6 py-3 font-mono text-gray-600 text-xs">
+                      {m.profile?.memberCode ?? '—'}
+                    </td>
+                    <td className="px-6 py-3">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                        m.enrollmentType === 'NEW'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {m.enrollmentType === 'NEW' ? 'Nouveau' : 'Ré-inscription'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 text-gray-700">
+                      {m.shareCommitment?.sharesCount ?? '—'}
+                    </td>
+                    <td className="px-6 py-3 text-gray-600">
+                      {new Date(m.joinedAt).toLocaleDateString('fr-FR')}
+                    </td>
+                    {canAddMember && fy.status === 'ACTIVE' && (
+                      <td className="px-6 py-3 text-right">
+                        {!isLocked && (
+                          <button
+                            type="button"
+                            onClick={() => handleEditMembership(m as any)}
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            Modifier
+                          </button>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

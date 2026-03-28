@@ -58,7 +58,7 @@ export default function Sidebar() {
   });
 
   return (
-    <aside className="w-64 shrink-0 bg-gray-900 text-gray-200 flex flex-col h-full">
+    <aside className="w-64 shrink-0 text-gray-200 flex flex-col h-full" style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 60%, #1e3a5f 100%)' }}>
       {/* Logo */}
       <div className="px-6 py-5 border-b border-gray-800">
         <h1 className="text-xl font-bold tracking-tight text-white">CAYA</h1>

@@ -9,23 +9,28 @@ export const SELECTED_FY_STORAGE_KEY = 'caya_selected_fy';
 interface FiscalYearContextValue {
   selectedFyId: string;
   selectedFy: FiscalYear | undefined;
+  /** L'exercice ACTIVE en cours (indépendant de la sélection) */
+  activeFy: FiscalYear | undefined;
   setSelectedFyId: (id: string) => void;
   fiscalYears: FiscalYear[] | undefined;
   isLoading: boolean;
+  /** true si l'exercice sélectionné n'est pas ACTIVE → toutes les pages sont en lecture seule */
+  isReadOnly: boolean;
 }
 
 const FiscalYearContext = createContext<FiscalYearContextValue>({
   selectedFyId: '',
   selectedFy: undefined,
+  activeFy: undefined,
   setSelectedFyId: () => {},
   fiscalYears: undefined,
   isLoading: false,
+  isReadOnly: false,
 });
 
 export function FiscalYearProvider({ children }: { children: ReactNode }) {
   const { data: fiscalYears, isLoading } = useFiscalYears();
 
-  // Initialise depuis localStorage pour survivre aux rechargements
   const [selectedFyId, setSelectedFyIdState] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem(SELECTED_FY_STORAGE_KEY) ?? '';
@@ -52,9 +57,13 @@ export function FiscalYearProvider({ children }: { children: ReactNode }) {
   }, [fiscalYears, selectedFyId, setSelectedFyId]);
 
   const selectedFy = fiscalYears?.find((fy) => fy.id === selectedFyId);
+  const activeFy = fiscalYears?.find((fy) => fy.status === 'ACTIVE');
+  const isReadOnly = selectedFy?.status !== 'ACTIVE';
 
   return (
-    <FiscalYearContext.Provider value={{ selectedFyId, selectedFy, setSelectedFyId, fiscalYears, isLoading }}>
+    <FiscalYearContext.Provider
+      value={{ selectedFyId, selectedFy, activeFy, setSelectedFyId, fiscalYears, isLoading, isReadOnly }}
+    >
       {children}
     </FiscalYearContext.Provider>
   );

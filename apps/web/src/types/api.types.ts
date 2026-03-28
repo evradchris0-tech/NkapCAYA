@@ -264,6 +264,7 @@ export interface MonthlySession {
   totalProjet: string;
   totalAutres: string;
   entries?: SessionEntry[];
+  fiscalYear?: { config?: FiscalYearConfig };
 }
 
 export interface SessionEntry {
@@ -281,7 +282,7 @@ export interface SessionEntry {
   notes: string | null;
   recordedById: string;
   recordedAt: string;
-  membership?: Pick<Member, 'id' | 'firstName' | 'lastName'>;
+  membership?: { profile?: Pick<Member, 'id' | 'firstName' | 'lastName' | 'memberCode'> | null };
 }
 
 // ─────────────────────────────────────────────────────────
@@ -479,6 +480,7 @@ export interface BeneficiarySlot {
   designatedAt: string | null;
   status: BeneficiaryStatus;
   deliveredAt: string | null;
+  isHost: boolean;
   notes: string | null;
   membership?: {
     profile?: Pick<Member, 'id' | 'firstName' | 'lastName' | 'memberCode'>;

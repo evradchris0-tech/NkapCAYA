@@ -5,6 +5,7 @@ import PageHeader from '@components/layout/PageHeader';
 import ChartCard from '@components/ui/ChartCard';
 import Pagination from '@components/ui/Pagination';
 import { Skeleton, SkeletonRow } from '@components/ui/Skeleton';
+import Select from '@components/ui/Select';
 import { useSavingsByMembership, useFiscalYearSavings } from '@lib/hooks/useSavings';
 import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
 import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
@@ -45,9 +46,9 @@ interface AllMembersTableProps {
 function AllMembersTable({ savings, memberships, isLoading, onSelect }: AllMembersTableProps) {
   const [page, setPage] = useState(1);
 
-  // Enrichir chaque ledger avec les infos profil issues des memberships
-  const rows = savings.map((ledger) => {
-    const membership = memberships.find((m) => m.id === ledger.membershipId);
+  // Afficher tous les membres inscrits, avec leur épargne (0 si aucun ledger)
+  const rows = memberships.map((membership) => {
+    const ledger = savings.find((l) => l.membershipId === membership.id);
     return { ledger, membership };
   });
 
@@ -75,6 +76,7 @@ function AllMembersTable({ savings, memberships, isLoading, onSelect }: AllMembe
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
+              <th className="text-left px-6 py-3 font-medium text-gray-600 w-10">#</th>
               <th className="text-left px-6 py-3 font-medium text-gray-600">Membre</th>
               <th className="text-left px-6 py-3 font-medium text-gray-600">Code</th>
               <th className="text-right px-6 py-3 font-medium text-gray-600">Solde total</th>
@@ -84,37 +86,39 @@ function AllMembersTable({ savings, memberships, isLoading, onSelect }: AllMembe
           </thead>
           <tbody className="divide-y divide-gray-100">
             {isLoading
-              ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} cols={5} />)
+              ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} cols={6} />)
               : sliced.length === 0
               ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-gray-400 text-sm">
-                    Aucune donnée d&apos;épargne disponible pour cet exercice.
+                  <td colSpan={6} className="px-6 py-10 text-center text-gray-400 text-sm">
+                    Aucun membre inscrit pour cet exercice.
                   </td>
                 </tr>
               )
-              : sliced.map(({ ledger, membership }) => {
-                  const fullName = membership?.profile
+              : sliced.map(({ ledger, membership }, index) => {
+                  const fullName = membership.profile
                     ? `${membership.profile.lastName} ${membership.profile.firstName}`
                     : '—';
-                  const code = membership?.profile?.memberCode ?? '—';
+                  const code = membership.profile?.memberCode ?? '—';
+                  const hasLedger = !!ledger;
 
                   return (
                     <tr
-                      key={ledger.membershipId}
-                      onClick={() => onSelect(ledger.membershipId)}
-                      className="hover:bg-blue-50 cursor-pointer transition-colors"
+                      key={membership.id}
+                      onClick={() => hasLedger ? onSelect(membership.id) : undefined}
+                      className={hasLedger ? 'hover:bg-blue-50 cursor-pointer transition-colors' : 'opacity-50'}
                     >
+                      <td className="px-6 py-3 text-gray-400 text-xs tabular-nums">{(page - 1) * PAGE_SIZE + index + 1}</td>
                       <td className="px-6 py-3 font-medium text-gray-800">{fullName}</td>
                       <td className="px-6 py-3 text-gray-500 font-mono text-xs">{code}</td>
                       <td className="px-6 py-3 text-right tabular-nums font-semibold text-gray-900">
-                        {fmt(ledger.balance)} XAF
+                        {hasLedger ? `${fmt(ledger.balance)} XAF` : <span className="text-gray-300 text-xs">Aucun versement</span>}
                       </td>
                       <td className="px-6 py-3 text-right tabular-nums text-gray-600">
-                        {fmt(ledger.principalBalance)} XAF
+                        {hasLedger ? `${fmt(ledger.principalBalance)} XAF` : '—'}
                       </td>
                       <td className="px-6 py-3 text-right tabular-nums text-blue-700">
-                        {fmt(ledger.totalInterestReceived)} XAF
+                        {hasLedger ? `${fmt(ledger.totalInterestReceived)} XAF` : '—'}
                       </td>
                     </tr>
                   );
@@ -366,13 +370,13 @@ export default function SavingsPage() {
           Filtrer par membre :
         </label>
         {loadingMemberships ? (
-          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-9 w-56" />
         ) : (
-          <select
+          <Select
             id="member-filter"
             value={selectedMembershipId}
             onChange={(e) => setSelectedMembershipId(e.target.value)}
-            className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="py-1.5 w-64"
           >
             <option value="">Tous les membres</option>
             {memberships.map((m) => (
@@ -380,7 +384,7 @@ export default function SavingsPage() {
                 {m.profile?.lastName} {m.profile?.firstName} — {m.profile?.memberCode}
               </option>
             ))}
-          </select>
+          </Select>
         )}
         {selectedMembershipId && (
           <button

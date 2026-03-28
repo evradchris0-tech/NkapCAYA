@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +10,7 @@ import Button from '@components/ui/Button';
 import Input from '@components/ui/Input';
 import Pagination from '@components/ui/Pagination';
 import { Skeleton, SkeletonRow } from '@components/ui/Skeleton';
+import Select from '@components/ui/Select';
 import { useLoansByMembership, useRequestLoan, useApproveLoan } from '@lib/hooks/useLoans';
 import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
 import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
@@ -82,6 +83,7 @@ function MembersTable({ memberships, isLoading, selectedId, onSelect }: MembersT
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
+              <th className="text-left px-6 py-3 font-medium text-gray-600 w-10">#</th>
               <th className="text-left px-6 py-3 font-medium text-gray-600">Nom</th>
               <th className="text-left px-6 py-3 font-medium text-gray-600">Code</th>
               <th className="text-left px-6 py-3 font-medium text-gray-600">Nombre de parts</th>
@@ -91,16 +93,16 @@ function MembersTable({ memberships, isLoading, selectedId, onSelect }: MembersT
           </thead>
           <tbody className="divide-y divide-gray-100">
             {isLoading
-              ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} cols={5} />)
+              ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} cols={6} />)
               : sliced.length === 0
               ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-gray-400 text-sm">
+                  <td colSpan={6} className="px-6 py-10 text-center text-gray-400 text-sm">
                     Aucun membre inscrit pour cet exercice.
                   </td>
                 </tr>
               )
-              : sliced.map((m) => {
+              : sliced.map((m, index) => {
                   const fullName = m.profile
                     ? `${m.profile.lastName} ${m.profile.firstName}`
                     : '—';
@@ -117,6 +119,7 @@ function MembersTable({ memberships, isLoading, selectedId, onSelect }: MembersT
                           : 'hover:bg-gray-50'
                       }`}
                     >
+                      <td className="px-6 py-3 text-gray-400 text-xs tabular-nums">{(page - 1) * PAGE_SIZE + index + 1}</td>
                       <td className="px-6 py-3 font-medium text-gray-800">{fullName}</td>
                       <td className="px-6 py-3 text-gray-500 font-mono text-xs">
                         {m.profile?.memberCode ?? '—'}
@@ -166,17 +169,174 @@ function MembersTable({ memberships, isLoading, selectedId, onSelect }: MembersT
   );
 }
 
+// ── Amortissement ─────────────────────────────────────────────────────────────
+
+function computeAmortization(balance: number, rate: number, months: number, payment: number) {
+  const rows = [];
+  let b = balance;
+  for (let m = 1; m <= months; m++) {
+    const interest = b * rate;
+    const total = b + interest;
+    const paid = Math.min(payment, total);
+    const newBalance = Math.max(0, total - payment);
+    rows.push({ month: m, balanceStart: b, interest, total, payment: paid, balanceEnd: newBalance });
+    b = newBalance;
+    if (b <= 0) break;
+  }
+  return rows;
+}
+
+function recommendedPayment(balance: number, rate: number, months: number): number {
+  if (months <= 0) return balance;
+  if (rate <= 0) return balance / months;
+  return (balance * rate) / (1 - Math.pow(1 + rate, -months));
+}
+
+interface AmortizationPanelProps {
+  balance: number;
+  rate: number;
+  dueBeforeDate: string;
+}
+
+function AmortizationPanel({ balance, rate, dueBeforeDate }: AmortizationPanelProps) {
+  const today = new Date();
+  const due = new Date(dueBeforeDate);
+  const defaultMonths = Math.max(1, Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30)));
+  const [months, setMonths] = useState(defaultMonths);
+
+  const payment = recommendedPayment(balance, rate, months);
+  const rows = computeAmortization(balance, rate, months, payment);
+  const totalInterest = rows.reduce((s, r) => s + r.interest, 0);
+  const totalPaid = rows.reduce((s, r) => s + r.payment, 0);
+  const isPaidOff = rows[rows.length - 1]?.balanceEnd === 0;
+
+  const fmt = (v: number) => v.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+
+  return (
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-t border-blue-100 p-5 space-y-4">
+      {/* Titre */}
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-semibold text-blue-900">Simulation de remboursement</h4>
+        <span className="text-xs text-blue-500 bg-blue-100 px-2 py-0.5 rounded-full">
+          Taux : {(rate * 100).toFixed(0)} %/mois
+        </span>
+      </div>
+
+      {/* Slider mois */}
+      <div className="bg-white rounded-xl border border-blue-100 p-4 shadow-sm space-y-3">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-gray-600 font-medium">Durée du remboursement</span>
+          <span className="text-lg font-bold text-blue-700 tabular-nums">{months} mois</span>
+        </div>
+        <input
+          type="range"
+          min={1}
+          max={36}
+          value={months}
+          onChange={(e) => setMonths(Number(e.target.value))}
+          className="w-full h-2 bg-blue-100 rounded-full appearance-none cursor-pointer accent-blue-600"
+        />
+        <div className="flex justify-between text-xs text-gray-400">
+          <span>1 mois</span>
+          <span className="text-blue-400 font-medium">
+            Date limite : {new Date(dueBeforeDate).toLocaleDateString('fr-FR')}
+            {' '}({defaultMonths} mois)
+          </span>
+          <span>36 mois</span>
+        </div>
+      </div>
+
+      {/* KPI cards */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          {
+            label: 'Mensualité',
+            value: `${fmt(payment)} XAF`,
+            sub: 'capital + intérêts',
+            color: 'text-blue-700',
+            bg: 'bg-white border-blue-100',
+          },
+          {
+            label: 'Total intérêts',
+            value: `${fmt(totalInterest)} XAF`,
+            sub: `sur ${rows.length} mois`,
+            color: 'text-amber-600',
+            bg: 'bg-white border-amber-100',
+          },
+          {
+            label: 'Total remboursé',
+            value: `${fmt(totalPaid)} XAF`,
+            sub: isPaidOff ? '✓ Solde clôturé' : `solde résiduel`,
+            color: isPaidOff ? 'text-green-700' : 'text-gray-700',
+            bg: `${isPaidOff ? 'bg-green-50 border-green-100' : 'bg-white border-gray-100'}`,
+          },
+        ].map(({ label, value, sub, color, bg }) => (
+          <div key={label} className={`rounded-xl border p-3 shadow-sm ${bg}`}>
+            <p className="text-xs text-gray-500 mb-1">{label}</p>
+            <p className={`text-sm font-bold tabular-nums ${color}`}>{value}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Table mois par mois */}
+      <div className="overflow-x-auto rounded-xl border border-blue-100 shadow-sm">
+        <table className="w-full text-xs bg-white">
+          <thead>
+            <tr className="bg-blue-600 text-white">
+              <th className="text-left px-3 py-2 font-semibold rounded-tl-xl">Mois</th>
+              <th className="text-right px-3 py-2 font-semibold">Solde début</th>
+              <th className="text-right px-3 py-2 font-semibold text-amber-200">+ Intérêts</th>
+              <th className="text-right px-3 py-2 font-semibold text-green-200">− Mensualité</th>
+              <th className="text-right px-3 py-2 font-semibold rounded-tr-xl">Solde fin</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-blue-50">
+            {rows.map((r, i) => (
+              <tr
+                key={r.month}
+                className={`transition-colors ${
+                  r.balanceEnd === 0
+                    ? 'bg-green-50'
+                    : i % 2 === 0
+                    ? 'bg-white'
+                    : 'bg-blue-50/30'
+                }`}
+              >
+                <td className="px-3 py-2 font-medium text-blue-800">M+{r.month}</td>
+                <td className="px-3 py-2 text-right tabular-nums text-gray-700">{fmt(r.balanceStart)}</td>
+                <td className="px-3 py-2 text-right tabular-nums text-amber-600 font-medium">+{fmt(r.interest)}</td>
+                <td className="px-3 py-2 text-right tabular-nums text-green-700 font-medium">−{fmt(r.payment)}</td>
+                <td className={`px-3 py-2 text-right tabular-nums font-bold ${r.balanceEnd === 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                  {fmt(r.balanceEnd)}{r.balanceEnd === 0 ? ' ✓' : ''}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="text-xs text-blue-400 text-center">
+        Simulation indicative — basée sur le solde actuel de{' '}
+        <strong>{fmt(balance)} XAF</strong>. Les remboursements réels modifieront les montants.
+      </p>
+    </div>
+  );
+}
+
 // ── Sous-composant : liste des prêts du membre sélectionné ────────────────────
 
 interface MemberLoansProps {
   membershipId: string;
   displayName: string;
   isPresident: boolean;
+  isReadOnly: boolean;
 }
 
-function MemberLoans({ membershipId, displayName, isPresident }: MemberLoansProps) {
+function MemberLoans({ membershipId, displayName, isPresident, isReadOnly }: MemberLoansProps) {
   const { data: loans, isLoading } = useLoansByMembership(membershipId);
   const approveLoan = useApproveLoan();
+  const [expandedLoanId, setExpandedLoanId] = useState<string | null>(null);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -197,60 +357,83 @@ function MemberLoans({ membershipId, displayName, isPresident }: MemberLoansProp
           Aucun prêt enregistré pour ce membre.
         </div>
       ) : (
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="text-left px-6 py-3 font-medium text-gray-600">Montant</th>
-              <th className="text-left px-6 py-3 font-medium text-gray-600">Taux mensuel</th>
-              <th className="text-left px-6 py-3 font-medium text-gray-600">Solde restant</th>
-              <th className="text-left px-6 py-3 font-medium text-gray-600">Date limite</th>
-              <th className="text-left px-6 py-3 font-medium text-gray-600">Statut</th>
-              <th className="px-6 py-3"><span className="sr-only">Actions</span></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {loans.map((loan) => (
-              <tr key={loan.id} className="hover:bg-gray-50 transition">
-                <td className="px-6 py-3 font-medium tabular-nums">
-                  {parseFloat(loan.principalAmount).toLocaleString('fr-FR')} XAF
-                </td>
-                <td className="px-6 py-3 text-gray-600">
-                  {(parseFloat(loan.monthlyRate) * 100).toFixed(0)} %
-                </td>
-                <td className="px-6 py-3 tabular-nums text-gray-700">
-                  {parseFloat(loan.outstandingBalance).toLocaleString('fr-FR')} XAF
-                </td>
-                <td className="px-6 py-3 text-gray-600">
-                  {new Date(loan.dueBeforeDate).toLocaleDateString('fr-FR')}
-                </td>
-                <td className="px-6 py-3">
-                  <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[loan.status]}`}>
-                    {STATUS_LABELS[loan.status]}
-                  </span>
-                </td>
-                <td className="px-6 py-3 text-right">
-                  <div className="flex items-center gap-2 justify-end">
-                    {loan.status === 'PENDING' && isPresident && (
-                      <Button
-                        size="sm"
-                        onClick={() => approveLoan.mutate(loan.id)}
-                        isLoading={approveLoan.isPending}
-                      >
-                        Approuver
-                      </Button>
-                    )}
-                    <Link
-                      href={`/loans/${loan.id}`}
-                      className="text-blue-600 hover:text-blue-800 text-xs font-medium"
-                    >
-                      Voir →
-                    </Link>
-                  </div>
-                </td>
+        <div>
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="text-left px-6 py-3 font-medium text-gray-600">Montant</th>
+                <th className="text-left px-6 py-3 font-medium text-gray-600">Taux mensuel</th>
+                <th className="text-left px-6 py-3 font-medium text-gray-600">Solde restant</th>
+                <th className="text-left px-6 py-3 font-medium text-gray-600">Date limite</th>
+                <th className="text-left px-6 py-3 font-medium text-gray-600">Statut</th>
+                <th className="px-6 py-3"><span className="sr-only">Actions</span></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loans.map((loan) => (
+                <React.Fragment key={loan.id}>
+                  <tr className="hover:bg-gray-50 transition border-b border-gray-100">
+                    <td className="px-6 py-3 font-medium tabular-nums">
+                      {parseFloat(loan.principalAmount).toLocaleString('fr-FR')} XAF
+                    </td>
+                    <td className="px-6 py-3 text-gray-600">
+                      {(parseFloat(loan.monthlyRate) * 100).toFixed(0)} %
+                    </td>
+                    <td className="px-6 py-3 tabular-nums text-gray-700">
+                      {parseFloat(loan.outstandingBalance).toLocaleString('fr-FR')} XAF
+                    </td>
+                    <td className="px-6 py-3 text-gray-600">
+                      {new Date(loan.dueBeforeDate).toLocaleDateString('fr-FR')}
+                    </td>
+                    <td className="px-6 py-3">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[loan.status]}`}>
+                        {STATUS_LABELS[loan.status]}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 text-right">
+                      <div className="flex items-center gap-2 justify-end">
+                        {(loan.status === 'ACTIVE' || loan.status === 'PARTIALLY_REPAID') && (
+                          <button
+                            onClick={() => setExpandedLoanId(expandedLoanId === loan.id ? null : loan.id)}
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium underline"
+                          >
+                            {expandedLoanId === loan.id ? 'Masquer simulation' : 'Simuler remboursement'}
+                          </button>
+                        )}
+                        {loan.status === 'PENDING' && isPresident && !isReadOnly && (
+                          <Button
+                            size="sm"
+                            onClick={() => approveLoan.mutate(loan.id)}
+                            isLoading={approveLoan.isPending}
+                          >
+                            Approuver
+                          </Button>
+                        )}
+                        <Link
+                          href={`/loans/${loan.id}`}
+                          className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                        >
+                          Voir →
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                  {expandedLoanId === loan.id && (
+                    <tr>
+                      <td colSpan={6} className="p-0">
+                        <AmortizationPanel
+                          balance={parseFloat(loan.outstandingBalance)}
+                          rate={parseFloat(loan.monthlyRate)}
+                          dueBeforeDate={loan.dueBeforeDate}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
@@ -260,7 +443,7 @@ function MemberLoans({ membershipId, displayName, isPresident }: MemberLoansProp
 
 export default function LoansPage() {
   const { data: currentUser } = useCurrentUser();
-  const { selectedFyId, selectedFy } = useFiscalYearContext();
+  const { selectedFyId, selectedFy, isReadOnly } = useFiscalYearContext();
 
   const { data: memberships = [], isLoading: loadingMemberships } =
     useFiscalYearMemberships(selectedFyId);
@@ -306,7 +489,7 @@ export default function LoansPage() {
         title="Prêts"
         breadcrumbs={[{ label: 'Accueil', href: '/' }, { label: 'Prêts' }]}
         action={
-          isTresorier && selectedFy ? (
+          isTresorier && selectedFy && !isReadOnly ? (
             <Button size="sm" onClick={() => setShowForm(!showForm)}>
               + Demander un prêt
             </Button>
@@ -326,10 +509,10 @@ export default function LoansPage() {
               {loadingMemberships ? (
                 <Skeleton className="h-9 w-full" />
               ) : (
-                <select
+                <Select
                   id="loan-membership"
                   {...register('membershipId')}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  error={errors.membershipId?.message}
                 >
                   <option value="">Sélectionner…</option>
                   {memberships.map((m) => (
@@ -337,10 +520,7 @@ export default function LoansPage() {
                       {m.profile?.lastName} {m.profile?.firstName} — {m.profile?.memberCode}
                     </option>
                   ))}
-                </select>
-              )}
-              {errors.membershipId && (
-                <p className="text-xs text-red-500">{errors.membershipId.message}</p>
+                </Select>
               )}
             </div>
 
@@ -395,13 +575,13 @@ export default function LoansPage() {
               Filtrer par membre :
             </label>
             {loadingMemberships ? (
-              <Skeleton className="h-8 w-56" />
+              <Skeleton className="h-9 w-56" />
             ) : (
-              <select
+              <Select
                 id="member-filter"
                 value={selectedMembershipId}
                 onChange={(e) => setSelectedMembershipId(e.target.value)}
-                className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="py-1.5 w-64"
               >
                 <option value="">Tous les membres</option>
                 {memberships.map((m) => (
@@ -409,7 +589,7 @@ export default function LoansPage() {
                     {m.profile?.lastName} {m.profile?.firstName}
                   </option>
                 ))}
-              </select>
+              </Select>
             )}
             {selectedMembershipId && (
               <button
@@ -432,6 +612,7 @@ export default function LoansPage() {
               membershipId={selectedMembershipId}
               displayName={selectedDisplayName}
               isPresident={isPresident}
+              isReadOnly={isReadOnly}
             />
           ) : (
             <MembersTable

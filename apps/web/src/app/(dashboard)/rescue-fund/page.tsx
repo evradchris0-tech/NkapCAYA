@@ -7,9 +7,11 @@ import { z } from 'zod';
 import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
 import Input from '@components/ui/Input';
+import Select from '@components/ui/Select';
 import ChartCard from '@components/ui/ChartCard';
 import { useRescueFundLedger, useRescueFundEvents, useRecordRescueEvent } from '@lib/hooks/useRescueFund';
-import { useFiscalYears, useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
+import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
+import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
 import { BureauRole } from '@/types/domain.types';
 import type { RescueEventType } from '@/types/api.types';
@@ -37,19 +39,20 @@ type FormValues = z.infer<typeof schema>;
 
 export default function RescueFundPage() {
   const { data: currentUser } = useCurrentUser();
-  const { data: fiscalYears } = useFiscalYears();
-  const activeFy = fiscalYears?.find((f) => f.status === 'ACTIVE');
-  const { data: memberships } = useFiscalYearMemberships(activeFy?.id ?? '');
-  const { data: ledger, isLoading: ledgerLoading } = useRescueFundLedger(activeFy?.id ?? '');
-  const { data: events } = useRescueFundEvents(activeFy?.id ?? '');
-  const recordEvent = useRecordRescueEvent(activeFy?.id ?? '');
+  const { selectedFyId, isReadOnly } = useFiscalYearContext();
+  const { data: memberships } = useFiscalYearMemberships(selectedFyId);
+  const { data: ledger, isLoading: ledgerLoading } = useRescueFundLedger(selectedFyId);
+  const { data: events } = useRescueFundEvents(selectedFyId);
+  const recordEvent = useRecordRescueEvent(selectedFyId);
 
   const [showForm, setShowForm] = useState(false);
 
   const canRecord =
-    currentUser?.role === BureauRole.PRESIDENT ||
-    currentUser?.role === BureauRole.VICE_PRESIDENT ||
-    currentUser?.role === BureauRole.SUPER_ADMIN;
+    !isReadOnly && (
+      currentUser?.role === BureauRole.PRESIDENT ||
+      currentUser?.role === BureauRole.VICE_PRESIDENT ||
+      currentUser?.role === BureauRole.SUPER_ADMIN
+    );
 
   const { register, handleSubmit, reset, setError, formState: { errors, isSubmitting } } =
     useForm<FormValues>({ resolver: zodResolver(schema) });
@@ -64,7 +67,7 @@ export default function RescueFundPage() {
     }
   };
 
-  if (!activeFy) {
+  if (!selectedFyId) {
     return (
       <div className="space-y-6">
         <PageHeader
@@ -100,41 +103,31 @@ export default function RescueFundPage() {
             Le montant est automatiquement fixé selon le type d&apos;événement (défini dans la configuration).
           </p>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="flex flex-col gap-1">
-              <label htmlFor="rf-member" className="text-sm font-medium text-gray-700">Bénéficiaire</label>
-              <select
-                id="rf-member"
-                {...register('beneficiaryMembershipId')}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Sélectionner…</option>
-                {memberships?.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.profile?.lastName} {m.profile?.firstName} — {m.profile?.memberCode}
-                  </option>
-                ))}
-              </select>
-              {errors.beneficiaryMembershipId && (
-                <p className="text-xs text-red-500">{errors.beneficiaryMembershipId.message}</p>
-              )}
-            </div>
+            <Select
+              id="rf-member"
+              label="Bénéficiaire"
+              {...register('beneficiaryMembershipId')}
+              error={errors.beneficiaryMembershipId?.message}
+            >
+              <option value="">Sélectionner…</option>
+              {memberships?.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.profile?.lastName} {m.profile?.firstName} — {m.profile?.memberCode}
+                </option>
+              ))}
+            </Select>
 
-            <div className="flex flex-col gap-1">
-              <label htmlFor="rf-type" className="text-sm font-medium text-gray-700">Type d&apos;événement</label>
-              <select
-                id="rf-type"
-                {...register('eventType')}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Sélectionner…</option>
-                {(Object.keys(EVENT_TYPE_LABELS) as RescueEventType[]).map((t) => (
-                  <option key={t} value={t}>{EVENT_TYPE_LABELS[t]}</option>
-                ))}
-              </select>
-              {errors.eventType && (
-                <p className="text-xs text-red-500">{errors.eventType.message}</p>
-              )}
-            </div>
+            <Select
+              id="rf-type"
+              label="Type d'événement"
+              {...register('eventType')}
+              error={errors.eventType?.message}
+            >
+              <option value="">Sélectionner…</option>
+              {(Object.keys(EVENT_TYPE_LABELS) as RescueEventType[]).map((t) => (
+                <option key={t} value={t}>{EVENT_TYPE_LABELS[t]}</option>
+              ))}
+            </Select>
 
             <Input
               label="Date de l'événement"
@@ -170,7 +163,10 @@ export default function RescueFundPage() {
         const balance = parseFloat(ledger.totalBalance);
         const target  = parseFloat(ledger.targetPerMember);
         const minimum = parseFloat(ledger.minimumPerMember);
-        const pct = target > 0 ? Math.min((balance / target) * 100, 100) : 0;
+        const memberCount = ledger.memberCount || 1;
+        // Solde moyen par membre vs objectif par membre
+        const avgPerMember = balance / memberCount;
+        const pct = target > 0 ? Math.min((avgPerMember / target) * 100, 100) : 0;
         const gaugeColor = pct >= 80 ? '#10b981' : pct >= 40 ? '#f59e0b' : '#ef4444';
 
         const eventCounts: Record<string, number> = {};
@@ -182,11 +178,12 @@ export default function RescueFundPage() {
 
         return (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
-                { label: 'Solde actuel',     value: `${balance.toLocaleString('fr-FR')} XAF` },
-                { label: 'Objectif / membre', value: `${target.toLocaleString('fr-FR')} XAF` },
-                { label: 'Minimum / membre',  value: `${minimum.toLocaleString('fr-FR')} XAF` },
+                { label: 'Solde actuel',         value: `${balance.toLocaleString('fr-FR')} XAF` },
+                { label: 'Solde moyen / membre', value: `${avgPerMember.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} XAF` },
+                { label: 'Objectif / membre',    value: `${target.toLocaleString('fr-FR')} XAF` },
+                { label: 'Minimum / membre',     value: `${minimum.toLocaleString('fr-FR')} XAF` },
               ].map(({ label, value }) => (
                 <div key={label} className="bg-white rounded-xl border border-gray-200 p-4">
                   <p className="text-xs text-gray-500 mb-1">{label}</p>
@@ -197,7 +194,7 @@ export default function RescueFundPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Gauge remplissage */}
-              <ChartCard title="Niveau de la caisse" subtitle={`${pct.toFixed(0)} % de l'objectif atteint`}>
+              <ChartCard title="Niveau de la caisse par membre" subtitle={`Moy. ${avgPerMember.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} XAF / objectif ${target.toLocaleString('fr-FR')} XAF`}>
                 <div className="h-52 flex flex-col items-center justify-center relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadialBarChart
@@ -240,6 +237,72 @@ export default function RescueFundPage() {
                 </div>
               )}
             </div>
+
+            {/* Membres avec dette de reconstitution */}
+            {(() => {
+              const positions = ledger.positions ?? [];
+              const debtors = positions
+                .filter((p) => parseFloat(p.refillDebt) > 0)
+                .map((p) => {
+                  const m = (memberships ?? []).find((mb) => mb.id === p.membershipId);
+                  return {
+                    name: m?.profile ? `${m.profile.lastName} ${m.profile.firstName}` : p.membershipId.slice(-6),
+                    code: m?.profile?.memberCode ?? '—',
+                    paidAmount: parseFloat(p.paidAmount),
+                    balance: parseFloat(p.balance),
+                    refillDebt: parseFloat(p.refillDebt),
+                  };
+                })
+                .sort((a, b) => b.refillDebt - a.refillDebt);
+
+              if (debtors.length === 0) return null;
+
+              const totalDebt = debtors.reduce((s, d) => s + d.refillDebt, 0);
+
+              return (
+                <div className="bg-white rounded-xl border border-amber-200 overflow-hidden">
+                  <div className="px-6 py-4 border-b border-amber-100 bg-amber-50 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-base font-semibold text-amber-800">Reconstitution en attente</h2>
+                      <p className="text-xs text-amber-600 mt-0.5">
+                        {debtors.length} membre{debtors.length > 1 ? 's' : ''} doivent encore alimenter la caisse
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-amber-700 tabular-nums">
+                      Total dû : {totalDebt.toLocaleString('fr-FR')} XAF
+                    </span>
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead className="bg-amber-50/60 border-b border-amber-100">
+                      <tr>
+                        <th className="text-left px-6 py-3 font-medium text-gray-600">Membre</th>
+                        <th className="text-left px-6 py-3 font-medium text-gray-600">Code</th>
+                        <th className="text-right px-6 py-3 font-medium text-gray-600">Versé</th>
+                        <th className="text-right px-6 py-3 font-medium text-gray-600">Solde position</th>
+                        <th className="text-right px-6 py-3 font-medium text-amber-700">Dette restante</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {debtors.map((d, i) => (
+                        <tr key={i} className="hover:bg-amber-50/40">
+                          <td className="px-6 py-3 font-medium text-gray-900">{d.name}</td>
+                          <td className="px-6 py-3 text-gray-500 font-mono text-xs">{d.code}</td>
+                          <td className="px-6 py-3 text-right tabular-nums text-gray-700">
+                            {d.paidAmount.toLocaleString('fr-FR')} XAF
+                          </td>
+                          <td className="px-6 py-3 text-right tabular-nums text-gray-700">
+                            {d.balance.toLocaleString('fr-FR')} XAF
+                          </td>
+                          <td className="px-6 py-3 text-right tabular-nums font-semibold text-amber-700">
+                            {d.refillDebt.toLocaleString('fr-FR')} XAF
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
           </>
         );
       })() : null}

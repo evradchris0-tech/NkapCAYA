@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
+import { useMyMemberProfile } from '@lib/hooks/useMembers';
 import { authApi } from '@lib/api/auth.api';
 import { BUREAU_ROLE_LABELS, BureauRole } from '@/types/domain.types';
 import Button from '@components/ui/Button';
@@ -10,6 +11,7 @@ import Input from '@components/ui/Input';
 
 export default function ProfilePage() {
   const { data: user, isLoading } = useCurrentUser();
+  const { data: memberProfile } = useMyMemberProfile();
   const queryClient = useQueryClient();
 
   const [currentPassword, setCurrentPassword] = useState('');
@@ -79,17 +81,38 @@ export default function ProfilePage() {
         <div className="px-6 py-5 space-y-4">
           <div className="flex items-center gap-4">
             <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 text-blue-700 font-bold text-xl">
-              {user.username.slice(0, 2).toUpperCase()}
+              {memberProfile
+                ? `${memberProfile.firstName[0]}${memberProfile.lastName[0]}`.toUpperCase()
+                : user.username.slice(0, 2).toUpperCase()}
             </span>
             <div>
-              <p className="text-lg font-semibold text-gray-900">{user.username}</p>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <p className="text-lg font-semibold text-gray-900">
+                {memberProfile
+                  ? `${memberProfile.lastName} ${memberProfile.firstName}`
+                  : user.username}
+              </p>
+              {memberProfile?.neighborhood && (
+                <p className="text-sm text-gray-500">{memberProfile.neighborhood}</p>
+              )}
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">
                 {roleLabel}
               </span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 pt-2">
+            {memberProfile && (
+              <>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Code membre</p>
+                  <p className="text-sm font-mono font-medium text-gray-900">{memberProfile.memberCode}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Quartier</p>
+                  <p className="text-sm font-medium text-gray-900">{memberProfile.neighborhood}</p>
+                </div>
+              </>
+            )}
             <div>
               <p className="text-xs text-gray-500 mb-1">Identifiant</p>
               <p className="text-sm font-medium text-gray-900">{user.username}</p>

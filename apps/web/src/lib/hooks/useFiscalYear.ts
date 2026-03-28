@@ -3,7 +3,9 @@ import toast from 'react-hot-toast';
 import {
   fiscalYearApi,
   CreateFiscalYearPayload,
+  UpdateFiscalYearPayload,
   AddMemberPayload,
+  UpdateMembershipPayload,
 } from '@lib/api/fiscal-year.api';
 
 const FY_KEY = ['fiscal-years'] as const;
@@ -48,6 +50,42 @@ export function useCreateFiscalYear() {
   });
 }
 
+export function useCloseFiscalYear() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => fiscalYearApi.close(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: FY_KEY });
+      toast.success('Exercice fiscal clôturé.');
+    },
+    onError: (error) => toast.error(apiError(error)),
+  });
+}
+
+export function useUpdateFiscalYear(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UpdateFiscalYearPayload) => fiscalYearApi.update(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: FY_KEY });
+      toast.success('Exercice fiscal modifié.');
+    },
+    onError: (error) => toast.error(apiError(error)),
+  });
+}
+
+export function useDeleteFiscalYear() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => fiscalYearApi.remove(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: FY_KEY });
+      toast.success('Exercice fiscal supprimé.');
+    },
+    onError: (error) => toast.error(apiError(error)),
+  });
+}
+
 export function useActivateFiscalYear() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -67,6 +105,19 @@ export function useOpenCassation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: FY_KEY });
       toast.success('Cassation ouverte.');
+    },
+    onError: (error) => toast.error(apiError(error)),
+  });
+}
+
+export function useUpdateMembership(fiscalYearId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ membershipId, payload }: { membershipId: string; payload: UpdateMembershipPayload }) =>
+      fiscalYearApi.updateMembership(fiscalYearId, membershipId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...FY_KEY, fiscalYearId, 'memberships'] });
+      toast.success('Inscription mise à jour.');
     },
     onError: (error) => toast.error(apiError(error)),
   });

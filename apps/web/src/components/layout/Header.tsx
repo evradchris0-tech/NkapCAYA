@@ -2,14 +2,16 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { Bell, LogOut, Clock, AlertCircle, Gift, Gavel, X, Lock, CalendarRange, ChevronDown } from 'lucide-react';
+import { Bell, LogOut, Clock, AlertCircle, Gift, Gavel, X, Lock, CalendarRange, ChevronDown, CheckCheck } from 'lucide-react';
 import { useCurrentUser, useLogout } from '@lib/hooks/useCurrentUser';
 import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
 import { useSessionsByFiscalYear } from '@lib/hooks/useSessions';
 import { useBeneficiarySchedule } from '@lib/hooks/useBeneficiaries';
 import { BUREAU_ROLE_LABELS, BureauRole } from '@/types/domain.types';
 
-const FY_SECRET = 'CAYA2000';
+const DISMISSED_NOTIFS_KEY = 'caya_dismissed_notifs';
+
+const FY_SECRET = 'CAYA';
 
 function avatarColor(initials: string): string {
   const colors = [
@@ -70,6 +72,27 @@ export default function Header() {
   const { selectedFyId, selectedFy, setSelectedFyId, fiscalYears } = useFiscalYearContext();
   const { data: sessions } = useSessionsByFiscalYear(selectedFyId);
   const { data: schedule } = useBeneficiarySchedule(selectedFyId);
+
+  // Today's date
+  const todayLabel = useMemo(
+    () => new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
+    [],
+  );
+
+  // Dismissed notifications (persisted in localStorage)
+  const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(DISMISSED_NOTIFS_KEY) ?? '[]'); }
+    catch { return []; }
+  });
+
+  const dismissNotif = useCallback((id: string) => {
+    setDismissedIds((prev) => {
+      const next = [...prev, id];
+      localStorage.setItem(DISMISSED_NOTIFS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
 
   // Notification panel
   const [showNotifPanel, setShowNotifPanel] = useState(false);
@@ -173,8 +196,22 @@ export default function Header() {
     return items;
   }, [sessions, schedule, selectedFy]);
 
+  const visibleNotifications = useMemo(
+    () => notifications.filter((n) => !dismissedIds.includes(n.id)),
+    [notifications, dismissedIds],
+  );
+
+  const dismissAll = useCallback(() => {
+    const allIds = [...dismissedIds, ...notifications.map((n) => n.id)];
+    const unique = [...new Set(allIds)];
+    setDismissedIds(unique);
+    localStorage.setItem(DISMISSED_NOTIFS_KEY, JSON.stringify(unique));
+  }, [dismissedIds, notifications]);
+
   const openSession = sessions?.find((s) => s.status === 'OPEN');
   const isSuperAdmin = user?.role === BureauRole.SUPER_ADMIN;
+  // Membres du bureau (tout rôle sauf MEMBRE simple) peuvent consulter les exercices historiques
+  const canSwitchFy = user?.role !== undefined && user.role !== BureauRole.MEMBRE;
   const roleLabel = user?.role ? BUREAU_ROLE_LABELS[user.role as BureauRole] ?? user.role : null;
   const initials = user?.username.slice(0, 2).toUpperCase() ?? '??';
   const avatarCls = avatarColor(initials);
@@ -218,7 +255,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="h-14 shrink-0 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm gap-3">
+      <header className="h-14 shrink-0 border-b border-indigo-100 flex items-center justify-between px-6 shadow-sm gap-3" style={{ background: 'linear-gradient(90deg, #ffffff 0%, #f5f3ff 50%, #eff6ff 100%)' }}>
 
         {/* Zone gauche */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -234,8 +271,8 @@ export default function Header() {
             </Link>
           )}
 
-          {/* Sélecteur exercice fiscal (super admin) — dropdown custom */}
-          {isSuperAdmin && fiscalYears && fiscalYears.length > 0 && (
+          {/* Sélecteur exercice fiscal (membres du bureau) — dropdown custom */}
+          {canSwitchFy && fiscalYears && fiscalYears.length > 0 && (
             <div className="flex items-center gap-2 min-w-0">
               <div className="relative" ref={fyDropdownRef}>
                 {/* Trigger */}
@@ -313,8 +350,8 @@ export default function Header() {
             </div>
           )}
 
-          {/* Label exercice courant pour non super-admin */}
-          {!isSuperAdmin && selectedFy && (
+          {/* Label exercice courant pour les simples membres (pas de switcher) */}
+          {!canSwitchFy && selectedFy && (
             <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500">
               <span className="text-gray-600 font-medium">{selectedFy.label}</span>
               {fyStatus && (
@@ -332,6 +369,11 @@ export default function Header() {
         {/* Zone droite */}
         <div className="flex items-center gap-3 shrink-0">
 
+          {/* Date du jour */}
+          <span className="hidden md:inline-flex items-center text-xs text-gray-400 font-medium capitalize px-2 py-1 bg-gray-50 rounded-lg border border-gray-100 shrink-0">
+            {todayLabel}
+          </span>
+
           {/* Notification bell */}
           <div className="relative" ref={notifRef}>
             <button
@@ -340,9 +382,9 @@ export default function Header() {
               className="relative p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
             >
               <Bell className="h-5 w-5" strokeWidth={1.8} />
-              {notifications.length > 0 && (
+              {visibleNotifications.length > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none">
-                  {notifications.length > 9 ? '9+' : notifications.length}
+                  {visibleNotifications.length > 9 ? '9+' : visibleNotifications.length}
                 </span>
               )}
             </button>
@@ -351,38 +393,61 @@ export default function Header() {
               <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
                   <span className="text-sm font-semibold text-gray-800">Notifications</span>
-                  <button
-                    aria-label="Fermer"
-                    onClick={() => setShowNotifPanel(false)}
-                    className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    {visibleNotifications.length > 0 && (
+                      <button
+                        aria-label="Tout effacer"
+                        onClick={dismissAll}
+                        title="Tout effacer"
+                        className="p-1 rounded-md text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      >
+                        <CheckCheck className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button
+                      aria-label="Fermer"
+                      onClick={() => setShowNotifPanel(false)}
+                      className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
 
-                {notifications.length === 0 ? (
+                {visibleNotifications.length === 0 ? (
                   <div className="px-4 py-8 text-center text-sm text-gray-400">
                     Aucune notification
                   </div>
                 ) : (
                   <ul className="divide-y divide-gray-100 max-h-72 overflow-y-auto">
-                    {notifications.map((notif) => {
-                      const inner = (
-                        <div className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                    {visibleNotifications.map((notif) => {
+                      const content = (
+                        <div className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer group/notif">
                           <span className={`mt-0.5 ${notif.color}`}>{notif.icon}</span>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-gray-800 leading-snug">{notif.message}</p>
                           </div>
-                          <span className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full ${BADGE_STYLES[notif.badge]}`}>
-                            {notif.badge === 'warning' ? 'Attention' : notif.badge === 'info' ? 'Info' : 'Urgent'}
-                          </span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${BADGE_STYLES[notif.badge]}`}>
+                              {notif.badge === 'warning' ? 'Attention' : notif.badge === 'info' ? 'Info' : 'Urgent'}
+                            </span>
+                            <button
+                              aria-label="Fermer cette notification"
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); dismissNotif(notif.id); }}
+                              className="opacity-0 group-hover/notif:opacity-100 transition-opacity p-0.5 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-100"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
                       );
                       return (
                         <li key={notif.id}>
                           {notif.href ? (
-                            <Link href={notif.href} onClick={() => setShowNotifPanel(false)}>{inner}</Link>
-                          ) : inner}
+                            <Link href={notif.href} onClick={() => { setShowNotifPanel(false); dismissNotif(notif.id); }}>
+                              {content}
+                            </Link>
+                          ) : content}
                         </li>
                       );
                     })}
@@ -443,22 +508,22 @@ export default function Header() {
                 <Lock className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Changement d'exercice</h2>
+                <h2 className="text-base font-semibold text-gray-900">Changement d&apos;exercice</h2>
                 <p className="text-xs text-gray-500 mt-0.5">Authentification requise</p>
               </div>
             </div>
 
             {/* Info */}
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 leading-relaxed">
-              Vous souhaitez passer à l'exercice{' '}
+              Vous souhaitez passer à l&apos;exercice{' '}
               <span className="font-semibold">{pendingFy?.label ?? '...'}</span>.
               <br />
-              Entrez le code d'accès pour confirmer le changement.
+              Entrez le code d&apos;accès pour confirmer le changement.
             </div>
 
             {/* Code input */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-gray-700">Code d'accès</label>
+              <label className="text-xs font-medium text-gray-700">Code d&apos;accès</label>
               <input
                 ref={codeInputRef}
                 type="password"

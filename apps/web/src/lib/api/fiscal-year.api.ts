@@ -10,6 +10,14 @@ export interface CreateFiscalYearPayload {
   notes?: string;
 }
 
+export type UpdateFiscalYearPayload = Partial<CreateFiscalYearPayload>;
+
+export interface UpdateMembershipPayload {
+  joinedAt?: string;
+  joinedAtMonth?: number;
+  sharesCount?: number;
+}
+
 export interface AddMemberPayload {
   profileId: string;
   enrollmentType: 'NEW' | 'RETURNING' | 'MID_YEAR';
@@ -28,6 +36,15 @@ export const fiscalYearApi = {
   create: (payload: CreateFiscalYearPayload) =>
     apiClient.post<FiscalYear>('/fiscal-years', payload).then((r) => r.data),
 
+  close: (id: string) =>
+    apiClient.patch<FiscalYear>(`/fiscal-years/${id}/close`).then((r) => r.data),
+
+  update: (id: string, payload: UpdateFiscalYearPayload) =>
+    apiClient.patch<FiscalYear>(`/fiscal-years/${id}`, payload).then((r) => r.data),
+
+  remove: (id: string) =>
+    apiClient.delete(`/fiscal-years/${id}`),
+
   activate: (id: string) =>
     apiClient.patch<FiscalYear>(`/fiscal-years/${id}/activate`).then((r) => r.data),
 
@@ -39,4 +56,7 @@ export const fiscalYearApi = {
 
   addMember: (id: string, payload: AddMemberPayload) =>
     apiClient.post<FiscalYearMembership>(`/fiscal-years/${id}/members`, payload).then((r) => r.data),
+
+  updateMembership: (fyId: string, membershipId: string, payload: UpdateMembershipPayload) =>
+    apiClient.patch<FiscalYearMembership>(`/fiscal-years/${fyId}/memberships/${membershipId}`, payload).then((r) => r.data),
 };

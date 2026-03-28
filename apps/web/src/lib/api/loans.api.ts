@@ -17,6 +17,9 @@ export const loansApi = {
   getByMembership: (membershipId: string) =>
     apiClient.get<LoanAccount[]>('/loans', { params: { membershipId } }).then((r) => r.data),
 
+  getByFiscalYear: (fiscalYearId: string) =>
+    apiClient.get<LoanAccount[]>('/loans', { params: { fiscalYearId } }).then((r) => r.data),
+
   getById: (id: string) =>
     apiClient.get<LoanAccount>(`/loans/${id}`).then((r) => r.data),
 

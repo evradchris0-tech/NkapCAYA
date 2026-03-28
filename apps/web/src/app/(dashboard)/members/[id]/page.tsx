@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { TrendingUp, Banknote, Gift, History } from 'lucide-react';
 import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
+import Select from '@components/ui/Select';
 import ConfirmDialog from '@components/ui/ConfirmDialog';
 import { Skeleton } from '@components/ui/Skeleton';
 import {
@@ -91,6 +92,8 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const [pendingRole, setPendingRole] = useState<string | null>(null);
   const isSuperAdmin = currentUser?.role === BureauRole.SUPER_ADMIN;
+  const isPresident = currentUser?.role === BureauRole.PRESIDENT;
+  const canManageActivity = isSuperAdmin || isPresident;
 
   const handleToggleActive = async () => {
     if (!member) return;
@@ -137,7 +140,7 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
             >
               Modifier
             </Link>
-            {isSuperAdmin && (
+            {canManageActivity && (
               <Button
                 variant={member.user.isActive ? 'danger' : 'secondary'}
                 size="sm"
@@ -179,17 +182,16 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
           <div className="flex flex-col sm:flex-row sm:gap-4 sm:items-center">
             <span className="text-sm text-gray-500 sm:w-40 shrink-0">Rôle</span>
             {isSuperAdmin ? (
-              <select
+              <Select
                 value={member.user.role}
                 onChange={handleRoleChange}
                 disabled={changeRole.isPending}
                 aria-label="Rôle bureau"
-                className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 {Object.values(BureauRole).map((r) => (
                   <option key={r} value={r}>{BUREAU_ROLE_LABELS[r]}</option>
                 ))}
-              </select>
+              </Select>
             ) : (
               <span className="text-sm text-gray-900 font-medium">
                 {BUREAU_ROLE_LABELS[member.user.role as BureauRole] ?? member.user.role}

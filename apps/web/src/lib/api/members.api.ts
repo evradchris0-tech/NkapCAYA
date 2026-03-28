@@ -66,4 +66,7 @@ export const membersApi = {
 
   changeRole: (id: string, role: string) =>
     apiClient.patch(`/members/${id}/role`, { role }).then((r) => r.data),
+
+  getMe: () =>
+    apiClient.get<Member>('/members/me').then((r) => r.data),
 };

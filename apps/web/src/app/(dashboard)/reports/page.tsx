@@ -4,10 +4,13 @@ import { useState } from 'react';
 import { FileSpreadsheet, FileText, Download, Check } from 'lucide-react';
 import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
+import Select from '@components/ui/Select';
 import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
 import { useFiscalYearSavings } from '@lib/hooks/useSavings';
 import { useSessionsByFiscalYear } from '@lib/hooks/useSessions';
 import { useBeneficiarySchedule } from '@lib/hooks/useBeneficiaries';
+import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
+import { useFiscalYearLoans } from '@lib/hooks/useLoans';
 import {
   exportSavingsToExcel, exportSessionsToExcel, exportBeneficiariesToExcel,
 } from '@lib/export/exportExcel';
@@ -30,8 +33,18 @@ export default function ReportsPage() {
   const { data: savingsData }       = useFiscalYearSavings(selectedFyId);
   const { data: sessionsData }      = useSessionsByFiscalYear(selectedFyId);
   const { data: beneficiariesData } = useBeneficiarySchedule(selectedFyId);
+  const { data: memberships }       = useFiscalYearMemberships(selectedFyId);
+  const { data: loansData }         = useFiscalYearLoans(selectedFyId);
 
   const fyLabel = selectedFy?.label ?? 'export';
+
+  // Map membershipId → "Nom Prénom" pour les exports
+  const memberMap: Record<string, string> = {};
+  (memberships ?? []).forEach((m) => {
+    if (m.profile) {
+      memberMap[m.id] = `${m.profile.lastName} ${m.profile.firstName}`;
+    }
+  });
 
   const handleExport = async (type: ReportType, format: 'excel' | 'pdf') => {
     const key = `${type}-${format}`;
@@ -39,10 +52,21 @@ export default function ReportsPage() {
     try {
       if (type === 'savings') {
         if (!savingsData?.length) return alert('Aucune donnée d\'épargne disponible.');
-        if (format === 'excel') { exportSavingsToExcel(savingsData, fyLabel); } else { exportSavingsToPdf(savingsData, fyLabel); }
+        if (format === 'excel') { exportSavingsToExcel(savingsData, fyLabel); } else { exportSavingsToPdf(savingsData, fyLabel, memberMap); }
       } else if (type === 'sessions') {
         if (!sessionsData?.length) return alert('Aucune session disponible.');
-        if (format === 'excel') { exportSessionsToExcel(sessionsData, fyLabel); } else { exportSessionsToPdf(sessionsData, fyLabel); }
+        if (format === 'excel') {
+          exportSessionsToExcel(sessionsData, fyLabel);
+        } else {
+          exportSessionsToPdf(
+            sessionsData,
+            fyLabel,
+            memberMap,
+            beneficiariesData ?? undefined,
+            savingsData ?? undefined,
+            loansData ?? undefined
+          );
+        }
       } else if (type === 'beneficiaries') {
         if (!beneficiariesData) return alert('Aucun tableau de bénéficiaires disponible.');
         if (format === 'excel') { exportBeneficiariesToExcel(beneficiariesData, fyLabel); } else { exportBeneficiariesToPdf(beneficiariesData, fyLabel); }
@@ -70,17 +94,17 @@ export default function ReportsPage() {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Exercice fiscal cible
         </label>
-        <select
+        <Select
           value={selectedFyId}
           onChange={(e) => setSelectedFyId(e.target.value)}
-          className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full max-w-xs"
+          className="w-full max-w-xs"
         >
           {fiscalYears?.map((fy) => (
             <option key={fy.id} value={fy.id}>
               {fy.label} — {fy.status}
             </option>
           ))}
-        </select>
+        </Select>
         {selectedFy && (
           <p className="text-xs text-gray-400 mt-1.5">
             {new Date(selectedFy.startDate).toLocaleDateString('fr-FR')} →{' '}

@@ -3,9 +3,11 @@
 import { useMemo, useState } from 'react';
 import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
+import Select from '@components/ui/Select';
 import ConfirmDialog from '@components/ui/ConfirmDialog';
 import ChartCard from '@components/ui/ChartCard';
-import TransactionForm from '@components/forms/TransactionForm';
+import TransactionModal from '@components/forms/TransactionModal';
+import Modal from '@components/ui/Modal';
 import { Skeleton } from '@components/ui/Skeleton';
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
@@ -17,7 +19,13 @@ import {
 } from 'lucide-react';
 import { useSession, useOpenSession, useCloseForReview, useValidateAndClose } from '@lib/hooks/useSessions';
 import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
-import { useBeneficiarySchedule } from '@lib/hooks/useBeneficiaries';
+import {
+  useBeneficiarySchedule,
+  useMarkDelivered,
+  useAssignSlot,
+  useSetHost,
+  useAddSlotToSession,
+} from '@lib/hooks/useBeneficiaries';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
 import { BureauRole, TRANSACTION_TYPE_LABELS, TransactionType } from '@/types/domain.types';
 import type { BeneficiarySlot } from '@/types/api.types';
@@ -25,20 +33,6 @@ import type { BeneficiarySlot } from '@/types/api.types';
 interface Props {
   params: { id: string };
 }
-
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Brouillon',
-  OPEN: 'Ouverte',
-  REVIEWING: 'En révision',
-  CLOSED: 'Clôturée',
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-500',
-  OPEN: 'bg-green-100 text-green-700',
-  REVIEWING: 'bg-yellow-100 text-yellow-700',
-  CLOSED: 'bg-blue-100 text-blue-700',
-};
 
 const PIE_COLORS = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#f43f5e','#14b8a6','#f97316','#6366f1','#94a3b8'];
 
@@ -87,13 +81,20 @@ export default function SessionDetailPage({ params }: Props) {
   const openSession = useOpenSession();
   const closeForReview = useCloseForReview();
   const validateAndClose = useValidateAndClose();
-  const [showForm, setShowForm] = useState(false);
+  const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmReview, setConfirmReview] = useState(false);
   const [confirmValidate, setConfirmValidate] = useState(false);
+  const [deliverySlotId, setDeliverySlotId] = useState<string | null>(null);
+  const [deliveryAmount, setDeliveryAmount] = useState('');
+  const [assignMembershipId, setAssignMembershipId] = useState<Record<string, string>>({});
 
   const { data: memberships } = useFiscalYearMemberships(session?.fiscalYearId ?? '');
   const { data: schedule } = useBeneficiarySchedule(session?.fiscalYearId ?? '');
+  const markDelivered = useMarkDelivered(session?.fiscalYearId ?? '');
+  const assignSlot = useAssignSlot(session?.fiscalYearId ?? '');
+  const setHost = useSetHost(session?.fiscalYearId ?? '');
+  const addSlot = useAddSlotToSession(session?.fiscalYearId ?? '');
 
   const isTresorier =
     currentUser?.role === BureauRole.TRESORIER ||
@@ -101,6 +102,10 @@ export default function SessionDetailPage({ params }: Props) {
   const isPresident =
     currentUser?.role === BureauRole.PRESIDENT ||
     currentUser?.role === BureauRole.SUPER_ADMIN;
+  const canOpenSession =
+    isPresident ||
+    currentUser?.role === BureauRole.VICE_PRESIDENT ||
+    isTresorier;
 
   /* ── Calculs dérivés ── */
   const derived = useMemo(() => {
@@ -155,8 +160,9 @@ export default function SessionDetailPage({ params }: Props) {
     entries
       .filter((e) => e.type === TransactionType.COTISATION)
       .forEach((e) => {
-        const name = e.membership
-          ? `${e.membership.lastName} ${e.membership.firstName}`.trim()
+        const profile = e.membership?.profile;
+        const name = profile
+          ? `${profile.lastName} ${profile.firstName}`.trim()
           : e.membershipId.slice(-6);
         if (!cotisationMap[e.membershipId]) {
           cotisationMap[e.membershipId] = { name, montant: 0 };
@@ -176,7 +182,20 @@ export default function SessionDetailPage({ params }: Props) {
 
   const handleOpen = async () => { await openSession.mutateAsync(params.id); };
   const handleCloseForReview = async () => { await closeForReview.mutateAsync(params.id); };
-  const handleValidate = async () => { await validateAndClose.mutateAsync(params.id); };
+  const handleValidate = async () => {
+    await validateAndClose.mutateAsync(params.id);
+    // Après clôture, vérifier si des bénéficiaires n'ont pas encore reçu leur pot
+    const undelivered = beneficiarySlots.filter((s) => s.status === 'ASSIGNED');
+    if (undelivered.length > 0) {
+      // Le toast est déjà affiché par le hook ; on affiche un rappel supplémentaire
+      import('react-hot-toast').then(({ default: toast }) => {
+        toast(
+          `⚠ ${undelivered.length} bénéficiaire${undelivered.length > 1 ? 's' : ''} en attente de remise du pot.`,
+          { duration: 6000, icon: '🎁' },
+        );
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -210,15 +229,15 @@ export default function SessionDetailPage({ params }: Props) {
         ]}
         action={
           <div className="flex gap-2">
-            {session.status === 'DRAFT' && isTresorier && (
+            {session.status === 'DRAFT' && canOpenSession && (
               <Button size="sm" onClick={() => setConfirmOpen(true)} isLoading={openSession.isPending}>
                 Ouvrir la session
               </Button>
             )}
             {session.status === 'OPEN' && isTresorier && (
               <>
-                <Button size="sm" variant="secondary" onClick={() => setShowForm(!showForm)}>
-                  {showForm ? 'Masquer formulaire' : '+ Transaction'}
+                <Button size="sm" variant="secondary" onClick={() => setShowTransactionModal(true)}>
+                  + Transaction
                 </Button>
                 <Button size="sm" variant="secondary" onClick={() => setConfirmReview(true)} isLoading={closeForReview.isPending}>
                   Soumettre pour révision
@@ -274,7 +293,6 @@ export default function SessionDetailPage({ params }: Props) {
             {WORKFLOW.map((step, i) => {
               const done = i < currentOrder;
               const active = i === currentOrder;
-              const upcoming = i > currentOrder;
               return (
                 <div key={step.key} className="flex-1 flex flex-col items-center">
                   {/* Connecteur + cercle */}
@@ -346,43 +364,136 @@ export default function SessionDetailPage({ params }: Props) {
 
         {/* Bénéficiaires du mois (multi-slots) */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Gift className="h-4 w-4 text-teal-600" />
-            <p className="text-sm font-semibold text-gray-800">
-              Bénéficiaire{beneficiarySlots.length > 1 ? 's' : ''} du mois
-              {beneficiarySlots.length > 0 && (
-                <span className="ml-2 text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full font-medium">
-                  {beneficiarySlots.length}
-                </span>
-              )}
-            </p>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2">
+              <Gift className="h-4 w-4 text-teal-600" />
+              <p className="text-sm font-semibold text-gray-800">
+                Bénéficiaire{beneficiarySlots.length > 1 ? 's' : ''} du mois
+                {beneficiarySlots.length > 0 && (
+                  <span className="ml-2 text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full font-medium">
+                    {beneficiarySlots.length}
+                  </span>
+                )}
+              </p>
+            </div>
+            {session.status === 'OPEN' && isPresident && (
+              <button
+                onClick={() => addSlot.mutate(params.id)}
+                disabled={addSlot.isPending}
+                className="text-xs font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50"
+              >
+                + Ajouter
+              </button>
+            )}
           </div>
+
           {beneficiarySlots.length > 0 ? (
             <div className="space-y-3">
               {beneficiarySlots.map((slot, i) => (
-                <div key={slot.id} className={`rounded-lg p-3 ${i > 0 ? 'border-t border-gray-100 pt-3' : ''}`}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-xs text-gray-400">Slot #{slot.slotIndex}</p>
-                      <p className="text-sm font-semibold text-gray-900 mt-0.5">
-                        {slot.membership?.profile
-                          ? `${slot.membership.profile.lastName} ${slot.membership.profile.firstName}`
-                          : <span className="text-gray-400 italic text-xs">Non désigné</span>}
-                      </p>
-                      <p className="text-sm font-bold text-teal-700 tabular-nums mt-0.5">
-                        {parseFloat(slot.amountDelivered || '0').toLocaleString('fr-FR')} XAF
-                      </p>
+                <div key={slot.id} className={`${i > 0 ? 'border-t border-gray-100 pt-3' : ''}`}>
+                  {/* Slot UNASSIGNED — picker membre */}
+                  {slot.status === 'UNASSIGNED' && session.status === 'OPEN' && isPresident ? (
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-400">Slot #{slot.slotIndex} — Non attribué</p>
+                      <div className="flex gap-2 items-start">
+                        <Select
+                          value={assignMembershipId[slot.id] ?? ''}
+                          onChange={(e) =>
+                            setAssignMembershipId((prev) => ({ ...prev, [slot.id]: e.target.value }))
+                          }
+                          className="flex-1 text-xs py-1.5 px-2"
+                        >
+                          <option value="">Sélectionner un membre…</option>
+                          {memberships?.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.profile?.lastName} {m.profile?.firstName}
+                            </option>
+                          ))}
+                        </Select>
+                        <button
+                          onClick={() => {
+                            const mid = assignMembershipId[slot.id];
+                            if (!mid) return;
+                            assignSlot.mutate({ slotId: slot.id, membershipId: mid });
+                            setAssignMembershipId((prev) => ({ ...prev, [slot.id]: '' }));
+                          }}
+                          disabled={!assignMembershipId[slot.id] || assignSlot.isPending}
+                          className="text-xs font-medium bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 disabled:opacity-40 transition-colors"
+                        >
+                          Assigner
+                        </button>
+                      </div>
                     </div>
-                    <span className={`shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                      slot.status === 'DELIVERED' ? 'bg-emerald-100 text-emerald-700'
-                      : slot.status === 'ASSIGNED' ? 'bg-blue-100 text-blue-700'
-                      : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {slot.status === 'DELIVERED' ? 'Livré' : slot.status === 'ASSIGNED' ? 'Désigné' : 'Non attribué'}
-                    </span>
-                  </div>
+                  ) : (
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-xs text-gray-400">
+                          Slot #{slot.slotIndex}
+                          {slot.isHost && (
+                            <span className="ml-1.5 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
+                              Hôte
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-sm font-semibold text-gray-900 mt-0.5">
+                          {slot.membership?.profile
+                            ? `${slot.membership.profile.lastName} ${slot.membership.profile.firstName}`
+                            : <span className="text-gray-400 italic text-xs">Non désigné</span>}
+                        </p>
+                        {slot.status === 'DELIVERED' && parseFloat(slot.amountDelivered || '0') > 0 && (
+                          <p className="text-sm font-bold text-teal-700 tabular-nums mt-0.5">
+                            {parseFloat(slot.amountDelivered).toLocaleString('fr-FR')} XAF
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                          slot.status === 'DELIVERED' ? 'bg-emerald-100 text-emerald-700'
+                          : slot.status === 'ASSIGNED' ? 'bg-amber-100 text-amber-700'
+                          : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {slot.status === 'DELIVERED' ? 'Livré ✓' : slot.status === 'ASSIGNED' ? 'En attente' : 'Non attribué'}
+                        </span>
+                        {slot.status === 'ASSIGNED' && isPresident && (
+                          <button
+                            onClick={() => { setDeliverySlotId(slot.id); setDeliveryAmount(''); }}
+                            className="text-[11px] font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2 py-0.5 rounded-full transition-colors"
+                          >
+                            Confirmer remise
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
+
+              {/* Hôte toggle — visible si ≥ 2 slots ASSIGNED */}
+              {beneficiarySlots.filter((s) => s.status === 'ASSIGNED').length >= 2 && session.status === 'OPEN' && isPresident && (
+                <div className="pt-3 border-t border-gray-100">
+                  <p className="text-xs font-medium text-gray-600 mb-2">Hôte de la réunion :</p>
+                  <div className="space-y-1.5">
+                    {beneficiarySlots
+                      .filter((s) => s.status === 'ASSIGNED' || s.status === 'DELIVERED')
+                      .map((s) => (
+                        <label key={s.id} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="host"
+                            checked={s.isHost}
+                            onChange={() => setHost.mutate(s.id)}
+                            className="text-teal-600 focus:ring-teal-500"
+                          />
+                          <span className="text-xs text-gray-700">
+                            {s.membership?.profile
+                              ? `${s.membership.profile.lastName} ${s.membership.profile.firstName}`
+                              : `Slot #${s.slotIndex}`}
+                          </span>
+                        </label>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -435,17 +546,15 @@ export default function SessionDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* ── Formulaire transaction ── */}
-      {showForm && session.status === 'OPEN' && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-xl">
-          <h2 className="text-base font-semibold text-gray-800 mb-4">Nouvelle transaction</h2>
-          <TransactionForm
-            sessionId={params.id}
-            memberships={memberships ?? []}
-            onSuccess={() => setShowForm(false)}
-          />
-        </div>
-      )}
+      {/* ── Modal transaction ── */}
+      <TransactionModal
+        open={showTransactionModal}
+        onClose={() => setShowTransactionModal(false)}
+        sessionId={params.id}
+        memberships={memberships ?? []}
+        config={session.fiscalYear?.config}
+        entries={session.entries ?? []}
+      />
 
       {/* ── Totaux + Charts ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -544,7 +653,8 @@ export default function SessionDetailPage({ params }: Props) {
               Transactions ({session.entries.length})
             </h2>
           </div>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[560px]">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
                 <th className="text-left px-6 py-3 font-medium text-gray-600">Référence</th>
@@ -559,8 +669,8 @@ export default function SessionDetailPage({ params }: Props) {
                 <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-3 font-mono text-xs text-gray-400">{entry.reference}</td>
                   <td className="px-6 py-3 text-gray-700">
-                    {entry.membership
-                      ? `${entry.membership.lastName} ${entry.membership.firstName}`
+                    {entry.membership?.profile
+                      ? `${entry.membership.profile.lastName} ${entry.membership.profile.firstName}`
                       : entry.membershipId.slice(-8)}
                   </td>
                   <td className="px-6 py-3">
@@ -587,8 +697,54 @@ export default function SessionDetailPage({ params }: Props) {
               </tr>
             </tfoot>
           </table>
+          </div>
         </div>
       )}
+
+      {/* Modal confirmation remise */}
+      <Modal
+        isOpen={Boolean(deliverySlotId)}
+        onClose={() => setDeliverySlotId(null)}
+        title="Confirmer la remise"
+        size="sm"
+        footer={(
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setDeliverySlotId(null)}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={() => {
+                const amount = deliveryAmount ? parseFloat(deliveryAmount) : undefined;
+                markDelivered.mutate({ slotId: deliverySlotId!, amount });
+                setDeliverySlotId(null);
+              }}
+              isLoading={markDelivered.isPending}
+            >
+              Confirmer
+            </Button>
+          </>
+        )}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Saisir le montant perçu par le bénéficiaire pour ce pot.
+          </p>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-gray-700">Montant (XAF)</label>
+            <input
+              type="number"
+              placeholder="0"
+              value={deliveryAmount}
+              onChange={(e) => setDeliveryAmount(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+              autoFocus
+            />
+          </div>
+        </div>
+      </Modal>
 
       {/* Modales de confirmation */}
       <ConfirmDialog
