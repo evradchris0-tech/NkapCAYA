@@ -19,11 +19,14 @@ const makeSlot = (override = {}) => ({
 describe('BeneficiariesService', () => {
   let service: BeneficiariesService;
   let repository: jest.Mocked<BeneficiariesRepository>;
-  let prisma: { beneficiarySlot: { findUnique: jest.Mock } };
+  let prisma: { beneficiarySlot: { findUnique: jest.Mock; findFirst?: jest.Mock } };
 
   beforeEach(async () => {
     prisma = {
-      beneficiarySlot: { findUnique: jest.fn().mockResolvedValue(null) },
+      beneficiarySlot: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -74,9 +77,16 @@ describe('BeneficiariesService', () => {
       await expect(service.assignSlot('x', { membershipId: 'mem-1' }, 'actor')).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw ConflictException if slot is already assigned', async () => {
+    it('should allow reassignment of an already ASSIGNED slot', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findSlotById.mockResolvedValue(makeSlot({ status: BeneficiaryStatus.ASSIGNED }) as any);
+      const result = await service.assignSlot('slot-1', { membershipId: 'mem-2' }, 'actor');
+      expect(result.status).toBe(BeneficiaryStatus.ASSIGNED);
+    });
+
+    it('should throw ConflictException if slot is DELIVERED', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      repository.findSlotById.mockResolvedValue(makeSlot({ status: BeneficiaryStatus.DELIVERED }) as any);
       await expect(service.assignSlot('slot-1', { membershipId: 'mem-1' }, 'actor')).rejects.toThrow(ConflictException);
     });
   });

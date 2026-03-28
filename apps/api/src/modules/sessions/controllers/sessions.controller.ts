@@ -29,7 +29,7 @@ export class SessionsController {
   }
 
   @Post(':id/open')
-  @Roles(BureauRole.SUPER_ADMIN, BureauRole.TRESORIER)
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT, BureauRole.VICE_PRESIDENT, BureauRole.TRESORIER)
   @ApiOperation({ summary: 'DRAFT → OPEN (SESS-04)' })
   openSession(@Param('id') id: string, @CurrentUser('id') actorId: string) {
     return this.sessionsService.openSession(id, actorId);
@@ -47,7 +47,7 @@ export class SessionsController {
   }
 
   @Post(':id/entries')
-  @Roles(BureauRole.SUPER_ADMIN, BureauRole.TRESORIER)
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT, BureauRole.VICE_PRESIDENT, BureauRole.TRESORIER)
   @ApiOperation({ summary: 'Enregistrer une transaction (SESS-01)' })
   recordEntry(
     @Param('id') id: string,
@@ -58,7 +58,7 @@ export class SessionsController {
   }
 
   @Post(':id/close-review')
-  @Roles(BureauRole.SUPER_ADMIN, BureauRole.TRESORIER)
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT, BureauRole.VICE_PRESIDENT, BureauRole.TRESORIER)
   @ApiOperation({ summary: 'OPEN → REVIEWING' })
   closeForReview(@Param('id') id: string, @CurrentUser('id') actorId: string) {
     return this.sessionsService.closeForReview(id, actorId);

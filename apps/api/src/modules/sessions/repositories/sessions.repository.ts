@@ -11,7 +11,16 @@ export class SessionsRepository {
       where: { id },
       include: {
         fiscalYear: { include: { config: true } },
-        entries: { orderBy: { recordedAt: 'asc' } },
+        entries: {
+          orderBy: { recordedAt: 'asc' },
+          include: {
+            membership: {
+              include: {
+                profile: { select: { firstName: true, lastName: true, memberCode: true } },
+              },
+            },
+          },
+        },
       },
     });
   }

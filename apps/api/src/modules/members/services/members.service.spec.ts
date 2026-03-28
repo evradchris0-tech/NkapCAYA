@@ -69,6 +69,7 @@ describe('MembersService', () => {
               update: jest.fn(),
             },
             memberProfile: {
+              count: jest.fn().mockResolvedValue(0),
               findFirst: jest.fn().mockResolvedValue(null),
               findUnique: jest.fn().mockResolvedValue(mockProfile),
               update: jest.fn().mockResolvedValue({}),
@@ -108,7 +109,7 @@ describe('MembersService', () => {
 
       expect(result.profile).toBeDefined();
       expect(result.profile.firstName).toBe('Jean-Pierre');
-      expect(result.temporaryPassword).toMatch(/^Caya@MB/);
+      expect(result.temporaryPassword).toMatch(/^Caya@CAYA/);
       expect(prisma.$transaction).toHaveBeenCalled();
     });
   });

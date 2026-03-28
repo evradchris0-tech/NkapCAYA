@@ -274,12 +274,14 @@ export class MembersService {
   // ── Helpers privés ────────────────────────────────────────────────────────
 
   private async generateUniqueMemberCode(): Promise<string> {
+    const count = await this.prisma.memberProfile.count();
+    let next = count + 1;
     let code: string;
-    let attempts = 0;
+    let safety = 0;
     do {
-      code = `MB${generateCode()}`;
-      attempts++;
-      if (attempts > 10) throw new Error('Impossible de générer un memberCode unique');
+      code = `CAYA${String(next).padStart(3, '0')}`;
+      next++;
+      if (++safety > 50) throw new Error('Impossible de générer un memberCode unique');
     } while (await this.membersRepository.memberCodeExists(code));
     return code;
   }

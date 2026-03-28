@@ -23,9 +23,7 @@ export class MembersRepository {
     const { page, limit, search, role, isActive } = filters;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.MemberProfileWhereInput = {
-      deletedAt: null,
-    };
+    const where: Prisma.MemberProfileWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -38,11 +36,11 @@ export class MembersRepository {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userFilters: any = { deletedAt: null };
+    const userFilters: any = {};
     if (role) userFilters.role = role;
     if (isActive !== undefined) userFilters.isActive = isActive;
-    
-    where.user = userFilters;
+
+    if (Object.keys(userFilters).length > 0) where.user = userFilters;
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.memberProfile.findMany({
@@ -62,7 +60,7 @@ export class MembersRepository {
 
   async findById(id: string): Promise<MemberProfileWithUser | null> {
     const profile = await this.prisma.memberProfile.findFirst({
-      where: { id, deletedAt: null },
+      where: { id },
       include: {
         user: { select: { id: true, username: true, phone: true, role: true, isActive: true } },
         emergencyContacts: { where: { deletedAt: null } },

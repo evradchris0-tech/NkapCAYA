@@ -24,10 +24,11 @@ const makeSession = (override = {}) => ({
 describe('SessionsService', () => {
   let service: SessionsService;
   let repository: jest.Mocked<SessionsRepository>;
-  let prisma: { $transaction: jest.Mock };
+  let prisma: { $transaction: jest.Mock; monthlySession?: { findFirst: jest.Mock } };
 
   beforeEach(async () => {
     prisma = {
+      monthlySession: { findFirst: jest.fn().mockResolvedValue(null) },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       $transaction: jest.fn().mockImplementation((fn: (tx: any) => any) => fn({
         monthlySession: { findUnique: jest.fn().mockResolvedValue(makeSession()) },

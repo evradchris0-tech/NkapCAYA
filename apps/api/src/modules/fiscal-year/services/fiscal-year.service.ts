@@ -9,7 +9,9 @@ import { PrismaService } from '@database/prisma.service';
 import { FiscalYearRepository } from '../repositories/fiscal-year.repository';
 import { ConfigService as TontineConfigService } from '../../config/services/config.service';
 import { CreateFiscalYearDto } from '../dto/create-fiscal-year.dto';
+import { UpdateFiscalYearDto } from '../dto/update-fiscal-year.dto';
 import { AddMemberDto } from '../dto/add-member.dto';
+import { UpdateMembershipDto } from '../dto/update-membership.dto';
 import { FiscalYearStatus, EnrollmentType } from '@prisma/client';
 import { Decimal } from 'decimal.js';
 import * as dayjs from 'dayjs';
@@ -133,6 +135,24 @@ export class FiscalYearService {
     });
   }
 
+  async close(id: string, actorId: string) {
+    const fy = await this.fiscalYearRepository.findById(id);
+    if (!fy) throw new NotFoundException(`Exercice fiscal introuvable : ${id}`);
+    if (
+      fy.status !== FiscalYearStatus.ACTIVE &&
+      fy.status !== FiscalYearStatus.CASSATION
+    ) {
+      throw new ConflictException(
+        `Clôture impossible : l'exercice doit être ACTIVE ou CASSATION (actuel : ${fy.status})`,
+      );
+    }
+    return this.fiscalYearRepository.updateStatus(
+      id,
+      FiscalYearStatus.CLOSED,
+      { closedAt: new Date(), closedById: actorId },
+    );
+  }
+
   async openCassation(id: string, _actorId: string) {
     const fy = await this.fiscalYearRepository.findById(id);
     if (!fy) throw new NotFoundException(`Exercice fiscal introuvable : ${id}`);
@@ -155,6 +175,16 @@ export class FiscalYearService {
     ) {
       throw new ForbiddenException(
         `Impossible d'inscrire un membre en status ${fy.status}`,
+      );
+    }
+
+    // Valider que joinedAt est dans la fenêtre [startDate, cassationDate]
+    const joinedAt = new Date(dto.joinedAt);
+    const startDate = new Date(fy.startDate);
+    const maxDate = fy.cassationDate ? new Date(fy.cassationDate) : new Date(fy.endDate);
+    if (joinedAt < startDate || joinedAt > maxDate) {
+      throw new BadRequestException(
+        `La date d'inscription doit être entre ${startDate.toISOString().substring(0, 10)} et ${maxDate.toISOString().substring(0, 10)}`,
       );
     }
 
@@ -226,6 +256,106 @@ export class FiscalYearService {
       }
 
       return membership;
+    });
+  }
+
+  async update(id: string, dto: UpdateFiscalYearDto) {
+    const fy = await this.fiscalYearRepository.findById(id);
+    if (!fy) throw new NotFoundException(`Exercice fiscal introuvable : ${id}`);
+    if (fy.status !== FiscalYearStatus.PENDING) {
+      throw new ForbiddenException(
+        `Modification impossible : l'exercice doit être PENDING (actuel : ${fy.status})`,
+      );
+    }
+
+    const start = new Date(dto.startDate ?? fy.startDate);
+    const end = new Date(dto.endDate ?? fy.endDate);
+    const cassation = new Date(dto.cassationDate ?? fy.cassationDate);
+    const loanDue = new Date(dto.loanDueDate ?? fy.loanDueDate);
+
+    if (!(start < loanDue && loanDue < cassation && cassation <= end)) {
+      throw new BadRequestException(
+        'Contrainte de dates non respectée : startDate < loanDueDate < cassationDate <= endDate',
+      );
+    }
+
+    return this.fiscalYearRepository.update(id, {
+      label: dto.label,
+      startDate: start,
+      endDate: end,
+      cassationDate: cassation,
+      loanDueDate: loanDue,
+      notes: dto.notes,
+    });
+  }
+
+  async remove(id: string) {
+    const fy = await this.fiscalYearRepository.findById(id);
+    if (!fy) throw new NotFoundException(`Exercice fiscal introuvable : ${id}`);
+    if (fy.status !== FiscalYearStatus.PENDING) {
+      throw new ForbiddenException(
+        `Suppression impossible : l'exercice doit être PENDING (actuel : ${fy.status})`,
+      );
+    }
+    const count = await this.fiscalYearRepository.hasMemberships(id);
+    if (count > 0) {
+      throw new ConflictException(
+        `Suppression impossible : ${count} membre(s) inscrit(s) à cet exercice`,
+      );
+    }
+    return this.fiscalYearRepository.softDelete(id);
+  }
+
+  async updateMembership(fiscalYearId: string, membershipId: string, dto: UpdateMembershipDto) {
+    const fy = await this.fiscalYearRepository.findById(fiscalYearId);
+    if (!fy) throw new NotFoundException(`Exercice fiscal introuvable : ${fiscalYearId}`);
+
+    const membership = await this.prisma.membership.findUnique({
+      where: { id: membershipId },
+      include: { shareCommitment: true },
+    });
+    if (!membership || membership.fiscalYearId !== fiscalYearId) {
+      throw new NotFoundException(`Inscription introuvable`);
+    }
+    if (membership.shareCommitment?.isLocked) {
+      throw new ForbiddenException(`Cette inscription est verrouillée et ne peut plus être modifiée`);
+    }
+
+    // Validate joinedAt bounds
+    if (dto.joinedAt) {
+      const joinedAt = new Date(dto.joinedAt);
+      const startDate = new Date(fy.startDate);
+      const maxDate = fy.cassationDate ? new Date(fy.cassationDate) : new Date(fy.endDate);
+      if (joinedAt < startDate || joinedAt > maxDate) {
+        throw new BadRequestException(
+          `La date d'inscription doit être entre ${startDate.toISOString().substring(0, 10)} et ${maxDate.toISOString().substring(0, 10)}`,
+        );
+      }
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.membership.update({
+        where: { id: membershipId },
+        data: {
+          ...(dto.joinedAt !== undefined && { joinedAt: new Date(dto.joinedAt) }),
+          ...(dto.joinedAtMonth !== undefined && { joinedAtMonth: dto.joinedAtMonth }),
+        },
+        include: { shareCommitment: true },
+      });
+
+      if (dto.sharesCount !== undefined && membership.shareCommitment) {
+        const config = fy.config ?? await this.configService.findConfig();
+        const shareUnitAmount = new Decimal(config.shareUnitAmount.toString());
+        const sharesCount = new Decimal(dto.sharesCount.toString());
+        const monthlyAmount = sharesCount.mul(shareUnitAmount);
+
+        await tx.shareCommitment.update({
+          where: { membershipId },
+          data: { sharesCount: dto.sharesCount, monthlyAmount },
+        });
+      }
+
+      return updated;
     });
   }
 

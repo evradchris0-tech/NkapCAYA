@@ -121,18 +121,18 @@ export class MembersController {
   }
 
   @Patch(':id/reactivate')
-  @Roles(BureauRole.SUPER_ADMIN)
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Réactiver un compte membre — SUPER_ADMIN seulement' })
+  @ApiOperation({ summary: 'Réactiver un compte membre — PRESIDENT ou SUPER_ADMIN' })
   @ApiNoContentResponse()
   reactivate(@Param('id') id: string) {
     return this.membersService.reactivate(id);
   }
 
   @Delete(':id')
-  @Roles(BureauRole.SUPER_ADMIN)
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Désactiver un compte membre (soft — SUPER_ADMIN seulement)' })
+  @ApiOperation({ summary: 'Désactiver un compte membre (soft — PRESIDENT ou SUPER_ADMIN)' })
   @ApiNoContentResponse()
   deactivate(@Param('id') id: string) {
     return this.membersService.deactivate(id);

@@ -36,4 +36,19 @@ export class BeneficiariesRepository {
   createSlot(data: Prisma.BeneficiarySlotUncheckedCreateInput) {
     return this.prisma.beneficiarySlot.create({ data });
   }
+
+  findSlotsBySession(sessionId: string) {
+    return this.prisma.beneficiarySlot.findMany({ where: { sessionId } });
+  }
+
+  clearHostForSession(sessionId: string, excludeSlotId: string) {
+    return this.prisma.beneficiarySlot.updateMany({
+      where: { sessionId, id: { not: excludeSlotId } },
+      data: { isHost: false },
+    });
+  }
+
+  deleteSlot(id: string) {
+    return this.prisma.beneficiarySlot.delete({ where: { id } });
+  }
 }

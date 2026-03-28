@@ -36,11 +36,8 @@ const TOTAL_FIELD: Record<TransactionType, string> = {
   AUTRES: 'totalAutres',
 };
 
-/** Types that also create a SavingsEntry(DEPOSIT) */
-const SAVINGS_TYPES = new Set<TransactionType>([
-  TransactionType.COTISATION,
-  TransactionType.EPARGNE,
-]);
+/** Types that also create a SavingsEntry(DEPOSIT) — COTISATION exclue intentionnellement */
+const SAVINGS_TYPES = new Set<TransactionType>([TransactionType.EPARGNE]);
 
 @Injectable()
 export class SessionsService {
@@ -67,6 +64,16 @@ export class SessionsService {
     if (session.status !== SessionStatus.DRAFT) {
       throw new ConflictException(
         `Session is ${session.status}, expected DRAFT`,
+      );
+    }
+
+    // Guard : une seule session ouverte à la fois par exercice
+    const alreadyOpen = await this.prisma.monthlySession.findFirst({
+      where: { fiscalYearId: session.fiscalYearId, status: SessionStatus.OPEN },
+    });
+    if (alreadyOpen) {
+      throw new ConflictException(
+        `Une session est déjà ouverte (Session #${alreadyOpen.sessionNumber}). Clôturez-la avant d'en ouvrir une nouvelle.`,
       );
     }
 

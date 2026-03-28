@@ -48,6 +48,21 @@ export class FiscalYearRepository {
     return client.fiscalYear.update({ where: { id }, data: { status, ...extra } });
   }
 
+  update(id: string, data: Prisma.FiscalYearUpdateInput) {
+    return this.prisma.fiscalYear.update({ where: { id }, data });
+  }
+
+  softDelete(id: string) {
+    return this.prisma.fiscalYear.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  hasMemberships(fiscalYearId: string) {
+    return this.prisma.membership.count({ where: { fiscalYearId } });
+  }
+
   findMemberships(fiscalYearId: string) {
     return this.prisma.membership.findMany({
       where: { fiscalYearId },

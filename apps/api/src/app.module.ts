@@ -14,6 +14,7 @@ import { CassationModule } from './modules/cassation/cassation.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PublicModule } from './modules/public/public.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { PublicModule } from './modules/public/public.module';
     CassationModule,
     ReportsModule,
     NotificationsModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

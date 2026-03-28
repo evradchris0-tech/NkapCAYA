@@ -26,8 +26,12 @@ export class LoansController {
   constructor(private readonly loansService: LoansService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Prêts d\'un membership (mobile)' })
-  getMemberLoans(@Query('membershipId') membershipId: string) {
+  @ApiOperation({ summary: 'Prêts d\'un membership (mobile) ou d\'un exercice (web)' })
+  getMemberLoans(
+    @Query('membershipId') membershipId: string,
+    @Query('fiscalYearId') fiscalYearId: string,
+  ) {
+    if (fiscalYearId) return this.loansService.getFiscalYearLoans(fiscalYearId);
     return this.loansService.getMemberLoans(membershipId);
   }
 

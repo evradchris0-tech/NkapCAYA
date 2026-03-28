@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ValidationPipe, VersioningType, RequestMethod } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
@@ -18,8 +18,10 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
-  // Préfixe global
-  app.setGlobalPrefix('api');
+  // Préfixe global — /health exclu pour Railway health checks
+  app.setGlobalPrefix('api', {
+    exclude: [{ path: 'health', method: RequestMethod.GET }],
+  });
 
   // Swagger — documentation interactive
   const config = new DocumentBuilder()

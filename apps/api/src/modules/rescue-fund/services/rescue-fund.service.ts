@@ -49,26 +49,27 @@ export class RescueFundService {
         throw new NotFoundException(`No configured amount for event type ${dto.eventType}`);
       }
 
-      const amount = new Decimal(eventAmount.amount.toString());
+      const configuredAmount = new Decimal(eventAmount.amount.toString());
       const currentBalance = new Decimal(ledger.totalBalance.toString());
-      const minimumPerMember = new Decimal(ledger.minimumPerMember.toString());
-      const newBalance = currentBalance.minus(amount);
 
-      // RES-01 : vérifier le seuil minimum
-      const minimumRequired = minimumPerMember.mul(ledger.memberCount);
-      if (newBalance.lessThan(minimumRequired)) {
+      // RES-01 : vérifier que le solde post-décaissement reste >= minimumPerMember × memberCount
+      const minimum = new Decimal(ledger.minimumPerMember.toString()).times(ledger.memberCount);
+      const newBalance = currentBalance.minus(configuredAmount);
+      if (newBalance.lessThan(minimum)) {
         throw new BadRequestException(
-          `Insufficient rescue fund balance. After disbursement: ${newBalance.toFixed(2)}, ` +
-          `minimum required: ${minimumRequired.toFixed(2)} (${minimumPerMember.toFixed(2)} × ${ledger.memberCount} members)`,
+          `Solde insuffisant : après décaissement, le solde (${newBalance.toFixed(0)} XAF) serait inférieur au seuil minimum (${minimum.toFixed(0)} XAF).`,
         );
       }
+
+      // Edge case : si la caisse est insuffisante, on donne tout ce qui reste
+      const actualAmount = Decimal.min(configuredAmount, currentBalance);
 
       const event = await this.rescueFundRepository.createEvent(
         {
           ledgerId: ledger.id,
           beneficiaryId: dto.beneficiaryMembershipId,
           eventType: dto.eventType,
-          amount: amount.toFixed(2),
+          amount: actualAmount.toFixed(2),
           authorizedById: actorId,
           eventDate: new Date(dto.eventDate),
           description: dto.description ?? null,
@@ -88,7 +89,7 @@ export class RescueFundService {
         tx,
       );
       if (position) {
-        const newPositionBalance = new Decimal(position.balance.toString()).minus(amount);
+        const newPositionBalance = new Decimal(position.balance.toString()).minus(actualAmount);
         const targetPerMember = new Decimal(ledger.targetPerMember.toString());
         const refillDebt = Decimal.max(
           new Decimal(0),

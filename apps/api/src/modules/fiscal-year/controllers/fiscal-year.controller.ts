@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -12,7 +13,9 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { FiscalYearService } from '../services/fiscal-year.service';
 import { CreateFiscalYearDto } from '../dto/create-fiscal-year.dto';
+import { UpdateFiscalYearDto } from '../dto/update-fiscal-year.dto';
 import { AddMemberDto } from '../dto/add-member.dto';
+import { UpdateMembershipDto } from '../dto/update-membership.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
@@ -46,11 +49,36 @@ export class FiscalYearController {
     return this.fiscalYearService.findById(id);
   }
 
+  @Patch(':id')
+  @Roles(BureauRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Modifier un exercice fiscal PENDING (SUPER_ADMIN)' })
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateFiscalYearDto,
+  ) {
+    return this.fiscalYearService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(BureauRole.SUPER_ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Supprimer un exercice fiscal PENDING sans membres (SUPER_ADMIN)' })
+  remove(@Param('id') id: string) {
+    return this.fiscalYearService.remove(id);
+  }
+
   @Patch(':id/activate')
   @Roles(BureauRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Activer un exercice fiscal PENDING → ACTIVE (SUPER_ADMIN)' })
   activate(@Param('id') id: string, @CurrentUser() user: { id: string }) {
     return this.fiscalYearService.activate(id, user.id);
+  }
+
+  @Patch(':id/close')
+  @Roles(BureauRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Clôturer un exercice ACTIVE ou CASSATION (SUPER_ADMIN)' })
+  close(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+    return this.fiscalYearService.close(id, user.id);
   }
 
   @Patch(':id/open-cassation')
@@ -76,6 +104,17 @@ export class FiscalYearController {
   @ApiOperation({ summary: 'Lister les membres inscrits à l\'exercice' })
   getMemberships(@Param('id') id: string) {
     return this.fiscalYearService.getMemberships(id);
+  }
+
+  @Patch(':id/memberships/:membershipId')
+  @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT, BureauRole.VICE_PRESIDENT, BureauRole.SECRETAIRE_GENERAL, BureauRole.SECRETAIRE_ADJOINT)
+  @ApiOperation({ summary: 'Modifier une inscription (date, parts) — avant verrouillage' })
+  updateMembership(
+    @Param('id') id: string,
+    @Param('membershipId') membershipId: string,
+    @Body() dto: UpdateMembershipDto,
+  ) {
+    return this.fiscalYearService.updateMembership(id, membershipId, dto);
   }
 
   @Get(':id/sessions')
