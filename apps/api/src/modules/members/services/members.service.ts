@@ -3,7 +3,6 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '@database/prisma.service';
 import { MembersRepository, MemberProfileWithUser, MemberProfileSummary } from '../repositories/members.repository';
@@ -14,12 +13,6 @@ import { NotificationsService } from '../../notifications/services/notifications
 import { FilterMembersDto } from '../dto/filter-members.dto';
 import { PaginatedResult, paginate } from '@common/interfaces/paginated-result.interface';
 
-const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-function generateCode(length = 6): string {
-  return Array.from(randomBytes(length))
-    .map((b) => ALPHABET[b % ALPHABET.length])
-    .join('');
-}
 
 export interface CreateMemberResult {
   profile: MemberProfileWithUser;
