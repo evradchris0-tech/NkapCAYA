@@ -28,6 +28,7 @@ class SavingsPage extends ConsumerWidget {
                     const SizedBox(height: 120, child: LoadingWidget()),
                 error: (e, _) => CayaErrorWidget(
                   message: e.toString(),
+                  error: e,
                   onRetry: () => ref.invalidate(savingsProvider),
                 ),
                 data: (savings) => Container(

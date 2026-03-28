@@ -30,11 +30,12 @@ class ApiConstants {
   static String loanRepay(String loanId) => '/loans/$loanId/repay';
   static String loanDisburse(String loanId) => '/loans/$loanId/disburse';
 
-  // Rescue fund endpoints
-  static const String rescueFund = '/rescue-fund';
-  static const String rescueFundEvents = '/rescue-fund/events';
-  static String rescueFundPosition(String membershipId) =>
-      '/rescue-fund/positions/$membershipId';
+  // Rescue fund endpoints — préfixés par fiscalYearId (obligatoire côté backend)
+  static String rescueFundLedger(String fyId) =>
+      '/fiscal-years/$fyId/rescue-fund';
+  static String rescueFundEvents(String fyId) =>
+      '/fiscal-years/$fyId/rescue-fund/events';
+  // rescueFundPosition : endpoint inexistant côté backend — position retournée null
 
   // Storage keys
   static const String accessTokenKey = 'caya_access_token';

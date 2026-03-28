@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/error_widget.dart';
 import '../providers/rescue_fund_provider.dart';
 import '../widgets/rescue_fund_balance.dart';
 
@@ -25,19 +26,15 @@ class RescueFundPage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              positionAsync.when(
-                data: (position) => ledgerAsync.when(
-                  data: (ledger) => RescueFundBalance(
-                    memberContribution: position.paidAmount,
-                    totalFund: ledger.totalBalance,
-                    memberBalance: position.balance,
-                    refillDebt: position.refillDebt,
-                  ),
-                  loading: () => const _LoadingCard(),
-                  error: (e, _) => _ErrorCard(message: e.toString()),
+              ledgerAsync.when(
+                data: (ledger) => RescueFundBalance(
+                  memberContribution: positionAsync.value?.paidAmount,
+                  totalFund: ledger.totalBalance,
+                  memberBalance: positionAsync.value?.balance,
+                  refillDebt: positionAsync.value?.refillDebt,
                 ),
                 loading: () => const _LoadingCard(),
-                error: (e, _) => _ErrorCard(message: e.toString()),
+                error: (e, _) => _ErrorCard(message: e.toString(), error: e),
               ),
               const SizedBox(height: 24),
               Card(
@@ -104,19 +101,13 @@ class _LoadingCard extends StatelessWidget {
 
 class _ErrorCard extends StatelessWidget {
   final String message;
+  final Object? error;
 
-  const _ErrorCard({required this.message});
+  const _ErrorCard({required this.message, this.error});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(message, style: const TextStyle(color: AppColors.error)),
-    );
+    return CayaErrorWidget(message: message, error: error);
   }
 }
 

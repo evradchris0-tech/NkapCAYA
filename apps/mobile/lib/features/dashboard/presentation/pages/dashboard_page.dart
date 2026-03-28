@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/providers/auth_provider.dart';
+import '../../../../shared/providers/current_membership_provider.dart';
 import '../providers/dashboard_provider.dart';
 import '../../../savings/presentation/providers/savings_provider.dart';
 import '../../../loans/presentation/providers/loans_provider.dart';
@@ -22,14 +26,22 @@ class DashboardPage extends ConsumerWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Tableau de bord', style: TextStyle(fontSize: 18)),
             Text(
-              auth.role ?? '',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.cayaGoldLight,
+              'Tableau de bord',
+              style: GoogleFonts.montserrat(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
               ),
             ),
+            if (auth.role != null)
+              Text(
+                auth.role!,
+                style: GoogleFonts.lato(
+                  fontSize: 11,
+                  color: AppColors.cayaGoldLight,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
           ],
         ),
         actions: const [
@@ -51,7 +63,9 @@ class DashboardPage extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           child: dashboardAsync.when(
             loading: () => const _DashboardSkeleton(),
-            error: (e, _) => _ErrorBanner(message: e.toString()),
+            error: (e, _) => e is NoMemberProfileException
+                ? _AdminInfoBanner(message: e.toString())
+                : _ErrorBanner(message: e.toString()),
             data: (data) => _DashboardContent(data: data),
           ),
         ),
@@ -60,14 +74,16 @@ class DashboardPage extends ConsumerWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Content
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _DashboardContent extends StatelessWidget {
   final DashboardData data;
-
   const _DashboardContent({required this.data});
 
   @override
   Widget build(BuildContext context) {
-    // Données synthétiques pour le graphique (épargne brute + intérêts = NAP)
     final chartData = [
       SavingsChartData(month: 'Capital', amount: data.principalBalance),
       SavingsChartData(month: 'Intérêts', amount: data.totalInterestReceived),
@@ -131,11 +147,17 @@ class _DashboardContent extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Skeleton
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _DashboardSkeleton extends StatelessWidget {
   const _DashboardSkeleton();
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final shimmerColor = isDark ? AppColors.darkSurfaceVariant : AppColors.grey200;
     return Column(
       children: [
         GridView.count(
@@ -149,10 +171,9 @@ class _DashboardSkeleton extends StatelessWidget {
             4,
             (_) => Container(
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: shimmerColor,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(child: CircularProgressIndicator()),
             ),
           ),
         ),
@@ -161,9 +182,84 @@ class _DashboardSkeleton extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Error states
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Bannière info pour admin sans profil membre
+class _AdminInfoBanner extends StatelessWidget {
+  final String message;
+  const _AdminInfoBanner({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.cayaBlue.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.cayaBlue.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.cayaBlue.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.admin_panel_settings_outlined,
+                  color: AppColors.cayaBlue,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Mode administrateur',
+                style: GoogleFonts.montserrat(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: AppColors.cayaBlue,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            style: GoogleFonts.lato(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () => context.go(AppConstants.routeProfile),
+            icon: const Icon(Icons.person_outline, size: 16),
+            label: const Text('Voir mon profil'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.cayaBlue,
+              side: const BorderSide(color: AppColors.cayaBlue),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Bannière d'erreur générique
 class _ErrorBanner extends StatelessWidget {
   final String message;
-
   const _ErrorBanner({required this.message});
 
   @override
@@ -171,17 +267,23 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.1),
+        color: AppColors.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error),
+          const Icon(Icons.error_outline, color: AppColors.error, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: AppColors.error),
+              style: GoogleFonts.lato(
+                color: AppColors.error,
+                fontSize: 13,
+                height: 1.4,
+              ),
             ),
           ),
         ],

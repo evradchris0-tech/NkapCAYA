@@ -21,12 +21,16 @@ final class NetworkFailure extends AppFailure {
   const NetworkFailure({
     this.message = 'Erreur réseau. Vérifiez votre connexion.',
   });
+  @override
+  String toString() => message;
 }
 
 final class ServerFailure extends AppFailure {
   final String message;
   final int statusCode;
   const ServerFailure({required this.message, this.statusCode = 500});
+  @override
+  String toString() => message.isNotEmpty ? message : 'Erreur serveur ($statusCode).';
 }
 
 final class UnauthorizedFailure extends AppFailure {
@@ -34,11 +38,15 @@ final class UnauthorizedFailure extends AppFailure {
   const UnauthorizedFailure({
     this.message = 'Session expirée. Veuillez vous reconnecter.',
   });
+  @override
+  String toString() => message;
 }
 
 final class NotFoundFailure extends AppFailure {
   final String message;
   const NotFoundFailure({this.message = 'Ressource introuvable.'});
+  @override
+  String toString() => message;
 }
 
 final class ValidationFailure extends AppFailure {
@@ -48,16 +56,22 @@ final class ValidationFailure extends AppFailure {
     this.message = 'Données invalides.',
     this.fieldErrors,
   });
+  @override
+  String toString() => message;
 }
 
 final class CacheFailure extends AppFailure {
   final String message;
   const CacheFailure({this.message = 'Erreur de cache local.'});
+  @override
+  String toString() => message;
 }
 
 final class UnknownFailure extends AppFailure {
   final String message;
   const UnknownFailure({this.message = 'Une erreur inattendue est survenue.'});
+  @override
+  String toString() => message.isNotEmpty ? message : 'Une erreur inattendue est survenue.';
 }
 
 /// Convertit un [AppFailure] en message lisible par l'utilisateur.

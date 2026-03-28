@@ -18,41 +18,12 @@ import '../constants/app_constants.dart';
 import '../theme/app_colors.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
-  final tontine = ref.watch(tontineProvider);
+  final notifier = _RouterNotifier(ref);
 
   return GoRouter(
     initialLocation: AppConstants.routeSplash,
-    redirect: (context, state) {
-      final location = state.matchedLocation;
-
-      // Splash et onboarding gèrent leur propre navigation — pas de redirect
-      if (location == AppConstants.routeSplash) return null;
-      if (location == AppConstants.routeOnboarding) return null;
-
-      final hasTontine = tontine != null;
-      final isAuthenticated = authState.isAuthenticated;
-
-      final isTontineSearch = location == AppConstants.routeTontineSearch;
-      final isLogin = location == AppConstants.routeLogin;
-
-      // 1. Pas de tontine → toujours /tontine-search
-      if (!hasTontine) {
-        return isTontineSearch ? null : AppConstants.routeTontineSearch;
-      }
-
-      // 2. Pas authentifié → /login
-      if (!isAuthenticated) {
-        return isLogin ? null : AppConstants.routeLogin;
-      }
-
-      // 3. Authentifié sur login ou tontine-search → dashboard
-      if (isLogin || isTontineSearch) {
-        return AppConstants.routeDashboard;
-      }
-
-      return null;
-    },
+    refreshListenable: notifier,
+    redirect: notifier.redirect,
     routes: [
       // ── Splash ───────────────────────────────────────────────────────────
       GoRoute(
@@ -163,6 +134,45 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ),
   );
 });
+
+// ---------------------------------------------------------------------------
+// Router notifier — évite de recréer le GoRouter à chaque changement d'état
+// ---------------------------------------------------------------------------
+
+class _RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  _RouterNotifier(this._ref) {
+    _ref.listen(authStateProvider, (_, __) => notifyListeners());
+    _ref.listen(tontineProvider, (_, __) => notifyListeners());
+  }
+
+  String? redirect(BuildContext context, GoRouterState state) {
+    final location = state.matchedLocation;
+
+    // Splash et onboarding gèrent leur propre navigation
+    if (location == AppConstants.routeSplash) return null;
+    if (location == AppConstants.routeOnboarding) return null;
+
+    final hasTontine = _ref.read(tontineProvider) != null;
+    final isAuthenticated = _ref.read(authStateProvider).isAuthenticated;
+
+    final isTontineSearch = location == AppConstants.routeTontineSearch;
+    final isLogin = location == AppConstants.routeLogin;
+
+    if (!hasTontine) {
+      return isTontineSearch ? null : AppConstants.routeTontineSearch;
+    }
+    if (!isAuthenticated) {
+      return isLogin ? null : AppConstants.routeLogin;
+    }
+    if (isLogin || isTontineSearch) {
+      return AppConstants.routeDashboard;
+    }
+
+    return null;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Transition builders

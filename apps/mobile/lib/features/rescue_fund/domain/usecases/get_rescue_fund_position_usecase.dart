@@ -5,6 +5,6 @@ class GetRescueFundPositionUseCase {
   final RescueFundRepository _repository;
   const GetRescueFundPositionUseCase(this._repository);
 
-  Future<RescueFundPositionEntity> call(String membershipId) =>
-      _repository.getPosition(membershipId);
+  Future<RescueFundPositionEntity?> call(String fyId, String membershipId) =>
+      _repository.getPosition(fyId, membershipId);
 }

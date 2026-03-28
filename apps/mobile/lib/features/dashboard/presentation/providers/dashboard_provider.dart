@@ -4,11 +4,11 @@ import '../../../loans/presentation/providers/loans_provider.dart';
 import '../../../rescue_fund/presentation/providers/rescue_fund_provider.dart';
 
 class DashboardData {
-  final double savingsBalance; // SavingsLedger.balance
-  final double principalBalance; // versements bruts
+  final double savingsBalance;
+  final double principalBalance;
   final double totalInterestReceived;
-  final double activeLoansOutstanding; // Σ outstandingBalance des prêts ACTIVE
-  final double rescueFundContribution; // paidAmount de la position membre
+  final double activeLoansOutstanding;
+  final double rescueFundContribution;
   final int activeLoansCount;
 
   const DashboardData({
@@ -22,9 +22,18 @@ class DashboardData {
 }
 
 final dashboardProvider = FutureProvider<DashboardData>((ref) async {
+  // savings et loans peuvent propager NoMemberProfileException → dashboard_page l'affiche
   final savings = await ref.watch(savingsProvider.future);
   final loans = await ref.watch(loansProvider.future);
-  final position = await ref.watch(rescueFundPositionProvider.future);
+
+  // Rescue fund : endpoint en cours de correction (fyId requis) — ne bloque pas le dashboard
+  double rescueContrib = 0;
+  try {
+    final position = await ref.watch(rescueFundPositionProvider.future);
+    rescueContrib = position?.paidAmount ?? 0;
+  } catch (_) {
+    // Silencieux : l'onglet Secours affiche son propre état d'erreur
+  }
 
   final activeLoans = loans.where((l) => l.isActive).toList();
   final outstanding =
@@ -35,7 +44,7 @@ final dashboardProvider = FutureProvider<DashboardData>((ref) async {
     principalBalance: savings.principalBalance,
     totalInterestReceived: savings.totalInterestReceived,
     activeLoansOutstanding: outstanding,
-    rescueFundContribution: position.paidAmount,
+    rescueFundContribution: rescueContrib,
     activeLoansCount: activeLoans.length,
   );
 });

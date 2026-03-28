@@ -20,17 +20,20 @@ final _rescueFundRepositoryProvider = Provider<RescueFundRepository>((ref) {
   );
 });
 
-/// Solde global du fonds de secours de l'exercice courant.
+/// Solde global du fonds de secours pour l'exercice courant.
+/// Nécessite un profil membre pour obtenir le fiscalYearId.
 final rescueFundLedgerProvider =
     FutureProvider<RescueFundLedgerEntity>((ref) async {
-  final repo = ref.watch(_rescueFundRepositoryProvider);
-  return repo.getLedger();
+  final ctx = await ref.watch(currentMembershipProvider.future);
+  return ref.watch(_rescueFundRepositoryProvider).getLedger(ctx.fiscalYearId);
 });
 
-/// Position individuelle du membre connecté dans le fonds de secours.
+/// Position individuelle du membre dans le fonds de secours.
+/// Retourne null tant que l'endpoint backend n'est pas implémenté.
 final rescueFundPositionProvider =
-    FutureProvider<RescueFundPositionEntity>((ref) async {
+    FutureProvider<RescueFundPositionEntity?>((ref) async {
   final ctx = await ref.watch(currentMembershipProvider.future);
-  final repo = ref.watch(_rescueFundRepositoryProvider);
-  return repo.getPosition(ctx.membershipId);
+  return ref
+      .watch(_rescueFundRepositoryProvider)
+      .getPosition(ctx.fiscalYearId, ctx.membershipId);
 });

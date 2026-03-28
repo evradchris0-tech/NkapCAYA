@@ -3,10 +3,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/amount_display.dart';
 
 class RescueFundBalance extends StatelessWidget {
-  final double memberContribution; // total versé par le membre
-  final double totalFund; // solde global du fonds
-  final double memberBalance; // solde net du membre
-  final double refillDebt; // dette de renflouement (0 si aucune)
+  final double? memberContribution; // null si endpoint position indisponible
+  final double totalFund;
+  final double? memberBalance;
+  final double? refillDebt;
 
   const RescueFundBalance({
     super.key,
@@ -51,12 +51,21 @@ class RescueFundBalance extends StatelessWidget {
             style: TextStyle(color: Colors.white70, fontSize: 12),
           ),
           const SizedBox(height: 4),
-          AmountDisplay(
-            amount: memberContribution,
-            amountFontSize: 28,
-            amountColor: AppColors.white,
-          ),
-          if (refillDebt > 0) ...[
+          memberContribution != null
+              ? AmountDisplay(
+                  amount: memberContribution!,
+                  amountFontSize: 28,
+                  amountColor: AppColors.white,
+                )
+              : const Text(
+                  '—',
+                  style: TextStyle(
+                    color: AppColors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+          if (refillDebt != null && refillDebt! > 0) ...[
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -65,9 +74,8 @@ class RescueFundBalance extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'Dette de renflouement : ${refillDebt.toStringAsFixed(0)} XAF',
-                style:
-                    const TextStyle(color: Colors.orangeAccent, fontSize: 12),
+                'Dette de renflouement : ${refillDebt!.toStringAsFixed(0)} XAF',
+                style: const TextStyle(color: Colors.orangeAccent, fontSize: 12),
               ),
             ),
           ],
@@ -89,7 +97,7 @@ class RescueFundBalance extends StatelessWidget {
 
 class _FundStat extends StatelessWidget {
   final String label;
-  final double amount;
+  final double? amount;
 
   const _FundStat({required this.label, required this.amount});
 
@@ -99,16 +107,18 @@ class _FundStat extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white60, fontSize: 11),
-          ),
+          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 11)),
           const SizedBox(height: 2),
-          AmountDisplay(
-            amount: amount,
-            amountFontSize: 14,
-            amountColor: AppColors.white,
-          ),
+          amount != null
+              ? AmountDisplay(
+                  amount: amount!,
+                  amountFontSize: 14,
+                  amountColor: AppColors.white,
+                )
+              : const Text(
+                  '—',
+                  style: TextStyle(color: Colors.white60, fontSize: 14),
+                ),
         ],
       ),
     );

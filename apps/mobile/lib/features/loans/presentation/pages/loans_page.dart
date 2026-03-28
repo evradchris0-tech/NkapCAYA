@@ -19,6 +19,7 @@ class LoansPage extends ConsumerWidget {
         loading: () => const LoadingWidget(message: 'Chargement des prêts...'),
         error: (e, _) => CayaErrorWidget(
           message: e.toString(),
+          error: e,
           onRetry: () => ref.invalidate(loansProvider),
         ),
         data: (loans) {
