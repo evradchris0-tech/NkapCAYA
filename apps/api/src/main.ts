@@ -33,9 +33,16 @@ async function bootstrap(): Promise<void> {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  // CORS
-  // DEV : toutes origines autorisées — restreindre en production
-  app.enableCors({ origin: '*' });
+  // CORS — origines autorisées (env var ou liste fixe)
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+    : ['*'];
+  app.enableCors({
+    origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
