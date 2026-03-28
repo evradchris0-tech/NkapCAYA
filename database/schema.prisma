@@ -757,6 +757,7 @@ model BeneficiarySlot {
   designatedAt    DateTime?         @map("designated_at")
   status          BeneficiaryStatus @default(UNASSIGNED) @map("status")
   deliveredAt     DateTime?         @map("delivered_at")
+  isHost          Boolean           @default(false) @map("is_host")
   notes           String?           @map("notes") @db.Text
   deletedAt       DateTime?         @map("deleted_at")
   version         Int               @default(1) @map("version")

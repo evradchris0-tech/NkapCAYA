@@ -3,7 +3,10 @@ node_modules/
 dist/
 .env
 .env.*
+# Fichiers exemple commités (templates sans secrets)
 !.env.example
+!apps/api/.env.example
+!apps/web/.env.example
 
 # ── Logs ─────────────────────────────────────────────────────────────────────
 *.log
