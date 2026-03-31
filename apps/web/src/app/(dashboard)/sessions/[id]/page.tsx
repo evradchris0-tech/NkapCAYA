@@ -7,17 +7,18 @@ import Select from '@components/ui/Select';
 import ConfirmDialog from '@components/ui/ConfirmDialog';
 import ChartCard from '@components/ui/ChartCard';
 import TransactionModal from '@components/forms/TransactionModal';
+import BatchTransactionModal from '@components/forms/BatchTransactionModal';
 import Modal from '@components/ui/Modal';
 import { Skeleton } from '@components/ui/Skeleton';
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts';
 import {
   Users, CreditCard, TrendingUp, Banknote,
   CheckCircle2, Clock, Circle, Gift, AlertTriangle,
+  Pencil, Trash2,
 } from 'lucide-react';
-import { useSession, useOpenSession, useCloseForReview, useValidateAndClose } from '@lib/hooks/useSessions';
+import { useSession, useOpenSession, useCloseForReview, useValidateAndClose, useUpdateEntry, useDeleteEntry } from '@lib/hooks/useSessions';
 import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
 import {
   useBeneficiarySchedule,
@@ -28,7 +29,7 @@ import {
 } from '@lib/hooks/useBeneficiaries';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
 import { BureauRole, TRANSACTION_TYPE_LABELS, TransactionType } from '@/types/domain.types';
-import type { BeneficiarySlot } from '@/types/api.types';
+import type { BeneficiarySlot, SessionEntry } from '@/types/api.types';
 
 interface Props {
   params: { id: string };
@@ -82,12 +83,21 @@ export default function SessionDetailPage({ params }: Props) {
   const closeForReview = useCloseForReview();
   const validateAndClose = useValidateAndClose();
   const [showTransactionModal, setShowTransactionModal] = useState(false);
+  const [showBatchModal, setShowBatchModal] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmReview, setConfirmReview] = useState(false);
   const [confirmValidate, setConfirmValidate] = useState(false);
   const [deliverySlotId, setDeliverySlotId] = useState<string | null>(null);
   const [deliveryAmount, setDeliveryAmount] = useState('');
   const [assignMembershipId, setAssignMembershipId] = useState<Record<string, string>>({});
+
+  // CRUD transaction
+  const [editEntry, setEditEntry] = useState<SessionEntry | null>(null);
+  const [editAmount, setEditAmount] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [deleteEntryId, setDeleteEntryId] = useState<string | null>(null);
+  const updateEntry = useUpdateEntry(params.id);
+  const deleteEntryMutation = useDeleteEntry(params.id);
 
   const { data: memberships } = useFiscalYearMemberships(session?.fiscalYearId ?? '');
   const { data: schedule } = useBeneficiarySchedule(session?.fiscalYearId ?? '');
@@ -155,23 +165,7 @@ export default function SessionDetailPage({ params }: Props) {
       { name: TRANSACTION_TYPE_LABELS[TransactionType.AUTRES],        value: parseFloat(session.totalAutres || '0') },
     ].filter((d) => d.value > 0);
 
-    // Bar data — cotisation par membre
-    const cotisationMap: Record<string, { name: string; montant: number }> = {};
-    entries
-      .filter((e) => e.type === TransactionType.COTISATION)
-      .forEach((e) => {
-        const profile = e.membership?.profile;
-        const name = profile
-          ? `${profile.lastName} ${profile.firstName}`.trim()
-          : e.membershipId.slice(-6);
-        if (!cotisationMap[e.membershipId]) {
-          cotisationMap[e.membershipId] = { name, montant: 0 };
-        }
-        cotisationMap[e.membershipId].montant += parseFloat(e.amount);
-      });
-    const barData = Object.values(cotisationMap).sort((a, b) => b.montant - a.montant);
-
-    return { totalGeneral, participantIds, cotisantIds, absentMembers, totalRbt, pct, pieData, barData };
+    return { totalGeneral, participantIds, cotisantIds, absentMembers, totalRbt, pct, pieData };
   }, [session, memberships]);
 
   // Bénéficiaires de cette session (plusieurs slots possibles)
@@ -236,7 +230,10 @@ export default function SessionDetailPage({ params }: Props) {
             )}
             {session.status === 'OPEN' && isTresorier && (
               <>
-                <Button size="sm" variant="secondary" onClick={() => setShowTransactionModal(true)}>
+                <Button size="sm" variant="secondary" onClick={() => setShowBatchModal(true)}>
+                  + Saisie rapide
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setShowTransactionModal(true)}>
                   + Transaction
                 </Button>
                 <Button size="sm" variant="secondary" onClick={() => setConfirmReview(true)} isLoading={closeForReview.isPending}>
@@ -546,10 +543,20 @@ export default function SessionDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* ── Modal transaction ── */}
+      {/* ── Modal transaction simple ── */}
       <TransactionModal
         open={showTransactionModal}
         onClose={() => setShowTransactionModal(false)}
+        sessionId={params.id}
+        memberships={memberships ?? []}
+        config={session.fiscalYear?.config}
+        entries={session.entries ?? []}
+      />
+
+      {/* ── Modal saisie batch ── */}
+      <BatchTransactionModal
+        open={showBatchModal}
+        onClose={() => setShowBatchModal(false)}
         sessionId={params.id}
         memberships={memberships ?? []}
         config={session.fiscalYear?.config}
@@ -612,37 +619,108 @@ export default function SessionDetailPage({ params }: Props) {
         )}
       </div>
 
-      {/* ── Bar chart cotisation par membre ── */}
-      {derived.barData.length > 0 && (
-        <ChartCard title="Cotisation par membre" subtitle="Montants en XAF">
-          <div style={{ height: Math.max(200, derived.barData.length * 36) }} className="px-4 pb-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={derived.barData} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                <XAxis
-                  type="number"
-                  tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-                  tick={{ fontSize: 11, fill: '#94a3b8' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  width={110}
-                  tick={{ fontSize: 11, fill: '#64748b' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  formatter={(v: number) => [`${v.toLocaleString('fr-FR')} XAF`, 'Cotisation']}
-                  contentStyle={{ borderRadius: 8, fontSize: 12 }}
-                />
-                <Bar dataKey="montant" fill="#3b82f6" radius={[0, 4, 4, 0]} maxBarSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
+      {/* ── Journal financier ── */}
+      {derived.totalGeneral > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+            <h2 className="text-sm font-semibold text-gray-800">Journal financier de la session</h2>
           </div>
-        </ChartCard>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[400px]">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="text-left px-6 py-3 font-medium text-gray-600">Rubrique</th>
+                  <th className="text-right px-6 py-3 font-medium text-gray-600">Montant (XAF)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {/* RECETTES */}
+                <tr className="bg-emerald-50/40">
+                  <td colSpan={2} className="px-6 py-2 text-xs font-bold text-emerald-700 uppercase tracking-wide">
+                    Recettes
+                  </td>
+                </tr>
+                {[
+                  { label: TRANSACTION_TYPE_LABELS[TransactionType.COTISATION], value: session.totalCotisation },
+                  { label: TRANSACTION_TYPE_LABELS[TransactionType.EPARGNE], value: session.totalEpargne },
+                  { label: TRANSACTION_TYPE_LABELS[TransactionType.SECOURS], value: session.totalSecours },
+                  { label: TRANSACTION_TYPE_LABELS[TransactionType.PROJET], value: session.totalProjet },
+                  { label: TRANSACTION_TYPE_LABELS[TransactionType.POT], value: session.totalPot },
+                  { label: TRANSACTION_TYPE_LABELS[TransactionType.RBT_PRINCIPAL], value: session.totalRbtPrincipal },
+                  { label: TRANSACTION_TYPE_LABELS[TransactionType.RBT_INTEREST], value: session.totalRbtInterest },
+                  { label: TRANSACTION_TYPE_LABELS[TransactionType.INSCRIPTION], value: session.totalInscription },
+                  { label: TRANSACTION_TYPE_LABELS[TransactionType.AUTRES], value: session.totalAutres },
+                ]
+                  .filter((r) => parseFloat(r.value || '0') > 0)
+                  .map((r) => (
+                    <tr key={r.label} className="hover:bg-gray-50">
+                      <td className="px-6 py-2.5 text-gray-600 pl-10">{r.label}</td>
+                      <td className="px-6 py-2.5 text-right tabular-nums font-medium text-gray-800">
+                        {parseFloat(r.value || '0').toLocaleString('fr-FR')}
+                      </td>
+                    </tr>
+                  ))}
+                <tr className="border-t border-emerald-100 bg-emerald-50/60">
+                  <td className="px-6 py-2.5 text-sm font-bold text-emerald-800">Total Recettes</td>
+                  <td className="px-6 py-2.5 text-right tabular-nums font-bold text-emerald-800">
+                    {derived.totalGeneral.toLocaleString('fr-FR')}
+                  </td>
+                </tr>
+
+                {/* DÉPENSES */}
+                <tr className="bg-rose-50/40">
+                  <td colSpan={2} className="px-6 py-2 text-xs font-bold text-rose-700 uppercase tracking-wide">
+                    Dépenses
+                  </td>
+                </tr>
+                {beneficiarySlots.filter((s) => s.status === 'DELIVERED' && parseFloat(s.amountDelivered || '0') > 0).length > 0 ? (
+                  <>
+                    {beneficiarySlots
+                      .filter((s) => s.status === 'DELIVERED' && parseFloat(s.amountDelivered || '0') > 0)
+                      .map((s) => (
+                        <tr key={s.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-2.5 text-gray-600 pl-10">
+                            Tontine versée — {s.membership?.profile
+                              ? `${s.membership.profile.lastName} ${s.membership.profile.firstName}`
+                              : `Slot #${s.slotIndex}`}
+                          </td>
+                          <td className="px-6 py-2.5 text-right tabular-nums font-medium text-rose-700">
+                            {parseFloat(s.amountDelivered || '0').toLocaleString('fr-FR')}
+                          </td>
+                        </tr>
+                      ))}
+                  </>
+                ) : (
+                  <tr>
+                    <td colSpan={2} className="px-6 py-2.5 text-xs text-gray-400 pl-10 italic">Aucune tontine versée pour cette session</td>
+                  </tr>
+                )}
+                {(() => {
+                  const totalDepenses = beneficiarySlots
+                    .filter((s) => s.status === 'DELIVERED')
+                    .reduce((sum, s) => sum + parseFloat(s.amountDelivered || '0'), 0);
+                  const solde = derived.totalGeneral - totalDepenses;
+                  return (
+                    <>
+                      <tr className="border-t border-rose-100 bg-rose-50/60">
+                        <td className="px-6 py-2.5 text-sm font-bold text-rose-800">Total Dépenses</td>
+                        <td className="px-6 py-2.5 text-right tabular-nums font-bold text-rose-800">
+                          {totalDepenses.toLocaleString('fr-FR')}
+                        </td>
+                      </tr>
+                      <tr className="border-t-2 border-gray-200 bg-blue-50/50">
+                        <td className="px-6 py-3 text-sm font-bold text-blue-900">Solde en caisse</td>
+                        <td className={`px-6 py-3 text-right tabular-nums text-base font-bold ${solde >= 0 ? 'text-blue-700' : 'text-red-600'}`}>
+                          {solde.toLocaleString('fr-FR')} XAF
+                        </td>
+                      </tr>
+                    </>
+                  );
+                })()}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       {/* ── Tableau des transactions ── */}
@@ -662,6 +740,9 @@ export default function SessionDetailPage({ params }: Props) {
                 <th className="text-left px-6 py-3 font-medium text-gray-600">Type</th>
                 <th className="text-right px-6 py-3 font-medium text-gray-600">Montant</th>
                 <th className="text-right px-6 py-3 font-medium text-gray-600">Date</th>
+                {session.status !== 'CLOSED' && isTresorier && (
+                  <th className="text-center px-4 py-3 font-medium text-gray-600">Actions</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -684,6 +765,30 @@ export default function SessionDetailPage({ params }: Props) {
                   <td className="px-6 py-3 text-right text-xs text-gray-400">
                     {new Date(entry.recordedAt).toLocaleDateString('fr-FR')}
                   </td>
+                  {session.status !== 'CLOSED' && isTresorier && (
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          title="Modifier"
+                          onClick={() => {
+                            setEditEntry(entry);
+                            setEditAmount(entry.amount);
+                            setEditNotes(entry.notes ?? '');
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          title="Supprimer"
+                          onClick={() => setDeleteEntryId(entry.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -694,6 +799,7 @@ export default function SessionDetailPage({ params }: Props) {
                   {derived.totalGeneral.toLocaleString('fr-FR')} XAF
                 </td>
                 <td />
+                {session.status !== 'CLOSED' && isTresorier && <td />}
               </tr>
             </tfoot>
           </table>
@@ -745,6 +851,81 @@ export default function SessionDetailPage({ params }: Props) {
           </div>
         </div>
       </Modal>
+
+      {/* ── Modale Edit transaction ── */}
+      <Modal
+        isOpen={Boolean(editEntry)}
+        onClose={() => setEditEntry(null)}
+        title="Modifier la transaction"
+        size="sm"
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setEditEntry(null)}>Annuler</Button>
+            <Button
+              isLoading={updateEntry.isPending}
+              onClick={() => {
+                if (!editEntry) return;
+                const amount = parseFloat(editAmount);
+                if (!isNaN(amount) && amount > 0) {
+                  updateEntry.mutate(
+                    { entryId: editEntry.id, payload: { amount, notes: editNotes || undefined } },
+                    { onSuccess: () => setEditEntry(null) },
+                  );
+                }
+              }}
+            >
+              Enregistrer
+            </Button>
+          </>
+        )}
+      >
+        {editEntry && (
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Type</p>
+              <span className="text-sm font-medium text-gray-800">
+                {TRANSACTION_TYPE_LABELS[editEntry.type as TransactionType] ?? editEntry.type}
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-700">Montant (XAF)</label>
+              <input
+                type="number"
+                min="1"
+                value={editAmount}
+                onChange={(e) => setEditAmount(e.target.value)}
+                className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-700">Notes (optionnel)</label>
+              <input
+                type="text"
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="Commentaire libre"
+                className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ── Confirm suppression transaction ── */}
+      <ConfirmDialog
+        isOpen={Boolean(deleteEntryId)}
+        title="Supprimer cette transaction ?"
+        message="Cette action annulera les effets de cette transaction (épargne, caisse de secours). Irréversible."
+        confirmLabel="Supprimer"
+        variant="danger"
+        isLoading={deleteEntryMutation.isPending}
+        onConfirm={() => {
+          if (deleteEntryId) {
+            deleteEntryMutation.mutate(deleteEntryId, { onSuccess: () => setDeleteEntryId(null) });
+          }
+        }}
+        onCancel={() => setDeleteEntryId(null)}
+      />
 
       {/* Modales de confirmation */}
       <ConfirmDialog

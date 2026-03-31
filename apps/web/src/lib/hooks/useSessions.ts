@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { sessionsApi, RecordEntryPayload } from '@lib/api/sessions.api';
+import { sessionsApi, RecordEntryPayload, UpdateEntryPayload } from '@lib/api/sessions.api';
 import type { MonthlySession, SessionEntry } from '@/types/api.types';
 import { SessionStatus } from '@/types/domain.types';
 
@@ -121,6 +121,27 @@ export function useRecordEntry(sessionId: string) {
       toast.error(apiError(_err));
     },
     onSuccess: () => toast.success('Entrée enregistrée.'),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: [...SESSIONS_KEY, sessionId] }),
+  });
+}
+
+export function useUpdateEntry(sessionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ entryId, payload }: { entryId: string; payload: UpdateEntryPayload }) =>
+      sessionsApi.updateEntry(sessionId, entryId, payload),
+    onError: (_err) => toast.error(apiError(_err)),
+    onSuccess: () => toast.success('Transaction modifiée.'),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: [...SESSIONS_KEY, sessionId] }),
+  });
+}
+
+export function useDeleteEntry(sessionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (entryId: string) => sessionsApi.deleteEntry(sessionId, entryId),
+    onError: (_err) => toast.error(apiError(_err)),
+    onSuccess: () => toast.success('Transaction supprimée.'),
     onSettled: () => queryClient.invalidateQueries({ queryKey: [...SESSIONS_KEY, sessionId] }),
   });
 }

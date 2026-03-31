@@ -8,6 +8,7 @@ import { PrismaService } from '@database/prisma.service';
 import { Prisma, SessionStatus, TransactionType, SavingsEntryType } from '@prisma/client';
 import { SessionsRepository } from '../repositories/sessions.repository';
 import { RecordEntryDto } from '../dto/record-entry.dto';
+import { UpdateEntryDto } from '../dto/update-entry.dto';
 import * as dayjs from 'dayjs';
 
 /** TransactionType → 3-4 char code for reference generation */
@@ -236,6 +237,156 @@ export class SessionsService {
       }
 
       return entry;
+    });
+  }
+
+  /** Modifier le montant / les notes d'une transaction existante */
+  async updateEntry(sessionId: string, entryId: string, dto: UpdateEntryDto) {
+    return this.prisma.$transaction(async (tx) => {
+      const entry = await tx.sessionEntry.findUnique({ where: { id: entryId } });
+      if (!entry || entry.sessionId !== sessionId) {
+        throw new NotFoundException(`Transaction ${entryId} introuvable dans la session ${sessionId}`);
+      }
+
+      const session = await tx.monthlySession.findUnique({ where: { id: sessionId } });
+      if (!session) throw new NotFoundException(`Session ${sessionId} introuvable`);
+      if (session.status === SessionStatus.CLOSED) {
+        throw new ConflictException('Impossible de modifier une transaction dans une session clôturée');
+      }
+
+      const oldAmount = Number(entry.amount);
+      const newAmount = dto.amount ?? oldAmount;
+      const diff = newAmount - oldAmount;
+
+      // Mise à jour du total session si le montant change
+      if (diff !== 0 && !entry.isOutOfSession) {
+        const field = TOTAL_FIELD[entry.type];
+        await tx.monthlySession.update({
+          where: { id: sessionId },
+          data: { [field]: { increment: diff } },
+        });
+      }
+
+      // Mise à jour des effets de bord si le montant change
+      if (diff !== 0) {
+        if (entry.type === TransactionType.EPARGNE) {
+          const savingsEntry = await tx.savingsEntry.findFirst({
+            where: { sessionEntryId: entryId },
+          });
+          if (savingsEntry) {
+            const ledger = await tx.savingsLedger.findUnique({ where: { id: savingsEntry.ledgerId } });
+            if (ledger) {
+              await tx.savingsEntry.update({
+                where: { id: savingsEntry.id },
+                data: { amount: { increment: diff }, balanceAfter: { increment: diff } },
+              });
+              await tx.savingsLedger.update({
+                where: { id: ledger.id },
+                data: { balance: { increment: diff }, principalBalance: { increment: diff } },
+              });
+            }
+          }
+        }
+
+        if (entry.type === TransactionType.SECOURS) {
+          const position = await tx.rescueFundPosition.findUnique({
+            where: { membershipId: entry.membershipId },
+          });
+          if (position) {
+            const Decimal = (await import('decimal.js')).default;
+            const newRefillDebt = Decimal.max(
+              new Decimal(0),
+              new Decimal(position.refillDebt.toString()).minus(diff),
+            );
+            await tx.rescueFundPosition.update({
+              where: { id: position.id },
+              data: {
+                paidAmount: { increment: diff },
+                balance: { increment: diff },
+                refillDebt: newRefillDebt.toFixed(2),
+              },
+            });
+            await tx.rescueFundLedger.update({
+              where: { id: position.ledgerId },
+              data: { totalBalance: { increment: diff } },
+            });
+          }
+        }
+      }
+
+      return tx.sessionEntry.update({
+        where: { id: entryId },
+        data: {
+          ...(dto.amount !== undefined && { amount: dto.amount }),
+          ...(dto.notes !== undefined && { notes: dto.notes }),
+        },
+      });
+    });
+  }
+
+  /** Supprimer une transaction et annuler ses effets de bord */
+  async deleteEntry(sessionId: string, entryId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const entry = await tx.sessionEntry.findUnique({ where: { id: entryId } });
+      if (!entry || entry.sessionId !== sessionId) {
+        throw new NotFoundException(`Transaction ${entryId} introuvable dans la session ${sessionId}`);
+      }
+
+      const session = await tx.monthlySession.findUnique({ where: { id: sessionId } });
+      if (!session) throw new NotFoundException(`Session ${sessionId} introuvable`);
+      if (session.status === SessionStatus.CLOSED) {
+        throw new ConflictException('Impossible de supprimer une transaction dans une session clôturée');
+      }
+
+      const amount = Number(entry.amount);
+
+      // Décrementer le total session
+      if (!entry.isOutOfSession) {
+        const field = TOTAL_FIELD[entry.type];
+        await tx.monthlySession.update({
+          where: { id: sessionId },
+          data: { [field]: { decrement: amount } },
+        });
+      }
+
+      // Annuler les effets de bord EPARGNE
+      if (entry.type === TransactionType.EPARGNE) {
+        const savingsEntry = await tx.savingsEntry.findFirst({
+          where: { sessionEntryId: entryId },
+        });
+        if (savingsEntry) {
+          await tx.savingsLedger.update({
+            where: { id: savingsEntry.ledgerId },
+            data: { balance: { decrement: amount }, principalBalance: { decrement: amount } },
+          });
+          await tx.savingsEntry.delete({ where: { id: savingsEntry.id } });
+        }
+      }
+
+      // Annuler les effets de bord SECOURS
+      if (entry.type === TransactionType.SECOURS) {
+        const position = await tx.rescueFundPosition.findUnique({
+          where: { membershipId: entry.membershipId },
+        });
+        if (position) {
+          await tx.rescueFundPosition.update({
+            where: { id: position.id },
+            data: {
+              paidAmount: { decrement: amount },
+              balance: { decrement: amount },
+              refillDebt: { increment: amount },
+            },
+          });
+          await tx.rescueFundLedger.update({
+            where: { id: position.ledgerId },
+            data: { totalBalance: { decrement: amount } },
+          });
+        }
+      }
+
+      await tx.sessionEntry.delete({ where: { id: entryId } });
+
+      return { success: true };
     });
   }
 

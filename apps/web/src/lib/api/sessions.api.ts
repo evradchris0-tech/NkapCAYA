@@ -12,6 +12,11 @@ export interface RecordEntryPayload {
   notes?: string;
 }
 
+export interface UpdateEntryPayload {
+  amount?: number;
+  notes?: string;
+}
+
 export const sessionsApi = {
   getByFiscalYear: (fiscalYearId: string) =>
     apiClient
@@ -26,6 +31,12 @@ export const sessionsApi = {
 
   recordEntry: (id: string, payload: RecordEntryPayload) =>
     apiClient.post<SessionEntry>(`/sessions/${id}/entries`, payload).then((r) => r.data),
+
+  updateEntry: (sessionId: string, entryId: string, payload: UpdateEntryPayload) =>
+    apiClient.patch<SessionEntry>(`/sessions/${sessionId}/entries/${entryId}`, payload).then((r) => r.data),
+
+  deleteEntry: (sessionId: string, entryId: string) =>
+    apiClient.delete(`/sessions/${sessionId}/entries/${entryId}`).then((r) => r.data),
 
   closeForReview: (id: string) =>
     apiClient.post<MonthlySession>(`/sessions/${id}/close-review`).then((r) => r.data),
