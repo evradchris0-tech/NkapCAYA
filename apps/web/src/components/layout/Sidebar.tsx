@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
 import { BUREAU_ROLE_LABELS, BureauRole } from '@/types/domain.types';
+import Logo from '@components/ui/Logo';
 
 interface NavChild { label: string; href: string }
 interface NavItem {
@@ -60,9 +61,12 @@ export default function Sidebar() {
   return (
     <aside className="w-64 shrink-0 text-gray-200 flex flex-col h-full" style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 60%, #1e3a5f 100%)' }}>
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-gray-800">
-        <h1 className="text-xl font-bold tracking-tight text-white">CAYA</h1>
-        <p className="text-xs text-gray-500 mt-0.5">Gestion tontine</p>
+      <div className="px-4 py-4 border-b border-gray-800 flex items-center gap-3">
+        <Logo size="sm" onDark />
+        <div>
+          <h1 className="text-sm font-bold tracking-tight text-white leading-tight">CAYA</h1>
+          <p className="text-[10px] text-gray-500 leading-tight">Gestion tontine</p>
+        </div>
       </div>
 
       {/* Navigation */}

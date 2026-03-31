@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
+import Logo from '@components/ui/Logo';
 import { InfoTooltip } from '@components/ui/Tooltip';
 import { useConfig, useUpdateConfig, useRescueEventAmounts, useUpdateRescueEventAmount } from '@lib/hooks/useConfig';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
@@ -143,6 +144,20 @@ export default function ConfigPage() {
         title="Configuration CAYA"
         breadcrumbs={[{ label: 'Accueil', href: '/' }, { label: 'Configuration' }]}
       />
+
+      {/* Bannière admin */}
+      <div className="rounded-2xl overflow-hidden flex items-center gap-5 px-6 py-5"
+        style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 60%, #7c3aed 100%)' }}>
+        <Logo size="lg" onDark />
+        <div>
+          <p className="text-white font-bold text-lg leading-tight">CAYA — Administration</p>
+          <p className="text-blue-200 text-sm mt-0.5">
+            {isSuperAdmin
+              ? 'Vous êtes connecté en tant que Super Admin. Toutes les modifications sont autorisées.'
+              : 'Mode lecture seule — contactez votre Super Admin pour modifier la configuration.'}
+          </p>
+        </div>
+      </div>
 
       {!isSuperAdmin && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">

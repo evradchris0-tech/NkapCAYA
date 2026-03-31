@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, LogIn, Users, PiggyBank, Banknote, Shield, AlertCircle, Loader2 } from 'lucide-react';
-import Image from 'next/image';
+import Logo from '@components/ui/Logo';
 import { useAuth } from '@lib/hooks/useAuth';
 
 const loginSchema = z.object({
@@ -56,13 +56,7 @@ export default function LoginPage() {
         <div className="relative z-10">
           {/* Logo large */}
           <div className="mb-8">
-            <Image
-              src="/caya_logo.png"
-              alt="CAYA"
-              width={120}
-              height={120}
-              priority
-            />
+            <Logo size="2xl" className="rounded-2xl shadow-2xl shadow-blue-900/40" />
           </div>
           <h2 className="text-3xl font-bold text-white leading-snug mb-8">
             CAYA
@@ -90,7 +84,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm animate-fade-in">
           {/* Logo — visible sur tous les écrans */}
           <div className="flex justify-center mb-8">
-            <Image src="/caya_logo.png" alt="CAYA" width={80} height={80} priority />
+            <Logo size="xl" className="rounded-2xl shadow-md" />
           </div>
 
           {/* En-tête */}

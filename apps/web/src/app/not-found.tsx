@@ -1,13 +1,12 @@
 import Link from 'next/link';
-import { FileQuestion, Home } from 'lucide-react';
+import { Home } from 'lucide-react';
+import Logo from '@components/ui/Logo';
 
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-6 text-center px-4"
       style={{ background: 'linear-gradient(135deg, #f0f4ff 0%, #e8f5ff 40%, #f5f0ff 100%)' }}>
-      <div className="w-20 h-20 rounded-2xl bg-white shadow-card flex items-center justify-center">
-        <FileQuestion className="h-10 w-10 text-blue-500" strokeWidth={1.5} />
-      </div>
+      <Logo size="xl" className="rounded-2xl shadow-lg" />
 
       <div className="space-y-2">
         <p className="text-sm font-medium text-blue-500 uppercase tracking-wider">Erreur 404</p>

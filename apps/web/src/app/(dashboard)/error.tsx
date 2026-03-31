@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import Link from 'next/link';
+import Logo from '@components/ui/Logo';
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -16,8 +17,9 @@ export default function DashboardError({ error, reset }: ErrorProps) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center px-4">
-      <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center">
-        <AlertTriangle className="h-8 w-8 text-red-500" strokeWidth={1.5} />
+      <Logo size="md" className="rounded-xl opacity-80" />
+      <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center -mt-2">
+        <AlertTriangle className="h-6 w-6 text-red-500" strokeWidth={1.5} />
       </div>
 
       <div className="space-y-2">
