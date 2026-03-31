@@ -264,7 +264,7 @@ export interface MonthlySession {
   totalProjet: string;
   totalAutres: string;
   entries?: SessionEntry[];
-  fiscalYear?: { config?: FiscalYearConfig };
+  fiscalYear?: { label?: string; config?: FiscalYearConfig };
 }
 
 export interface SessionEntry {

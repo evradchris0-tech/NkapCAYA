@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import type { SavingsLedger, MonthlySession, BeneficiarySchedule, BeneficiarySlot, LoanAccount } from '@/types/api.types';
+import type { SavingsLedger, MonthlySession, BeneficiarySchedule, BeneficiarySlot, LoanAccount, SavingsEntry } from '@/types/api.types';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -600,4 +600,225 @@ export function exportBeneficiariesToPdf(schedule: BeneficiarySchedule, fyLabel:
   simpleTable(doc, headers, rows, widths, 28, totalsRow, align);
   addFooters(doc, 2);
   doc.save(`beneficiaires_${fyLabel.replace(/\s+/g, '_')}.pdf`);
+}
+
+// ── Export prêts ──────────────────────────────────────────────────────────────
+
+export function exportLoansToPdf(
+  loans: LoanAccount[],
+  fyLabel: string,
+  memberMap?: Record<string, string>,
+) {
+  const doc = new jsPDF({ orientation: 'landscape' });
+
+  const activeLoans  = loans.filter((l) => l.status !== 'CLOSED');
+  const totalPrincipal  = loans.reduce((s, l) => s + parseFloat(l.principalAmount || '0'), 0);
+  const totalOutstanding = activeLoans.reduce((s, l) => s + parseFloat(l.outstandingBalance || '0'), 0);
+  const totalRepaid  = loans.reduce((s, l) => s + parseFloat(l.totalRepaid || '0'), 0);
+
+  coverPage(doc, 'Tableau des Prêts', fyLabel, [
+    { label: 'Total prêts', value: String(loans.length) },
+    { label: 'Prêts actifs', value: String(activeLoans.length) },
+    { label: 'Capital total', value: fmtXAF(totalPrincipal) },
+    { label: 'Solde restant', value: fmtXAF(totalOutstanding) },
+    { label: 'Total remboursé', value: fmtXAF(totalRepaid) },
+  ]);
+
+  doc.addPage();
+  pageHeader(doc, 'Tableau des Prêts', fyLabel);
+
+  const headers = ['Membre', 'Code', 'Capital (XAF)', 'Intérêts (XAF)', 'Remboursé (XAF)', 'Solde (XAF)', 'Date emprunt', 'Échéance', 'Statut'];
+  const widths  = [46, 22, 30, 26, 30, 26, 24, 24, 24];
+  const align: ('left' | 'right')[] = ['left', 'left', 'right', 'right', 'right', 'right', 'left', 'left', 'left'];
+
+  const rows = loans.map((l) => {
+    const name = memberMap?.[l.membershipId] ?? l.membershipId.slice(-6);
+    const code = memberMap?.[`code_${l.membershipId}`] ?? '—';
+    return [
+      name,
+      code,
+      parseFloat(l.principalAmount || '0').toLocaleString('fr-FR'),
+      parseFloat(l.totalInterestAccrued || '0').toLocaleString('fr-FR'),
+      parseFloat(l.totalRepaid || '0').toLocaleString('fr-FR'),
+      parseFloat(l.outstandingBalance || '0').toLocaleString('fr-FR'),
+      l.disbursedAt ? fmtDate(l.disbursedAt) : '—',
+      l.dueBeforeDate ? fmtDate(l.dueBeforeDate) : '—',
+      STATUS_FR[l.status] ?? l.status,
+    ];
+  });
+
+  const totalsRow = [
+    'TOTAL', '',
+    totalPrincipal.toLocaleString('fr-FR'),
+    '',
+    totalRepaid.toLocaleString('fr-FR'),
+    totalOutstanding.toLocaleString('fr-FR'),
+    '', '', '',
+  ];
+
+  simpleTable(doc, headers, rows, widths, 28, totalsRow, align);
+  addFooters(doc, 2);
+  doc.save(`prets_${fyLabel.replace(/\s+/g, '_')}.pdf`);
+}
+
+// ── Export session détail ─────────────────────────────────────────────────────
+
+export function exportSessionDetailToPdf(session: MonthlySession, fyLabel: string) {
+  const doc = new jsPDF();
+
+  const entries = session.entries ?? [];
+  const totalGeneral = [
+    session.totalCotisation, session.totalPot, session.totalInscription,
+    session.totalSecours, session.totalRbtPrincipal, session.totalRbtInterest,
+    session.totalEpargne, session.totalProjet, session.totalAutres,
+  ].reduce((s, v) => s + parseFloat(v || '0'), 0);
+
+  coverPage(doc, `Session #${session.sessionNumber}`, fyLabel, [
+    { label: 'Date réunion', value: fmtDate(session.meetingDate) },
+    { label: 'Lieu', value: session.location ?? '—' },
+    { label: 'Statut', value: STATUS_FR[session.status] ?? session.status },
+    { label: 'Total collecté', value: fmtXAF(totalGeneral) },
+    { label: 'Transactions', value: String(entries.length) },
+    { label: 'Participants', value: String(new Set(entries.map((e) => e.membershipId)).size) },
+  ]);
+
+  doc.addPage();
+  pageHeader(doc, `Session #${session.sessionNumber} — Transactions`, fyLabel);
+
+  const headers = ['Référence', 'Membre', 'Type', 'Montant (XAF)', 'Date'];
+  const widths  = [44, 56, 34, 34, 24];
+  const align: ('left' | 'right')[] = ['left', 'left', 'left', 'right', 'left'];
+
+  const TYPE_LABELS: Record<string, string> = {
+    COTISATION: 'Cotisation', INSCRIPTION: 'Inscription', EPARGNE: 'Épargne',
+    SECOURS: 'Caisse secours', POT: 'Pot', RBT_PRINCIPAL: 'Remb. capital',
+    RBT_INTEREST: 'Remb. intérêts', PROJET: 'Projet', AUTRES: 'Autres',
+  };
+
+  const rows = entries.map((e) => [
+    e.reference,
+    e.membership?.profile
+      ? `${e.membership.profile.lastName} ${e.membership.profile.firstName}`
+      : e.membershipId.slice(-8),
+    TYPE_LABELS[e.type] ?? e.type,
+    parseFloat(e.amount).toLocaleString('fr-FR'),
+    fmtDate(e.recordedAt),
+  ]);
+
+  const totalsRow = ['', '', 'TOTAL', totalGeneral.toLocaleString('fr-FR'), ''];
+
+  let y = simpleTable(doc, headers, rows, widths, 28, totalsRow, align);
+
+  // Journal financier
+  y += 8;
+  if (y > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); pageHeader(doc, '', ''); y = 28; }
+  y = sectionHeading(doc, 'Journal Financier', y + 5);
+  y += 4;
+
+  const journalRows = ([
+    ['Cotisation', parseFloat(session.totalCotisation || '0')],
+    ['Épargne', parseFloat(session.totalEpargne || '0')],
+    ['Caisse de secours', parseFloat(session.totalSecours || '0')],
+    ['Projet', parseFloat(session.totalProjet || '0')],
+    ['Pot', parseFloat(session.totalPot || '0')],
+    ['Remb. capital', parseFloat(session.totalRbtPrincipal || '0')],
+    ['Remb. intérêts', parseFloat(session.totalRbtInterest || '0')],
+    ['Inscriptions', parseFloat(session.totalInscription || '0')],
+    ['Autres', parseFloat(session.totalAutres || '0')],
+  ] as [string, number][]).filter(([, v]) => v > 0);
+
+  const jRows = journalRows.map(([label, v]) => [label, v.toLocaleString('fr-FR') + ' XAF']);
+  simpleTable(doc, ['Rubrique (Recettes)', 'Montant'], jRows, [100, 82], y,
+    ['TOTAL RECETTES', fmtXAF(totalGeneral)], ['left', 'right']);
+
+  addFooters(doc, 2);
+  doc.save(`session_${session.sessionNumber}_${fyLabel.replace(/\s+/g, '_')}.pdf`);
+}
+
+// ── Export membre détail ──────────────────────────────────────────────────────
+
+interface MemberExportData {
+  firstName: string;
+  lastName: string;
+  memberCode: string;
+  phone?: string;
+  neighborhood?: string;
+  role: string;
+  isActive: boolean;
+  savingsBalance: string;
+  savingsPrincipal: string;
+  savingsInterests: string;
+  savingsEntries?: SavingsEntry[];
+  activeLoanAmount?: string;
+  activeLoanOutstanding?: string;
+  activeLoanStatus?: string;
+  enrollments: { fyLabel: string; type: string; shares: string; joinedAt: string }[];
+}
+
+export function exportMemberToPdf(data: MemberExportData, fyLabel: string) {
+  const doc = new jsPDF();
+
+  const fullName = `${data.lastName} ${data.firstName}`;
+
+  coverPage(doc, `Fiche Membre — ${fullName}`, fyLabel, [
+    { label: 'Matricule', value: data.memberCode },
+    { label: 'Statut', value: data.isActive ? 'Actif' : 'Inactif' },
+    { label: 'Épargne (solde)', value: fmtXAF(parseFloat(data.savingsBalance || '0')) },
+    { label: 'Prêt en cours', value: data.activeLoanAmount ? fmtXAF(parseFloat(data.activeLoanAmount)) : '—' },
+  ]);
+
+  doc.addPage();
+  pageHeader(doc, `Fiche Membre — ${fullName}`, fyLabel);
+
+  let y = 28;
+
+  // Infos personnelles
+  y = sectionHeading(doc, 'Informations personnelles', y + 5);
+  y += 4;
+  const infoRows = [
+    ['Nom complet', fullName],
+    ['Matricule', data.memberCode],
+    ['Téléphone', data.phone ?? '—'],
+    ['Quartier', data.neighborhood ?? '—'],
+    ['Rôle', data.role],
+    ['Statut', data.isActive ? 'Actif' : 'Inactif'],
+  ];
+  y = simpleTable(doc, ['Champ', 'Valeur'], infoRows, [70, 112], y, undefined, ['left', 'left']);
+
+  // Épargne
+  y += 6;
+  y = sectionHeading(doc, 'Épargne', y + 5);
+  y += 4;
+  const savingsRows = [
+    ['Solde total', fmtXAF(parseFloat(data.savingsBalance || '0'))],
+    ['Capital versé', fmtXAF(parseFloat(data.savingsPrincipal || '0'))],
+    ['Intérêts reçus', fmtXAF(parseFloat(data.savingsInterests || '0'))],
+  ];
+  y = simpleTable(doc, ['Métrique', 'Valeur'], savingsRows, [70, 112], y, undefined, ['left', 'right']);
+
+  // Prêt actif
+  if (data.activeLoanAmount) {
+    y += 6;
+    y = sectionHeading(doc, 'Prêt en cours', y + 5);
+    y += 4;
+    const loanRows = [
+      ['Montant emprunté', fmtXAF(parseFloat(data.activeLoanAmount || '0'))],
+      ['Solde restant', fmtXAF(parseFloat(data.activeLoanOutstanding || '0'))],
+      ['Statut', STATUS_FR[data.activeLoanStatus ?? ''] ?? (data.activeLoanStatus ?? '—')],
+    ];
+    y = simpleTable(doc, ['Métrique', 'Valeur'], loanRows, [70, 112], y, undefined, ['left', 'right']);
+  }
+
+  // Historique inscriptions
+  if (data.enrollments.length > 0) {
+    y += 6;
+    if (y > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); pageHeader(doc, '', ''); y = 28; }
+    y = sectionHeading(doc, 'Historique des inscriptions', y + 5);
+    y += 4;
+    const enrollRows = data.enrollments.map((e) => [e.fyLabel, e.type, e.shares, e.joinedAt]);
+    simpleTable(doc, ['Exercice', 'Type', 'Parts', 'Date entrée'], enrollRows, [60, 40, 20, 62], y, undefined, ['left', 'left', 'right', 'left']);
+  }
+
+  addFooters(doc, 2);
+  doc.save(`membre_${data.memberCode}_${fyLabel.replace(/\s+/g, '_')}.pdf`);
 }

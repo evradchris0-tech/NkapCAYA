@@ -16,9 +16,10 @@ import {
 import {
   Users, CreditCard, TrendingUp, Banknote,
   CheckCircle2, Clock, Circle, Gift, AlertTriangle,
-  Pencil, Trash2,
+  Pencil, Trash2, Download,
 } from 'lucide-react';
 import { useSession, useOpenSession, useCloseForReview, useValidateAndClose, useUpdateEntry, useDeleteEntry } from '@lib/hooks/useSessions';
+import { exportSessionDetailToPdf } from '@lib/export/exportPdf';
 import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
 import {
   useBeneficiarySchedule,
@@ -223,6 +224,15 @@ export default function SessionDetailPage({ params }: Props) {
         ]}
         action={
           <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => exportSessionDetailToPdf(session, session.fiscalYear?.label ?? '')}
+              className="flex items-center gap-1.5"
+            >
+              <Download className="h-3.5 w-3.5" />
+              PDF
+            </Button>
             {session.status === 'DRAFT' && canOpenSession && (
               <Button size="sm" onClick={() => setConfirmOpen(true)} isLoading={openSession.isPending}>
                 Ouvrir la session

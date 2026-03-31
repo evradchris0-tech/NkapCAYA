@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { TrendingUp, Banknote, Gift, History } from 'lucide-react';
+import { TrendingUp, Banknote, Gift, History, Download } from 'lucide-react';
 import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
 import Select from '@components/ui/Select';
@@ -20,6 +20,7 @@ import { useBeneficiarySchedule } from '@lib/hooks/useBeneficiaries';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
 import { BUREAU_ROLE_LABELS, BureauRole } from '@/types/domain.types';
 import type { LoanStatus } from '@/types/domain.types';
+import { exportMemberToPdf } from '@lib/export/exportPdf';
 
 interface MemberDetailPageProps { params: { id: string } }
 
@@ -108,6 +109,43 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
     router.refresh();
   };
 
+  const handleExportPdf = () => {
+    if (!member) return;
+    const activeLoan = loans?.find((l: any) => l.status === 'ACTIVE' || l.status === 'PARTIALLY_REPAID');
+    const enrollments = Array.isArray(memberships)
+      ? (memberships as any[]).map((m) => {
+          const fy = fiscalYears?.find((f) => f.id === m.fiscalYearId);
+          return {
+            fyLabel: fy?.label ?? m.fiscalYearId.slice(-6),
+            type: m.enrollmentType === 'NEW' ? 'Nouveau' : 'Ré-inscription',
+            shares: String(Number(m.shareCommitment?.sharesCount ?? 0)),
+            joinedAt: new Date(m.joinedAt).toLocaleDateString('fr-FR'),
+          };
+        })
+      : [];
+    exportMemberToPdf(
+      {
+        firstName: member.firstName,
+        lastName: member.lastName,
+        memberCode: member.memberCode,
+        phone: member.phone1 ?? undefined,
+        neighborhood: member.neighborhood ?? undefined,
+        role: BUREAU_ROLE_LABELS[member.user.role as BureauRole] ?? member.user.role,
+        isActive: member.user.isActive,
+        savingsBalance: savings?.balance ?? '0',
+        savingsPrincipal: savings?.principalBalance ?? '0',
+        savingsInterests: savings?.totalInterestReceived ?? '0',
+        activeLoanAmount: activeLoan ? String(activeLoan.principalAmount) : undefined,
+        activeLoanOutstanding: activeLoan
+          ? String(parseFloat(activeLoan.principalAmount) - parseFloat(activeLoan.totalRepaid))
+          : undefined,
+        activeLoanStatus: activeLoan ? activeLoan.status : undefined,
+        enrollments,
+      },
+      activeFy?.label ?? '',
+    );
+  };
+
   const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newRole = e.target.value;
     if (!newRole || !member) return;
@@ -134,6 +172,10 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
         ]}
         action={
           <div className="flex gap-2">
+            <Button variant="secondary" size="sm" onClick={handleExportPdf}>
+              <Download className="h-4 w-4 mr-1.5" />
+              PDF
+            </Button>
             <Link
               href={`/members/${member.id}/edit`}
               className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium px-4 py-2 rounded-lg transition"

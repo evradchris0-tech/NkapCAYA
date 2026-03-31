@@ -1,14 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import PageHeader from '@components/layout/PageHeader';
 import ChartCard from '@components/ui/ChartCard';
 import Pagination from '@components/ui/Pagination';
 import { Skeleton, SkeletonRow } from '@components/ui/Skeleton';
 import Select from '@components/ui/Select';
+import Button from '@components/ui/Button';
+import { Download } from 'lucide-react';
 import { useSavingsByMembership, useFiscalYearSavings } from '@lib/hooks/useSavings';
 import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
 import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
+import { exportSavingsToPdf } from '@lib/export/exportPdf';
 import type { SavingsEntryType, SavingsLedger, Membership } from '@/types/api.types';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -340,6 +344,8 @@ function MemberDetail({ membershipId, displayName }: MemberDetailProps) {
 
 export default function SavingsPage() {
   const { selectedFyId, selectedFy } = useFiscalYearContext();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const { data: memberships = [], isLoading: loadingMemberships } =
     useFiscalYearMemberships(selectedFyId);
@@ -347,13 +353,33 @@ export default function SavingsPage() {
   const { data: fysSavings = [], isLoading: loadingSavings } =
     useFiscalYearSavings(selectedFyId);
 
-  const [selectedMembershipId, setSelectedMembershipId] = useState('');
+  // Deep linking: ?member=<membershipId>
+  const [selectedMembershipId, setSelectedMembershipId] = useState(
+    searchParams.get('member') ?? '',
+  );
+
+  useEffect(() => {
+    const m = searchParams.get('member') ?? '';
+    setSelectedMembershipId(m);
+  }, [searchParams]);
+
+  const handleSelect = (id: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) params.set('member', id); else params.delete('member');
+    router.replace(`?${params.toString()}`);
+    setSelectedMembershipId(id);
+  };
 
   // Nom du membre sélectionné (pour l'affichage dans le détail)
   const selectedMembership = memberships.find((m) => m.id === selectedMembershipId);
   const selectedDisplayName = selectedMembership?.profile
     ? `${selectedMembership.profile.lastName} ${selectedMembership.profile.firstName}`
     : selectedMembershipId;
+
+  const memberMap: Record<string, string> = {};
+  for (const m of memberships) {
+    memberMap[m.id] = m.profile ? `${m.profile.lastName} ${m.profile.firstName}` : m.id.slice(-6);
+  }
 
   const isLoading = loadingMemberships || loadingSavings;
 
@@ -364,7 +390,7 @@ export default function SavingsPage() {
         breadcrumbs={[{ label: 'Accueil', href: '/' }, { label: 'Épargne' }]}
       />
 
-      {/* Filtre membre */}
+      {/* Filtre membre + export */}
       <div className="flex items-center gap-3 flex-wrap">
         <label htmlFor="member-filter" className="text-sm font-medium text-gray-700">
           Filtrer par membre :
@@ -375,7 +401,7 @@ export default function SavingsPage() {
           <Select
             id="member-filter"
             value={selectedMembershipId}
-            onChange={(e) => setSelectedMembershipId(e.target.value)}
+            onChange={(e) => handleSelect(e.target.value)}
             className="py-1.5 w-64"
           >
             <option value="">Tous les membres</option>
@@ -388,16 +414,27 @@ export default function SavingsPage() {
         )}
         {selectedMembershipId && (
           <button
-            onClick={() => setSelectedMembershipId('')}
+            onClick={() => handleSelect('')}
             className="text-xs text-gray-500 hover:text-gray-700 underline"
           >
             Voir tous
           </button>
         )}
         {selectedFy && (
-          <span className="ml-auto text-xs text-gray-400">
+          <span className="text-xs text-gray-400">
             Exercice : <span className="font-medium text-gray-600">{selectedFy.label}</span>
           </span>
+        )}
+        {selectedFy && fysSavings.length > 0 && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="ml-auto flex items-center gap-1.5"
+            onClick={() => exportSavingsToPdf(fysSavings, selectedFy.label, memberMap)}
+          >
+            <Download className="h-3.5 w-3.5" />
+            Exporter PDF
+          </Button>
         )}
       </div>
 
@@ -416,7 +453,7 @@ export default function SavingsPage() {
           savings={fysSavings}
           memberships={memberships}
           isLoading={isLoading}
-          onSelect={setSelectedMembershipId}
+          onSelect={handleSelect}
         />
       )}
     </div>

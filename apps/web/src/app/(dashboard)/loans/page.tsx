@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,10 +12,12 @@ import Input from '@components/ui/Input';
 import Pagination from '@components/ui/Pagination';
 import { Skeleton, SkeletonRow } from '@components/ui/Skeleton';
 import Select from '@components/ui/Select';
-import { useLoansByMembership, useRequestLoan, useApproveLoan } from '@lib/hooks/useLoans';
+import { Download } from 'lucide-react';
+import { useLoansByMembership, useRequestLoan, useApproveLoan, useFiscalYearLoans } from '@lib/hooks/useLoans';
 import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
 import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
+import { exportLoansToPdf } from '@lib/export/exportPdf';
 import { BureauRole } from '@/types/domain.types';
 import type { LoanStatus } from '@/types/domain.types';
 import type { Membership } from '@/types/api.types';
@@ -444,12 +447,29 @@ function MemberLoans({ membershipId, displayName, isPresident, isReadOnly }: Mem
 export default function LoansPage() {
   const { data: currentUser } = useCurrentUser();
   const { selectedFyId, selectedFy, isReadOnly } = useFiscalYearContext();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const { data: memberships = [], isLoading: loadingMemberships } =
     useFiscalYearMemberships(selectedFyId);
 
-  const [selectedMembershipId, setSelectedMembershipId] = useState('');
+  const { data: allLoans = [] } = useFiscalYearLoans(selectedFyId ?? '');
+
+  const [selectedMembershipId, setSelectedMembershipId] = useState(
+    searchParams.get('member') ?? '',
+  );
   const [showForm, setShowForm] = useState(false);
+
+  useEffect(() => {
+    setSelectedMembershipId(searchParams.get('member') ?? '');
+  }, [searchParams]);
+
+  const handleSelect = (id: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) params.set('member', id); else params.delete('member');
+    router.replace(`?${params.toString()}`);
+    setSelectedMembershipId(id);
+  };
 
   const requestLoan = useRequestLoan();
 
@@ -489,11 +509,31 @@ export default function LoansPage() {
         title="Prêts"
         breadcrumbs={[{ label: 'Accueil', href: '/' }, { label: 'Prêts' }]}
         action={
-          isTresorier && selectedFy && !isReadOnly ? (
-            <Button size="sm" onClick={() => setShowForm(!showForm)}>
-              + Demander un prêt
-            </Button>
-          ) : undefined
+          <div className="flex gap-2">
+            {allLoans.length > 0 && selectedFy && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  const memberMap: Record<string, string> = {};
+                  for (const m of memberships) {
+                    memberMap[m.id] = m.profile ? `${m.profile.lastName} ${m.profile.firstName}` : m.id.slice(-6);
+                    if (m.profile?.memberCode) memberMap[`code_${m.id}`] = m.profile.memberCode;
+                  }
+                  exportLoansToPdf(allLoans, selectedFy.label, memberMap);
+                }}
+                className="flex items-center gap-1.5"
+              >
+                <Download className="h-3.5 w-3.5" />
+                PDF
+              </Button>
+            )}
+            {isTresorier && selectedFy && !isReadOnly && (
+              <Button size="sm" onClick={() => setShowForm(!showForm)}>
+                + Demander un prêt
+              </Button>
+            )}
+          </div>
         }
       />
 
