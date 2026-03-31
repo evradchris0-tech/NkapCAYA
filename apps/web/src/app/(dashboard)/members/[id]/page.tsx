@@ -17,6 +17,7 @@ import { useFiscalYears } from '@lib/hooks/useFiscalYear';
 import { useSavingsByMembership } from '@lib/hooks/useSavings';
 import { useLoansByMembership } from '@lib/hooks/useLoans';
 import { useBeneficiarySchedule } from '@lib/hooks/useBeneficiaries';
+import { useRescueFundLedger } from '@lib/hooks/useRescueFund';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
 import { BUREAU_ROLE_LABELS, BureauRole } from '@/types/domain.types';
 import type { LoanStatus } from '@/types/domain.types';
@@ -84,6 +85,12 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
   // Épargne + prêts du membership actif
   const { data: savings, isLoading: loadingSavings } = useSavingsByMembership(activeMembership?.id ?? '');
   const { data: loans, isLoading: loadingLoans } = useLoansByMembership(activeMembership?.id ?? '');
+
+  // Caisse de secours
+  const { data: rescueLedger } = useRescueFundLedger(activeFy?.id ?? '');
+  const myRescuePosition = rescueLedger?.positions?.find(
+    (p) => p.membershipId === activeMembership?.id,
+  );
 
   // Slot bénéficiaire
   const { data: schedule } = useBeneficiarySchedule(activeFy?.id ?? '');
@@ -195,6 +202,73 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
           </div>
         }
       />
+
+      {/* ── Synthèse financière ── */}
+      {activeFy && activeMembership && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            {
+              label: 'Épargne',
+              value: savings ? `${parseFloat(savings.balance).toLocaleString('fr-FR')} XAF` : '—',
+              sub: savings ? `Capital : ${parseFloat(savings.principalBalance).toLocaleString('fr-FR')} XAF` : '',
+              color: 'text-blue-700',
+              bg: 'bg-blue-50 border-blue-100',
+              dot: 'bg-blue-500',
+            },
+            {
+              label: 'Caisse de secours',
+              value: myRescuePosition
+                ? `${parseFloat(myRescuePosition.balance).toLocaleString('fr-FR')} XAF`
+                : '—',
+              sub: myRescuePosition
+                ? `Versé : ${parseFloat(myRescuePosition.paidAmount).toLocaleString('fr-FR')} XAF`
+                : '',
+              color: 'text-rose-700',
+              bg: 'bg-rose-50 border-rose-100',
+              dot: 'bg-rose-500',
+            },
+            {
+              label: 'Prêts actifs',
+              value: (() => {
+                const active = loans?.find((l: any) => l.status === 'ACTIVE' || l.status === 'PARTIALLY_REPAID');
+                return active
+                  ? `${parseFloat(active.outstandingBalance).toLocaleString('fr-FR')} XAF`
+                  : '—';
+              })(),
+              sub: (() => {
+                const active = loans?.find((l: any) => l.status === 'ACTIVE' || l.status === 'PARTIALLY_REPAID');
+                return active ? `sur ${parseFloat(active.principalAmount).toLocaleString('fr-FR')} XAF` : '';
+              })(),
+              color: 'text-emerald-700',
+              bg: 'bg-emerald-50 border-emerald-100',
+              dot: 'bg-emerald-500',
+            },
+            {
+              label: 'Slot bénéficiaire',
+              value: nextSlot ? `Mois ${nextSlot.month}` : '—',
+              sub: nextSlot
+                ? nextSlot.status === 'DELIVERED'
+                  ? 'Livré ✓'
+                  : nextSlot.status === 'ASSIGNED'
+                  ? 'En attente'
+                  : 'Non désigné'
+                : '',
+              color: 'text-violet-700',
+              bg: 'bg-violet-50 border-violet-100',
+              dot: 'bg-violet-500',
+            },
+          ].map(({ label, value, sub, color, bg, dot }) => (
+            <div key={label} className={`rounded-xl border p-4 ${bg}`}>
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className={`w-2 h-2 rounded-full ${dot}`} />
+                <p className="text-xs text-gray-500">{label}</p>
+              </div>
+              <p className={`font-bold text-sm tabular-nums ${color}`}>{value}</p>
+              {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Informations personnelles ── */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
