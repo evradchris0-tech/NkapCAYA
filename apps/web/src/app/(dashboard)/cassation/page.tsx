@@ -5,6 +5,8 @@ import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
 import ChartCard from '@components/ui/ChartCard';
 import { useCassation, useExecuteCassation } from '@lib/hooks/useCassation';
+import { exportCassationToPdf } from '@lib/export/exportPdf';
+import { FileText } from 'lucide-react';
 import { useFiscalYears } from '@lib/hooks/useFiscalYear';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
 import { BureauRole } from '@/types/domain.types';
@@ -44,11 +46,23 @@ export default function CassationPage() {
         title="Cassation"
         breadcrumbs={[{ label: 'Accueil', href: '/' }, { label: 'Cassation' }]}
         action={
-          canExecute && cassationFy?.status === 'CASSATION' && !record ? (
-            <Button size="sm" onClick={() => setConfirmOpen(true)}>
-              Lancer la cassation
-            </Button>
-          ) : undefined
+          <div className="flex gap-2">
+            {record && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => exportCassationToPdf(record, cassationFy?.label ?? '')}
+              >
+                <FileText className="h-4 w-4 mr-1.5" />
+                Exporter PDF
+              </Button>
+            )}
+            {canExecute && cassationFy?.status === 'CASSATION' && !record && (
+              <Button size="sm" onClick={() => setConfirmOpen(true)}>
+                Lancer la cassation
+              </Button>
+            )}
+          </div>
         }
       />
 

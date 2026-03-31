@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import type { SavingsLedger, MonthlySession, BeneficiarySchedule, BeneficiarySlot, LoanAccount, SavingsEntry } from '@/types/api.types';
+import type { SavingsLedger, MonthlySession, BeneficiarySchedule, BeneficiarySlot, LoanAccount, SavingsEntry, CassationRecord, FiscalYear, Membership } from '@/types/api.types';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -821,4 +821,302 @@ export function exportMemberToPdf(data: MemberExportData, fyLabel: string) {
 
   addFooters(doc, 2);
   doc.save(`membre_${data.memberCode}_${fyLabel.replace(/\s+/g, '_')}.pdf`);
+}
+
+// ── Export Cassation ──────────────────────────────────────────────────────────
+
+export function exportCassationToPdf(record: CassationRecord, fyLabel: string) {
+  const doc = new jsPDF();
+
+  const totalDistributed = parseFloat(record.totalDistributed);
+  const totalSavings     = parseFloat(record.totalSavingsReturned);
+  const totalInterest    = parseFloat(record.totalInterestReturned);
+
+  coverPage(doc, 'Rapport de Cassation', fyLabel, [
+    { label: 'Total distribué',    value: fmtXAF(totalDistributed) },
+    { label: 'Capital restitué',   value: fmtXAF(totalSavings) },
+    { label: 'Intérêts restitués', value: fmtXAF(totalInterest) },
+    { label: 'Membres',            value: String(record.memberCount) },
+    { label: 'Prêts reportés N+1', value: String(record.carryoverCount ?? 0) },
+    { label: 'Exécuté le',         value: fmtDate(record.executedAt) },
+  ]);
+
+  doc.addPage();
+  pageHeader(doc, 'Rapport de Cassation', fyLabel);
+
+  let y = 28;
+
+  // Notes
+  if (record.notes) {
+    const pageW = doc.internal.pageSize.getWidth();
+    doc.setFillColor(239, 246, 255);
+    doc.setDrawColor(191, 219, 254);
+    doc.roundedRect(14, y - 3, pageW - 28, 12, 1.5, 1.5, 'FD');
+    doc.setFontSize(8);
+    doc.setTextColor(30, 58, 138);
+    doc.text(record.notes, 17, y + 4);
+    doc.setTextColor(0, 0, 0);
+    y += 18;
+  }
+
+  // Redistributions
+  if (record.redistributions && record.redistributions.length > 0) {
+    y = sectionHeading(doc, `Redistributions par membre (${record.redistributions.length})`, y + 4);
+    y += 4;
+
+    const headers = ['Membre', 'Matricule', 'Capital (XAF)', 'Intérêts (XAF)', 'Total (XAF)'];
+    const widths  = [60, 26, 32, 32, 32];
+    const align: ('left' | 'right')[] = ['left', 'left', 'right', 'right', 'right'];
+
+    const rows = record.redistributions.map((r) => [
+      r.membership?.profile
+        ? `${r.membership.profile.lastName} ${r.membership.profile.firstName}`
+        : r.membershipId.slice(-8),
+      r.membership?.profile?.memberCode ?? '—',
+      parseFloat(r.savingsAmount).toLocaleString('fr-FR'),
+      parseFloat(r.interestAmount).toLocaleString('fr-FR'),
+      parseFloat(r.totalReturned).toLocaleString('fr-FR'),
+    ]);
+
+    const totalsRow = [
+      `Total — ${record.memberCount} membres`, '',
+      totalSavings.toLocaleString('fr-FR'),
+      totalInterest.toLocaleString('fr-FR'),
+      totalDistributed.toLocaleString('fr-FR'),
+    ];
+
+    y = simpleTable(doc, headers, rows, widths, y, totalsRow, align);
+  }
+
+  // Parts institutionnelles
+  if (record.participantShares && record.participantShares.length > 0) {
+    y += 8;
+    const pageH = doc.internal.pageSize.getHeight();
+    if (y > pageH - 40) { doc.addPage(); pageHeader(doc, 'Rapport de Cassation', fyLabel); y = 28; }
+
+    y = sectionHeading(doc, 'Parts institutionnelles', y + 4);
+    y += 4;
+
+    const headers = ['Entité', 'Principal (XAF)', 'Intérêts (XAF)', 'Total distribué (XAF)'];
+    const widths  = [70, 38, 38, 36];
+    const align: ('left' | 'right')[] = ['left', 'right', 'right', 'right'];
+
+    const rows = record.participantShares.map((p) => [
+      p.participantType,
+      parseFloat(p.principalAmount).toLocaleString('fr-FR'),
+      parseFloat(p.interestEarned).toLocaleString('fr-FR'),
+      parseFloat(p.totalDistributed).toLocaleString('fr-FR'),
+    ]);
+
+    simpleTable(doc, headers, rows, widths, y, undefined, align);
+  }
+
+  addFooters(doc, 2);
+  doc.save(`cassation_${fyLabel.replace(/\s+/g, '_')}.pdf`);
+}
+
+// ── Export Rapport Global Exercice Fiscal ─────────────────────────────────────
+
+export function exportFiscalYearToPdf(
+  fy: FiscalYear,
+  sessions: MonthlySession[],
+  savings: SavingsLedger[],
+  loans: LoanAccount[],
+  beneficiaries: BeneficiarySchedule | undefined,
+  memberships: Membership[],
+  memberMap: Record<string, string>,
+) {
+  const doc = new jsPDF();
+  const fyLabel = fy.label;
+  const pageH = () => doc.internal.pageSize.getHeight();
+  const pageW = doc.internal.pageSize.getWidth();
+
+  // ── Stats couverture ──
+  const totalSavingsBalance = savings.reduce((s, l) => s + parseFloat(l.balance), 0);
+  const totalLoansOutstanding = loans.reduce((s, l) => s + parseFloat(l.outstandingBalance), 0);
+  const activeLoans = loans.filter((l) => ['ACTIVE', 'PARTIALLY_REPAID'].includes(l.status)).length;
+  const slots = beneficiaries?.slots ?? [];
+  const deliveredSlots = slots.filter((s) => s.status === 'DELIVERED').length;
+  const grandTotal = sessions.reduce((s, sess) =>
+    s + [sess.totalCotisation, sess.totalPot, sess.totalInscription, sess.totalSecours,
+      sess.totalRbtPrincipal, sess.totalRbtInterest, sess.totalEpargne, sess.totalProjet, sess.totalAutres]
+      .reduce((a, v) => a + parseFloat(v || '0'), 0), 0);
+
+  coverPage(doc, 'Rapport Global Exercice Fiscal', fyLabel, [
+    { label: 'Membres inscrits',      value: `${memberships.length}` },
+    { label: 'Sessions tenues',       value: `${sessions.length}` },
+    { label: 'Total collecté',        value: fmtXAF(grandTotal) },
+    { label: 'Épargne cumulée',       value: fmtXAF(totalSavingsBalance) },
+    { label: 'Encours prêts',         value: fmtXAF(totalLoansOutstanding) },
+    { label: 'Bénéficiaires livrés',  value: `${deliveredSlots} / ${slots.length}` },
+  ]);
+
+  // ── Page 2 : Fiche exercice + Membres ──
+  doc.addPage();
+  pageHeader(doc, 'Informations Exercice', fyLabel);
+  let y = 28;
+
+  const FY_STATUS: Record<string, string> = {
+    PENDING: 'En attente', ACTIVE: 'Actif', CASSATION: 'Cassation', CLOSED: 'Clôturé', ARCHIVED: 'Archivé',
+  };
+
+  y = sectionHeading(doc, 'Paramètres de l\'exercice', y + 4);
+  y += 4;
+  y = simpleTable(doc, ['Paramètre', 'Valeur'], [
+    ['Libellé',           fyLabel],
+    ['Statut',            FY_STATUS[fy.status] ?? fy.status],
+    ['Début',             fmtDate(fy.startDate)],
+    ['Fin',               fmtDate(fy.endDate)],
+    ['Date de cassation', fmtDate(fy.cassationDate)],
+    ['Échéance prêts',    fmtDate(fy.loanDueDate)],
+    ['Notes',             fy.notes ?? '—'],
+  ], [70, 112], y, undefined, ['left', 'left']);
+
+  y += 8;
+  if (y > pageH() - 40) { doc.addPage(); pageHeader(doc, 'Membres', fyLabel); y = 28; }
+  y = sectionHeading(doc, `Membres inscrits (${memberships.length})`, y + 4);
+  y += 4;
+
+  const memberRows = memberships.map((m) => [
+    m.profile ? `${m.profile.lastName} ${m.profile.firstName}` : m.id.slice(-8),
+    m.profile?.memberCode ?? '—',
+    m.shareCommitment?.sharesCount ?? '—',
+    fmtDate(m.joinedAt),
+    STATUS_FR[m.status] ?? m.status,
+  ]);
+  simpleTable(doc, ['Membre', 'Matricule', 'Parts', 'Inscrit le', 'Statut'],
+    memberRows, [60, 26, 16, 28, 22], y, undefined, ['left', 'left', 'right', 'left', 'left']);
+
+  // ── Page 3 : Sessions ──
+  if (sessions.length > 0) {
+    doc.addPage();
+    pageHeader(doc, 'Synthèse des Sessions', fyLabel);
+    y = 28;
+
+    const chartData = sessions.map((s) => ({
+      label: `S${s.sessionNumber}`,
+      value: [s.totalCotisation, s.totalPot, s.totalInscription, s.totalSecours,
+        s.totalRbtPrincipal, s.totalRbtInterest, s.totalEpargne, s.totalProjet, s.totalAutres]
+        .reduce((a, v) => a + parseFloat(v || '0'), 0),
+    }));
+
+    drawBarChart(doc, chartData, 14, y + 10, pageW - 28, 44, 'Total collecté par session (XAF)');
+    y += 62;
+
+    y = sectionHeading(doc, 'Détail des sessions', y + 4);
+    y += 4;
+
+    const sessionRows = sessions.map((s) => {
+      const total = chartData.find((d) => d.label === `S${s.sessionNumber}`)?.value ?? 0;
+      return [
+        `#${s.sessionNumber}`,
+        fmtDate(s.meetingDate),
+        STATUS_FR[s.status] ?? s.status,
+        parseFloat(s.totalCotisation  || '0').toLocaleString('fr-FR'),
+        parseFloat(s.totalEpargne     || '0').toLocaleString('fr-FR'),
+        parseFloat(s.totalPot         || '0').toLocaleString('fr-FR'),
+        (parseFloat(s.totalRbtPrincipal || '0') + parseFloat(s.totalRbtInterest || '0')).toLocaleString('fr-FR'),
+        total.toLocaleString('fr-FR'),
+      ];
+    });
+
+    const sum = (f: keyof MonthlySession) => sessions.reduce((s, sess) => s + parseFloat((sess[f] as string) || '0'), 0);
+    const sessionTotals = [
+      `Total (${sessions.length})`, '', '',
+      sum('totalCotisation').toLocaleString('fr-FR'),
+      sum('totalEpargne').toLocaleString('fr-FR'),
+      sum('totalPot').toLocaleString('fr-FR'),
+      (sum('totalRbtPrincipal') + sum('totalRbtInterest')).toLocaleString('fr-FR'),
+      grandTotal.toLocaleString('fr-FR'),
+    ];
+
+    simpleTable(doc,
+      ['Session', 'Date', 'Statut', 'Cotisations', 'Épargne', 'Pot', 'Remboursements', 'Total'],
+      sessionRows, [18, 24, 20, 26, 22, 20, 30, 28], y, sessionTotals,
+      ['left', 'left', 'left', 'right', 'right', 'right', 'right', 'right']);
+  }
+
+  // ── Page 4 : Épargne ──
+  if (savings.length > 0) {
+    doc.addPage();
+    pageHeader(doc, 'Synthèse Épargne', fyLabel);
+    y = 28;
+
+    const totalPrincipal = savings.reduce((s, l) => s + parseFloat(l.principalBalance), 0);
+    const totalInterest  = savings.reduce((s, l) => s + parseFloat(l.totalInterestReceived), 0);
+
+    y = sectionHeading(doc, `Épargne par membre (${savings.length})`, y + 4);
+    y += 4;
+    simpleTable(doc, ['Membre', 'Solde (XAF)', 'Capital (XAF)', 'Intérêts (XAF)'],
+      savings.map((l) => [
+        memberMap[l.membershipId] ?? l.membershipId.slice(-8),
+        parseFloat(l.balance).toLocaleString('fr-FR'),
+        parseFloat(l.principalBalance).toLocaleString('fr-FR'),
+        parseFloat(l.totalInterestReceived).toLocaleString('fr-FR'),
+      ]),
+      [70, 40, 40, 38], y,
+      [`Total (${savings.length})`, totalSavingsBalance.toLocaleString('fr-FR'), totalPrincipal.toLocaleString('fr-FR'), totalInterest.toLocaleString('fr-FR')],
+      ['left', 'right', 'right', 'right']);
+  }
+
+  // ── Page 5 : Prêts ──
+  if (loans.length > 0) {
+    doc.addPage();
+    pageHeader(doc, 'Synthèse Prêts', fyLabel);
+    y = 28;
+
+    const LOAN_STATUS: Record<string, string> = {
+      PENDING: 'En attente', ACTIVE: 'En cours', PARTIALLY_REPAID: 'Partiel', CLOSED: 'Clôturé',
+    };
+
+    y = sectionHeading(doc, `Prêts (${loans.length}) — ${activeLoans} actif${activeLoans > 1 ? 's' : ''}`, y + 4);
+    y += 4;
+
+    const totalRepaid = loans.reduce((s, l) => s + parseFloat(l.totalRepaid), 0);
+
+    simpleTable(doc,
+      ['Membre', 'Encours (XAF)', 'Remboursé (XAF)', 'Taux/mois', 'Statut', 'Échéance'],
+      loans.map((l) => [
+        memberMap[l.membershipId] ?? l.membershipId.slice(-8),
+        parseFloat(l.outstandingBalance).toLocaleString('fr-FR'),
+        parseFloat(l.totalRepaid).toLocaleString('fr-FR'),
+        `${(parseFloat(l.monthlyRate) * 100).toFixed(1)}%`,
+        LOAN_STATUS[l.status] ?? l.status,
+        l.dueBeforeDate ? fmtDate(l.dueBeforeDate) : '—',
+      ]),
+      [52, 34, 34, 20, 22, 26], y,
+      [`Total (${loans.length})`, totalLoansOutstanding.toLocaleString('fr-FR'), totalRepaid.toLocaleString('fr-FR'), '', '', ''],
+      ['left', 'right', 'right', 'right', 'left', 'left']);
+  }
+
+  // ── Page 6 : Bénéficiaires ──
+  if (slots.length > 0) {
+    doc.addPage();
+    pageHeader(doc, 'Tableau des Bénéficiaires', fyLabel);
+    y = 28;
+
+    const totalDelivered = slots.filter((s) => s.status === 'DELIVERED')
+      .reduce((sum, s) => sum + parseFloat(s.amountDelivered || '0'), 0);
+
+    y = sectionHeading(doc, `Slots bénéficiaires (${slots.length})`, y + 4);
+    y += 4;
+
+    simpleTable(doc,
+      ['Mois', 'Slot', 'Bénéficiaire', 'Code', 'Montant (XAF)', 'Hôte', 'Statut'],
+      slots.map((s) => [
+        `M${s.month}`,
+        `#${s.slotIndex}`,
+        s.membership?.profile ? `${s.membership.profile.lastName} ${s.membership.profile.firstName}` : '—',
+        s.membership?.profile?.memberCode ?? '—',
+        parseFloat(s.amountDelivered || '0').toLocaleString('fr-FR'),
+        s.isHost ? 'Oui' : '',
+        STATUS_FR[s.status] ?? s.status,
+      ]),
+      [14, 14, 58, 24, 34, 14, 28], y,
+      ['', `${deliveredSlots} livrés`, '', '', totalDelivered.toLocaleString('fr-FR'), '', ''],
+      ['left', 'left', 'left', 'left', 'right', 'left', 'left']);
+  }
+
+  addFooters(doc, 2);
+  doc.save(`exercice_global_${fyLabel.replace(/\s+/g, '_')}.pdf`);
 }

@@ -9,21 +9,25 @@ import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
 import { useFiscalYearSavings } from '@lib/hooks/useSavings';
 import { useSessionsByFiscalYear } from '@lib/hooks/useSessions';
 import { useBeneficiarySchedule } from '@lib/hooks/useBeneficiaries';
-import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
+import { useFiscalYearMemberships, useFiscalYear } from '@lib/hooks/useFiscalYear';
 import { useFiscalYearLoans } from '@lib/hooks/useLoans';
+import { useCassation } from '@lib/hooks/useCassation';
 import {
   exportSavingsToExcel, exportSessionsToExcel, exportBeneficiariesToExcel,
 } from '@lib/export/exportExcel';
 import {
   exportSavingsToPdf, exportSessionsToPdf, exportBeneficiariesToPdf,
+  exportCassationToPdf, exportFiscalYearToPdf,
 } from '@lib/export/exportPdf';
 
-type ReportType = 'savings' | 'sessions' | 'beneficiaries';
+type ReportType = 'savings' | 'sessions' | 'beneficiaries' | 'cassation' | 'fiscal-year';
 
-const REPORT_CONFIG: Record<ReportType, { label: string; desc: string; color: string }> = {
-  savings:       { label: 'Épargnes',       desc: 'Solde, capital et intérêts par membre',         color: 'emerald' },
-  sessions:      { label: 'Sessions',       desc: 'Totaux collectés par session (12 mois)',         color: 'blue' },
-  beneficiaries: { label: 'Bénéficiaires',  desc: 'Tableau de rotation, désignations et livraisons', color: 'violet' },
+const REPORT_CONFIG: Record<ReportType, { label: string; desc: string; color: string; pdfOnly?: boolean }> = {
+  savings:      { label: 'Épargnes',              desc: 'Solde, capital et intérêts par membre',              color: 'emerald' },
+  sessions:     { label: 'Sessions',              desc: 'Totaux collectés par session (12 mois)',              color: 'blue' },
+  beneficiaries:{ label: 'Bénéficiaires',         desc: 'Tableau de rotation, désignations et livraisons',    color: 'violet' },
+  cassation:    { label: 'Cassation',             desc: 'Redistributions membres + parts institutionnelles',  color: 'orange', pdfOnly: true },
+  'fiscal-year':{ label: 'Exercice fiscal global',desc: 'Synthèse complète : membres, sessions, épargne, prêts, bénéficiaires', color: 'indigo', pdfOnly: true },
 };
 
 export default function ReportsPage() {
@@ -35,6 +39,8 @@ export default function ReportsPage() {
   const { data: beneficiariesData } = useBeneficiarySchedule(selectedFyId);
   const { data: memberships }       = useFiscalYearMemberships(selectedFyId);
   const { data: loansData }         = useFiscalYearLoans(selectedFyId);
+  const { data: fyDetail }          = useFiscalYear(selectedFyId);
+  const { data: cassationRecord }   = useCassation(selectedFyId);
 
   const fyLabel = selectedFy?.label ?? 'export';
 
@@ -70,6 +76,20 @@ export default function ReportsPage() {
       } else if (type === 'beneficiaries') {
         if (!beneficiariesData) return alert('Aucun tableau de bénéficiaires disponible.');
         if (format === 'excel') { exportBeneficiariesToExcel(beneficiariesData, fyLabel); } else { exportBeneficiariesToPdf(beneficiariesData, fyLabel); }
+      } else if (type === 'cassation') {
+        if (!cassationRecord) return alert('Aucune cassation exécutée pour cet exercice.');
+        exportCassationToPdf(cassationRecord, fyLabel);
+      } else if (type === 'fiscal-year') {
+        if (!fyDetail) return alert('Données de l\'exercice non disponibles.');
+        exportFiscalYearToPdf(
+          fyDetail,
+          sessionsData ?? [],
+          savingsData ?? [],
+          loansData ?? [],
+          beneficiariesData ?? undefined,
+          memberships ?? [],
+          memberMap,
+        );
       }
     } finally {
       setLoading(null);
@@ -77,9 +97,11 @@ export default function ReportsPage() {
   };
 
   const dataAvailability: Record<ReportType, boolean> = {
-    savings:       (savingsData?.length ?? 0) > 0,
-    sessions:      (sessionsData?.length ?? 0) > 0,
-    beneficiaries: (beneficiariesData?.slots?.length ?? 0) > 0,
+    savings:        (savingsData?.length ?? 0) > 0,
+    sessions:       (sessionsData?.length ?? 0) > 0,
+    beneficiaries:  (beneficiariesData?.slots?.length ?? 0) > 0,
+    cassation:      !!cassationRecord,
+    'fiscal-year':  !!fyDetail && (memberships?.length ?? 0) > 0,
   };
 
   return (
@@ -138,20 +160,22 @@ export default function ReportsPage() {
               </div>
 
               <div className="flex gap-2 mt-auto">
+                {!cfg.pdfOnly && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="flex-1 flex items-center justify-center gap-1.5"
+                    isLoading={loading === `${type}-excel`}
+                    onClick={() => handleExport(type, 'excel')}
+                  >
+                    <FileSpreadsheet className="h-3.5 w-3.5" />
+                    Excel
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="secondary"
-                  className="flex-1 flex items-center justify-center gap-1.5"
-                  isLoading={loading === `${type}-excel`}
-                  onClick={() => handleExport(type, 'excel')}
-                >
-                  <FileSpreadsheet className="h-3.5 w-3.5" />
-                  Excel
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="flex-1 flex items-center justify-center gap-1.5"
+                  className={`flex items-center justify-center gap-1.5 ${cfg.pdfOnly ? 'flex-1' : ''}`}
                   isLoading={loading === `${type}-pdf`}
                   onClick={() => handleExport(type, 'pdf')}
                 >
