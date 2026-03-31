@@ -18,17 +18,11 @@ export default function RootLayout({
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Données considérées fraîches 5 min — évite les refetch inutiles
-            // lors des navigations inter-pages pendant une session de travail
-            staleTime: 5 * 60 * 1000,
-            // Maintenu en cache 20 min après la dernière utilisation
-            gcTime: 20 * 60 * 1000,
-            // Retry exponentiel : 1s → 2s → 4s (max 3 tentatives)
-            retry: 3,
-            retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
-            // Pas de refetch au focus de fenêtre (app de gestion, pas temps réel)
-            refetchOnWindowFocus: false,
-            // Refetch dès que la connexion revient après une coupure réseau
+            staleTime: 2 * 60 * 1000,      // Données fraîches 2 min
+            gcTime: 15 * 60 * 1000,         // Cache 15 min
+            retry: 2,
+            retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8_000),
+            refetchOnWindowFocus: true,     // Resync au retour sur l'onglet
             refetchOnReconnect: true,
           },
         },

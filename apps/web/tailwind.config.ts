@@ -30,6 +30,7 @@ const config: Config = {
         'fade-in': 'fadeIn 0.15s ease-out',
         'slide-up': 'slideUp 0.2s ease-out',
         'pulse-slow': 'pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'nav-progress': 'navProgress 1.4s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -39,6 +40,11 @@ const config: Config = {
         slideUp: {
           from: { opacity: '0', transform: 'translateY(6px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        navProgress: {
+          '0%': { transform: 'translateX(-100%)' },
+          '60%': { transform: 'translateX(30%)' },
+          '100%': { transform: 'translateX(110%)' },
         },
       },
     },
