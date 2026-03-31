@@ -1,18 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
 import Select from '@components/ui/Select';
 import { Skeleton } from '@components/ui/Skeleton';
 import Modal from '@components/ui/Modal';
 import ConfirmDialog from '@components/ui/ConfirmDialog';
-import { Trash2 } from 'lucide-react';
+import { Trash2, FileText, Plus, X } from 'lucide-react';
 import { useBeneficiarySchedule, useAssignSlot, useMarkDelivered, useAddSlotToSession, useRemoveSlot } from '@lib/hooks/useBeneficiaries';
 import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
+import { useLoansByMembership } from '@lib/hooks/useLoans';
 import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
-import { BureauRole } from '@/types/domain.types';
+import { BureauRole, LoanStatus } from '@/types/domain.types';
 import type { BeneficiarySlot, BeneficiaryStatus } from '@/types/api.types';
 
 const STATUS_LABELS: Record<BeneficiaryStatus, string> = {
@@ -26,6 +27,181 @@ const STATUS_COLORS: Record<BeneficiaryStatus, string> = {
   ASSIGNED: 'bg-yellow-100 text-yellow-700',
   DELIVERED: 'bg-green-100 text-green-700',
 };
+
+/** Modale détail bénéficiaire : calcul brut / retenues / net */
+function BeneficiaryDetailModal({
+  slot,
+  onClose,
+  onDelivery,
+}: {
+  slot: BeneficiarySlot;
+  onClose: () => void;
+  onDelivery: (slotId: string, amount: number) => void;
+}) {
+  const { data: loans } = useLoansByMembership(slot.membershipId ?? '');
+  const activeLoans = useMemo(
+    () => (loans ?? []).filter(
+      (l) => l.status === LoanStatus.ACTIVE || l.status === LoanStatus.PARTIALLY_REPAID,
+    ),
+    [loans],
+  );
+
+  const [tontineAmount, setTontineAmount] = useState(slot.amountDelivered !== '0' ? slot.amountDelivered : '');
+  const [extraRows, setExtraRows] = useState<{ label: string; amount: string }[]>([]);
+  const [retentionRows, setRetentionRows] = useState<{ label: string; amount: string }[]>([]);
+
+  const totalEntrees = useMemo(() => {
+    const t = parseFloat(tontineAmount || '0');
+    const extras = extraRows.reduce((s, r) => s + parseFloat(r.amount || '0'), 0);
+    return t + extras;
+  }, [tontineAmount, extraRows]);
+
+  const totalPrets = useMemo(
+    () => activeLoans.reduce((s, l) => s + parseFloat(l.outstandingBalance || '0'), 0),
+    [activeLoans],
+  );
+
+  const totalRetentions = useMemo(() => {
+    const manual = retentionRows.reduce((s, r) => s + parseFloat(r.amount || '0'), 0);
+    return totalPrets + manual;
+  }, [totalPrets, retentionRows]);
+
+  const net = totalEntrees - totalRetentions;
+
+  const memberName = slot.membership?.profile
+    ? `${slot.membership.profile.lastName} ${slot.membership.profile.firstName}`
+    : `Slot #${slot.slotIndex}`;
+
+  return (
+    <Modal
+      isOpen
+      onClose={onClose}
+      title={`Détail bénéficiaire — ${memberName}`}
+      size="md"
+      footer={(
+        <>
+          <Button variant="secondary" onClick={onClose}>Fermer</Button>
+          {slot.status === 'ASSIGNED' && (
+            <Button
+              onClick={() => { onDelivery(slot.id, net > 0 ? net : totalEntrees); onClose(); }}
+            >
+              Marquer livré ({net > 0 ? net.toLocaleString('fr-FR') : totalEntrees.toLocaleString('fr-FR')} XAF)
+            </Button>
+          )}
+        </>
+      )}
+    >
+      <div className="space-y-5 text-sm">
+        {/* Entrées */}
+        <div>
+          <h3 className="text-xs font-bold text-emerald-700 uppercase tracking-wide mb-2">Entrées</h3>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <span className="flex-1 text-gray-600">Tontine (montant brut)</span>
+              <input
+                type="number"
+                min="0"
+                value={tontineAmount}
+                onChange={(e) => setTontineAmount(e.target.value)}
+                className="w-36 rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-100"
+              />
+              <span className="text-xs text-gray-400 w-6">XAF</span>
+            </div>
+            {extraRows.map((row, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <input
+                  type="text"
+                  placeholder="Libellé"
+                  value={row.label}
+                  onChange={(e) => setExtraRows((prev) => prev.map((r, j) => j === i ? { ...r, label: e.target.value } : r))}
+                  className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={row.amount}
+                  onChange={(e) => setExtraRows((prev) => prev.map((r, j) => j === i ? { ...r, amount: e.target.value } : r))}
+                  className="w-36 rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+                <button onClick={() => setExtraRows((prev) => prev.filter((_, j) => j !== i))} className="text-gray-300 hover:text-red-500 w-6">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => setExtraRows((prev) => [...prev, { label: '', amount: '' }])}
+              className="text-xs text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
+            >
+              <Plus className="h-3 w-3" /> Ajouter une entrée
+            </button>
+          </div>
+          <div className="flex justify-between mt-2 pt-2 border-t border-gray-100 font-semibold text-emerald-700">
+            <span>Total Entrées</span>
+            <span className="tabular-nums">{totalEntrees.toLocaleString('fr-FR')} XAF</span>
+          </div>
+        </div>
+
+        {/* Retenues */}
+        <div>
+          <h3 className="text-xs font-bold text-rose-700 uppercase tracking-wide mb-2">Retenues</h3>
+          <div className="space-y-2">
+            {activeLoans.length > 0 ? (
+              activeLoans.map((l) => (
+                <div key={l.id} className="flex justify-between text-gray-600 py-1 border-b border-gray-50">
+                  <span>Prêt en cours (solde restant)</span>
+                  <span className="tabular-nums text-rose-600 font-medium">
+                    {parseFloat(l.outstandingBalance).toLocaleString('fr-FR')} XAF
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-gray-400 italic">Aucun prêt actif</p>
+            )}
+            {retentionRows.map((row, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <input
+                  type="text"
+                  placeholder="Libellé (ex: Secours, Projet)"
+                  value={row.label}
+                  onChange={(e) => setRetentionRows((prev) => prev.map((r, j) => j === i ? { ...r, label: e.target.value } : r))}
+                  className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={row.amount}
+                  onChange={(e) => setRetentionRows((prev) => prev.map((r, j) => j === i ? { ...r, amount: e.target.value } : r))}
+                  className="w-36 rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+                <button onClick={() => setRetentionRows((prev) => prev.filter((_, j) => j !== i))} className="text-gray-300 hover:text-red-500 w-6">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => setRetentionRows((prev) => [...prev, { label: '', amount: '' }])}
+              className="text-xs text-rose-600 hover:text-rose-700 flex items-center gap-1"
+            >
+              <Plus className="h-3 w-3" /> Ajouter une retenue
+            </button>
+          </div>
+          <div className="flex justify-between mt-2 pt-2 border-t border-gray-100 font-semibold text-rose-700">
+            <span>Total Retenues</span>
+            <span className="tabular-nums">{totalRetentions.toLocaleString('fr-FR')} XAF</span>
+          </div>
+        </div>
+
+        {/* Net */}
+        <div className={`flex justify-between p-3 rounded-xl font-bold text-base ${net >= 0 ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}`}>
+          <span>Net à percevoir</span>
+          <span className="tabular-nums">{net.toLocaleString('fr-FR')} XAF</span>
+        </div>
+      </div>
+    </Modal>
+  );
+}
 
 export default function BeneficiariesPage() {
   const { data: currentUser } = useCurrentUser();
@@ -42,6 +218,7 @@ export default function BeneficiariesPage() {
   const [deliverySlotId, setDeliverySlotId] = useState<string | null>(null);
   const [deliveryAmount, setDeliveryAmount] = useState('');
   const [deletingSlotId, setDeletingSlotId] = useState<string | null>(null);
+  const [detailSlot, setDetailSlot] = useState<BeneficiarySlot | null>(null);
 
   const canAssign =
     currentUser?.role === BureauRole.PRESIDENT ||
@@ -145,7 +322,7 @@ export default function BeneficiariesPage() {
                     <tr>
                       <th className="text-left px-6 py-2.5 font-medium text-gray-500 text-xs">Slot</th>
                       <th className="text-left px-6 py-2.5 font-medium text-gray-500 text-xs">Bénéficiaire</th>
-                      <th className="text-right px-6 py-2.5 font-medium text-gray-500 text-xs">Montant</th>
+                      <th className="text-right px-6 py-2.5 font-medium text-gray-500 text-xs">Montant livré</th>
                       <th className="text-left px-6 py-2.5 font-medium text-gray-500 text-xs">Statut</th>
                       <th className="px-6 py-2.5"><span className="sr-only">Actions</span></th>
                     </tr>
@@ -206,6 +383,15 @@ export default function BeneficiariesPage() {
                           </span>
                         </td>
                         <td className="px-6 py-3 text-right">
+                          {slot.membershipId && (
+                            <button
+                              title="Détail brut / retenues / net"
+                              onClick={() => setDetailSlot(slot)}
+                              className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors mr-1"
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           {['UNASSIGNED', 'ASSIGNED'].includes(slot.status) && canAssign && assigningSlotId !== slot.id && (
                             <Button
                               size="sm"
@@ -247,12 +433,35 @@ export default function BeneficiariesPage() {
                       </tr>
                     ))}
                   </tbody>
+                  {slots.some((s) => parseFloat(s.amountDelivered || '0') > 0) && (
+                    <tfoot className="border-t border-gray-200 bg-gray-50">
+                      <tr>
+                        <td colSpan={2} className="px-6 py-2.5 text-xs font-bold text-gray-700">Total</td>
+                        <td className="px-6 py-2.5 text-right tabular-nums font-bold text-gray-900 text-xs">
+                          {slots.reduce((sum, s) => sum + parseFloat(s.amountDelivered || '0'), 0).toLocaleString('fr-FR')} XAF
+                        </td>
+                        <td colSpan={2} />
+                      </tr>
+                    </tfoot>
+                  )}
                 </table>
               </div>
             );
           })}
         </div>
       )}
+      {/* Modale détail brut/retenues/net */}
+      {detailSlot && (
+        <BeneficiaryDetailModal
+          slot={detailSlot}
+          onClose={() => setDetailSlot(null)}
+          onDelivery={(slotId, amount) => {
+            setDeliverySlotId(slotId);
+            setDeliveryAmount(String(amount));
+          }}
+        />
+      )}
+
       {/* Modal confirmation remise */}
       <Modal
         isOpen={Boolean(deliverySlotId)}

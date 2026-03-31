@@ -27,6 +27,7 @@ import { useSessionsByFiscalYear } from '@lib/hooks/useSessions';
 import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
 import { useFiscalYearSavings } from '@lib/hooks/useSavings';
 import { useFiscalYearLoans } from '@lib/hooks/useLoans';
+import { useBeneficiarySchedule } from '@lib/hooks/useBeneficiaries';
 import type { MonthlySession } from '@/types/api.types';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -171,29 +172,47 @@ export default function DashboardPage() {
   const { selectedFyId, selectedFy, isLoading: loadingFY } = useFiscalYearContext();
 
   const { data: membersData, isLoading: loadingMembers } = useMembers({ page: 1, limit: 1 });
+  const { data: activeMembersData } = useMembers({ page: 1, limit: 1, isActive: true });
   const { data: memberships, isLoading: loadingMemberships } =
     useFiscalYearMemberships(selectedFyId);
   const { data: rescueLedger, isLoading: loadingRescue } = useRescueFundLedger(selectedFyId);
   const { data: sessions, isLoading: loadingSessions } = useSessionsByFiscalYear(selectedFyId);
   const { data: savingsLedgers } = useFiscalYearSavings(selectedFyId ?? '');
   const { data: fyLoans } = useFiscalYearLoans(selectedFyId ?? '');
+  const { data: fySchedule } = useBeneficiarySchedule(selectedFyId ?? '');
 
-  const totalMembers  = membersData?.total ?? 0;
-  const enrolledCount = memberships?.length ?? 0;
-  const rescueBalance = rescueLedger ? Number(rescueLedger.totalBalance) : 0;
+  const totalMembers   = membersData?.total ?? 0;
+  const activeMembers  = activeMembersData?.total ?? 0;
+  const enrolledCount  = memberships?.length ?? 0;
+  const rescueBalance  = rescueLedger ? Number(rescueLedger.totalBalance) : 0;
 
   // Session ouverte en cours
   const openSession = sessions?.find((s) => s.status === 'OPEN');
 
   // ── Données graphe sessions ─────────────────────────────────────────────
-  const sessionChartData = (sessions ?? []).map((s) => ({
-    label: `S${s.sessionNumber}`,
-    Collecté: Math.round(
+  const deliveredBySession = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const slot of fySchedule?.slots ?? []) {
+      if (slot.status === 'DELIVERED') {
+        map[slot.sessionId] = (map[slot.sessionId] ?? 0) + parseFloat(slot.amountDelivered || '0');
+      }
+    }
+    return map;
+  }, [fySchedule]);
+
+  const sessionChartData = useMemo(() => (sessions ?? []).map((s) => {
+    const collecte = Math.round(
       [s.totalCotisation, s.totalPot, s.totalInscription, s.totalSecours,
        s.totalRbtPrincipal, s.totalRbtInterest, s.totalEpargne, s.totalProjet, s.totalAutres]
-        .reduce((sum, v) => sum + parseFloat(v || '0'), 0)
-    ),
-  }));
+        .reduce((sum, v) => sum + parseFloat(v || '0'), 0),
+    );
+    const verse = deliveredBySession[s.id] ?? 0;
+    return {
+      label: `S${s.sessionNumber}`,
+      Collecté: collecte,
+      'Reste en caisse': Math.max(0, collecte - verse),
+    };
+  }), [sessions, deliveredBySession]);
 
   // ── Données donut inscriptions ──────────────────────────────────────────
   const newCount       = memberships?.filter((m) => m.enrollmentType === 'NEW').length ?? 0;
@@ -310,10 +329,10 @@ export default function DashboardPage() {
           icon={Users}
           iconBg="bg-blue-50" iconColor="text-blue-600"
           borderColor="border-blue-100"
-          label="Membres enregistrés"
-          value={totalMembers}
-          isLoading={loadingMembers}
-          description="Nombre total de membres inscrits dans le système."
+          label="Membres"
+          value={loadingMembers ? '…' : `${activeMembers} / ${totalMembers}`}
+          isLoading={false}
+          description={`${activeMembers} actifs sur ${totalMembers} enregistrés au total.`}
         />
         <KpiCard
           icon={Calendar}
@@ -395,12 +414,14 @@ export default function DashboardPage() {
             ) : (
               <div className="h-56 px-2 pb-3">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={sessionChartData} barSize={28} margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
+                  <BarChart data={sessionChartData} barSize={14} barCategoryGap="30%" margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tickFormatter={formatAmount} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={52} />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
+                    <Legend iconType="circle" iconSize={8} formatter={(v) => <span className="text-xs text-gray-600">{v}</span>} />
                     <Bar dataKey="Collecté" fill={COLORS.blue} radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Reste en caisse" fill={COLORS.emerald} radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
