@@ -104,5 +104,28 @@ describe('BeneficiariesService', () => {
       repository.findSlotById.mockResolvedValue(makeSlot({ status: BeneficiaryStatus.UNASSIGNED }) as any);
       await expect(service.markDelivered('slot-1', 'actor')).rejects.toThrow(ConflictException);
     });
+
+    it('M01 — avec dto.amount positif → updateSlot appelé avec amountDelivered', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      repository.findSlotById.mockResolvedValue(makeSlot({ status: BeneficiaryStatus.ASSIGNED }) as any);
+      await service.markDelivered('slot-1', 'actor-id', { amount: 500000 });
+      expect(repository.updateSlot).toHaveBeenCalledWith(
+        'slot-1',
+        expect.objectContaining({ amountDelivered: 500000, status: BeneficiaryStatus.DELIVERED }),
+      );
+    });
+
+    it('M02 — sans amount → updateSlot appelé sans clé amountDelivered', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      repository.findSlotById.mockResolvedValue(makeSlot({ status: BeneficiaryStatus.ASSIGNED }) as any);
+      await service.markDelivered('slot-1', 'actor-id');
+      const callArg = repository.updateSlot.mock.calls[0][1];
+      expect(callArg).not.toHaveProperty('amountDelivered');
+    });
+
+    it('M03 — NotFoundException si slot absent', async () => {
+      repository.findSlotById.mockResolvedValue(null);
+      await expect(service.markDelivered('x', 'actor')).rejects.toThrow(NotFoundException);
+    });
   });
 });
