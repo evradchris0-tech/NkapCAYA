@@ -2,23 +2,9 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import Input from '@components/ui/Input';
 import Button from '@components/ui/Button';
-
-const loanSchema = z.object({
-  memberId: z.string().min(1, 'Membre requis'),
-  amount: z.coerce.number().positive('Montant positif requis'),
-  interestRate: z.coerce
-    .number()
-    .min(0)
-    .max(100, 'Taux entre 0 et 100'),
-  durationMonths: z.coerce.number().int().positive('Durée en mois requise'),
-  startDate: z.string().min(1, 'Date de début requise'),
-  purpose: z.string().optional(),
-});
-
-type LoanFormValues = z.infer<typeof loanSchema>;
+import { loanSchema, type LoanFormValues } from '@/lib/schemas/loan.schema';
 
 interface LoanFormProps {
   onSuccess?: () => void;
