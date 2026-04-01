@@ -96,6 +96,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 30m
           script: |
             set -e
             export NVM_DIR="$HOME/.nvm"
@@ -112,13 +113,12 @@ jobs:
             cd "$APP_DIR"
             npm install --omit=dev --legacy-peer-deps --ignore-scripts
 
-            # Charger le .env pour que DATABASE_URL soit disponible
+            # Migrations — utiliser le binaire local (pas npx qui re-télécharge)
             if [ -f ".env" ]; then
               set -a && source .env && set +a
-              npm run migrate
+              ./node_modules/.bin/prisma migrate deploy --schema=./schema.prisma
             else
               echo "ERREUR: .env absent dans $APP_DIR"
-              echo "Creer le fichier .env sur le serveur avant de redeploy"
               exit 1
             fi
 
