@@ -44,7 +44,7 @@ jobs:
 
       - name: Prepare deployment package
         run: |
-          mkdir -p _api_deploy
+          mkdir -p _api_deploy/node_modules
 
           # Compiled code
           cp -r apps/api/dist _api_deploy/dist
@@ -52,11 +52,16 @@ jobs:
           # Entry point
           printf "'use strict';\nrequire('./dist/main');\n" > _api_deploy/index.js
 
-          # Prisma
+          # Prisma — schema + migrations
           cp database/schema.prisma _api_deploy/schema.prisma
           cp -r database/migrations _api_deploy/migrations
 
-          # package.json minimal pour le serveur
+          # Prisma client pré-compilé (généré en CI = Linux = même binaire que le serveur)
+          # Plus besoin de le régénérer sur le serveur
+          cp -r node_modules/.prisma _api_deploy/node_modules/.prisma
+          cp -r node_modules/@prisma _api_deploy/node_modules/@prisma
+
+          # package.json minimal — pas de postinstall (client déjà inclus)
           node -e "
             const pkg = require('./apps/api/package.json');
             const out = {
@@ -67,7 +72,6 @@ jobs:
               engines: { node: '>=20.0.0' },
               scripts: {
                 start: 'node index.js',
-                postinstall: 'npx prisma@5.22.0 generate --schema=./schema.prisma',
                 migrate: 'npx prisma@5.22.0 migrate deploy --schema=./schema.prisma'
               },
               dependencies: pkg.dependencies
@@ -113,9 +117,9 @@ jobs:
             # Restaurer le .env
             [ -f /tmp/caya-api.env ] && cp /tmp/caya-api.env "$APP_DIR/.env"
 
-            # Installer les dépendances prod
+            # Installer les dépendances prod (--ignore-scripts = pas de prisma generate)
             cd "$APP_DIR"
-            npm install --omit=dev --legacy-peer-deps
+            npm install --omit=dev --legacy-peer-deps --ignore-scripts
 
             # Migrations Prisma
             npm run migrate
