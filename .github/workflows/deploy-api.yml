@@ -1,0 +1,128 @@
+name: Deploy API — Hostinger
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'apps/api/**'
+      - 'database/schema.prisma'
+      - 'database/migrations/**'
+      - '.github/workflows/deploy-api.yml'
+
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client (Linux binary)
+        run: pnpm db:generate
+
+      - name: Build API
+        run: pnpm build:api
+
+      - name: Prepare deployment package
+        run: |
+          mkdir -p _api_deploy
+
+          # Compiled code
+          cp -r apps/api/dist _api_deploy/dist
+
+          # Entry point
+          printf "'use strict';\nrequire('./dist/main');\n" > _api_deploy/index.js
+
+          # Prisma
+          cp database/schema.prisma _api_deploy/schema.prisma
+          cp -r database/migrations _api_deploy/migrations
+
+          # package.json minimal pour le serveur
+          node -e "
+            const pkg = require('./apps/api/package.json');
+            const out = {
+              name: 'caya-api',
+              version: pkg.version || '1.0.0',
+              private: true,
+              main: 'index.js',
+              engines: { node: '>=20.0.0' },
+              scripts: {
+                start: 'node index.js',
+                postinstall: 'npx prisma@5.22.0 generate --schema=./schema.prisma',
+                migrate: 'npx prisma@5.22.0 migrate deploy --schema=./schema.prisma'
+              },
+              dependencies: pkg.dependencies
+            };
+            require('fs').writeFileSync('_api_deploy/package.json', JSON.stringify(out, null, 2));
+          "
+
+          tar -czf api-deploy.tar.gz -C _api_deploy .
+          echo "Archive size: $(du -sh api-deploy.tar.gz | cut -f1)"
+
+      - name: Upload archive
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: api-deploy.tar.gz
+          target: /tmp/
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            APP_DIR="$HOME/domains/nkapzen.com/public_html/api"
+            mkdir -p "$APP_DIR"
+
+            # Sauvegarder le .env avant extraction
+            cp "$APP_DIR/.env" /tmp/caya-api.env 2>/dev/null || true
+
+            # Extraire les nouveaux fichiers
+            tar -xzf /tmp/api-deploy.tar.gz -C "$APP_DIR"
+            chmod -R 755 "$APP_DIR/dist"
+
+            # Restaurer le .env
+            [ -f /tmp/caya-api.env ] && cp /tmp/caya-api.env "$APP_DIR/.env"
+
+            # Installer les dépendances prod
+            cd "$APP_DIR"
+            npm install --omit=dev --legacy-peer-deps
+
+            # Migrations Prisma
+            npm run migrate
+
+            # Redémarrer l'API
+            pm2 restart caya-api 2>/dev/null || pm2 start index.js --name caya-api
+            pm2 save
+
+            echo "API deployee avec succes"
+            pm2 show caya-api | grep -E "status|uptime|restarts"
