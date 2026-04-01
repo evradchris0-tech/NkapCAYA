@@ -112,7 +112,15 @@ jobs:
             cd "$APP_DIR"
             npm install --omit=dev --legacy-peer-deps --ignore-scripts
 
-            npm run migrate
+            # Charger le .env pour que DATABASE_URL soit disponible
+            if [ -f ".env" ]; then
+              set -a && source .env && set +a
+              npm run migrate
+            else
+              echo "ERREUR: .env absent dans $APP_DIR"
+              echo "Creer le fichier .env sur le serveur avant de redeploy"
+              exit 1
+            fi
 
             pm2 restart caya-api 2>/dev/null || pm2 start index.js --name caya-api
             pm2 save
