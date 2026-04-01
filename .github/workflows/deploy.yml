@@ -78,16 +78,17 @@ jobs:
           echo "Archive API: $(du -sh api-deploy.tar.gz | cut -f1)"
 
       - name: Upload archive
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: api-deploy.tar.gz
-          target: /tmp/
-          timeout: 60s
-          command_timeout: 30m
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          ssh -i /tmp/deploy_key \
+            -p ${{ secrets.SSH_PORT }} \
+            -o StrictHostKeyChecking=no \
+            -o BatchMode=yes \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "cat > /tmp/api-deploy.tar.gz" < api-deploy.tar.gz
+          rm -f /tmp/deploy_key
+          echo "Upload API OK"
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
@@ -164,20 +165,23 @@ jobs:
         run: |
           mkdir -p _web_deploy
 
-          # En pnpm monorepo, Next.js standalone nest server.js par le chemin workspace :
-          # .next/standalone/apps/web/server.js  (pas à la racine de standalone/)
-          STANDALONE_APP="apps/web/.next/standalone/apps/web"
           STANDALONE_ROOT="apps/web/.next/standalone"
 
-          # Debug — confirmer la structure générée
           echo "=== standalone root ===" && ls "$STANDALONE_ROOT/"
-          echo "=== standalone app ===" && ls "$STANDALONE_APP/" 2>/dev/null || echo "ABSENT - verifier output:standalone dans next.config.js"
 
-          # Copier les fichiers serveur depuis le sous-chemin monorepo
-          cp -r "$STANDALONE_APP/." _web_deploy/
-
-          # node_modules partagés depuis la racine standalone
-          [ -d "$STANDALONE_ROOT/node_modules" ] && cp -r "$STANDALONE_ROOT/node_modules" _web_deploy/node_modules || true
+          # Détecter le layout : monorepo (apps/web/server.js) ou workspace (server.js à la racine)
+          if [ -f "$STANDALONE_ROOT/apps/web/server.js" ]; then
+            echo "Layout: monorepo — server.js dans apps/web/"
+            cp -r "$STANDALONE_ROOT/apps/web/." _web_deploy/
+            [ -d "$STANDALONE_ROOT/node_modules" ] && cp -r "$STANDALONE_ROOT/node_modules" _web_deploy/node_modules || true
+          elif [ -f "$STANDALONE_ROOT/server.js" ]; then
+            echo "Layout: workspace — server.js à la racine"
+            cp -r "$STANDALONE_ROOT/." _web_deploy/
+          else
+            echo "ERREUR: server.js introuvable dans standalone"
+            find "$STANDALONE_ROOT" -name "server.js" 2>/dev/null | head -10
+            exit 1
+          fi
 
           # Fichiers statiques et public
           mkdir -p _web_deploy/.next/static
@@ -202,16 +206,17 @@ jobs:
           echo "Archive Web: $(du -sh web-deploy.tar.gz | cut -f1)"
 
       - name: Upload archive
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: web-deploy.tar.gz
-          target: /tmp/
-          timeout: 60s
-          command_timeout: 30m
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          ssh -i /tmp/deploy_key \
+            -p ${{ secrets.SSH_PORT }} \
+            -o StrictHostKeyChecking=no \
+            -o BatchMode=yes \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "cat > /tmp/web-deploy.tar.gz" < web-deploy.tar.gz
+          rm -f /tmp/deploy_key
+          echo "Upload Web OK"
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
