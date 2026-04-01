@@ -40,27 +40,28 @@ jobs:
           NEXT_PUBLIC_API_URL: https://api.nkapzen.com/api/v1
           NEXT_PUBLIC_APP_URL: https://caya.nkapzen.com
 
-      - name: Prepare deployment package
+      - name: Prepare deployment package (standalone)
         run: |
           mkdir -p _web_deploy
 
-          cp -r apps/web/.next _web_deploy/.next
-          # Supprimer le cache de build (inutile en prod, peut faire +200MB)
-          rm -rf _web_deploy/.next/cache
+          # Mode standalone : Next.js génère un bundle auto-suffisant
+          # .next/standalone/ contient node_modules minimal + server.js
+          # Pas de npm install nécessaire sur le serveur
+          cp -r apps/web/.next/standalone/. _web_deploy/
+          mkdir -p _web_deploy/.next/static
+          cp -r apps/web/.next/static/. _web_deploy/.next/static/
           cp -r apps/web/public _web_deploy/public
-          cp apps/web/package.json _web_deploy/package.json
-          cp apps/web/next.config.* _web_deploy/ 2>/dev/null || true
 
-          # ecosystem PM2
+          # server.js PM2 — remplace npm start
           cat > _web_deploy/ecosystem.config.js << 'EOF'
           module.exports = {
             apps: [{
               name: 'caya-web',
-              script: 'node_modules/.bin/next',
-              args: 'start',
+              script: 'server.js',
               env: {
                 NODE_ENV: 'production',
                 PORT: 3001,
+                HOSTNAME: '0.0.0.0',
               },
             }],
           };
@@ -99,9 +100,8 @@ jobs:
             # Extraire les nouveaux fichiers
             tar -xzf /tmp/web-deploy.tar.gz -C "$APP_DIR"
 
-            # Installer les dépendances prod
+            # Mode standalone — pas de npm install, tout est dans l'archive
             cd "$APP_DIR"
-            npm install --omit=dev
 
             # Redémarrer le web
             pm2 restart caya-web 2>/dev/null || pm2 start ecosystem.config.js
