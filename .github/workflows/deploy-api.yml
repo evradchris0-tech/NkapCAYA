@@ -57,9 +57,15 @@ jobs:
           cp -r database/migrations _api_deploy/migrations
 
           # Prisma client pré-compilé (généré en CI = Linux = même binaire que le serveur)
-          # Plus besoin de le régénérer sur le serveur
-          cp -r node_modules/.prisma _api_deploy/node_modules/.prisma
-          cp -r node_modules/@prisma _api_deploy/node_modules/@prisma
+          # Avec pnpm, le client est dans le store virtuel — on le localise dynamiquement
+          PRISMA_DIR=$(find node_modules/.pnpm -path "*/.prisma" -type d 2>/dev/null | head -1)
+          echo "Prisma trouvé : $PRISMA_DIR"
+          cp -r "$PRISMA_DIR" _api_deploy/node_modules/.prisma
+
+          PRISMA_CLIENT_DIR=$(find node_modules/.pnpm -path "*/@prisma/client" -type d 2>/dev/null | grep -v ".prisma" | head -1)
+          echo "@prisma/client trouvé : $PRISMA_CLIENT_DIR"
+          mkdir -p _api_deploy/node_modules/@prisma
+          cp -r "$PRISMA_CLIENT_DIR" _api_deploy/node_modules/@prisma/client
 
           # package.json minimal — pas de postinstall (client déjà inclus)
           node -e "

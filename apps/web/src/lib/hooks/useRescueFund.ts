@@ -5,14 +5,19 @@ import { rescueFundApi, RecordRescueEventPayload } from '@lib/api/rescue-fund.ap
 const RF_KEY = ['rescue-fund'] as const;
 
 const apiError = (error: unknown): string => {
-  const msg = (error as any)?.response?.data?.message ?? 'Une erreur est survenue.';
+  const err = error as { response?: { data?: { message?: string | string[] } } };
+  const msg = err?.response?.data?.message ?? 'Une erreur est survenue.';
   return Array.isArray(msg) ? msg[0] : msg;
 };
 
 export function useRescueFundLedger(fiscalYearId: string) {
   return useQuery({
     queryKey: [...RF_KEY, fiscalYearId],
-    queryFn: () => rescueFundApi.getLedger(fiscalYearId),
+    queryFn: () =>
+      rescueFundApi.getLedger(fiscalYearId).catch((err) => {
+        if (err?.response?.status === 404) return null;
+        throw err;
+      }),
     enabled: Boolean(fiscalYearId),
   });
 }
