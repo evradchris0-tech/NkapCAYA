@@ -131,6 +131,8 @@ jobs:
             mkdir -p "$APP_DIR"
 
             cp "$APP_DIR/.env" /tmp/caya-api.env 2>/dev/null || true
+            rm -rf "$APP_DIR"
+            mkdir -p "$APP_DIR"
             tar -xzf /tmp/api-deploy.tar.gz -C "$APP_DIR"
             chmod -R 755 "$APP_DIR/dist"
             [ -f /tmp/caya-api.env ] && cp /tmp/caya-api.env "$APP_DIR/.env"
@@ -253,8 +255,8 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
             APP_DIR="$HOME/domains/caya.nkapzen.com/public_html"
+            rm -rf "$APP_DIR"
             mkdir -p "$APP_DIR"
-
             tar -xzf /tmp/web-deploy.tar.gz -C "$APP_DIR"
 
             cd "$APP_DIR"
