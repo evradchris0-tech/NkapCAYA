@@ -127,9 +127,9 @@ jobs:
             [ -f /tmp/caya-api.env ] && cp /tmp/caya-api.env "$APP_DIR/.env"
 
             cd "$APP_DIR"
-            npm install --omit=dev --legacy-peer-deps --ignore-scripts
 
-            # Migrations — utiliser le binaire local (pas npx qui re-télécharge)
+            # Migrations AVANT npm install — le CLI prisma pré-compilé vient de l'archive CI
+            # (npm install le supprimerait car prisma n'est pas dans dependencies)
             if [ -f ".env" ]; then
               set -a && source .env && set +a
               ./node_modules/.bin/prisma migrate deploy --schema=./schema.prisma
@@ -137,6 +137,8 @@ jobs:
               echo "ERREUR: .env absent dans $APP_DIR"
               exit 1
             fi
+
+            npm install --omit=dev --legacy-peer-deps --ignore-scripts
 
             pm2 restart caya-api 2>/dev/null || pm2 start index.js --name caya-api
             pm2 save
