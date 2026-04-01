@@ -1,15 +1,41 @@
-# Node
+# ── Node / pnpm ──────────────────────────────────────────────────────────────
 node_modules/
 dist/
 .env
 .env.*
+# Fichiers exemple commités (templates sans secrets)
 !.env.example
+!apps/api/.env.example
+!apps/web/.env.example
 
-# Logs
+# ── Logs ─────────────────────────────────────────────────────────────────────
 *.log
 npm-debug.log*
+pnpm-debug.log*
 
-# LaTeX build artifacts
+# ── Build output ─────────────────────────────────────────────────────────────
+apps/api/dist/
+apps/web/.next/
+apps/web/out/
+
+# ── Tests / Coverage ─────────────────────────────────────────────────────────
+coverage/
+apps/api/coverage/
+apps/mobile/coverage/
+*.lcov
+
+# ── Prisma generated ─────────────────────────────────────────────────────────
+# Le client généré est dans node_modules, pas à committer
+# Les migrations OUI (elles font partie du code)
+
+# ── Flutter / Dart ───────────────────────────────────────────────────────────
+apps/mobile/.dart_tool/
+apps/mobile/.flutter-plugins
+apps/mobile/.flutter-plugins-dependencies
+apps/mobile/build/
+apps/mobile/.packages
+
+# ── LaTeX build artifacts ────────────────────────────────────────────────────
 docs/*.aux
 docs/*.log
 docs/*.out
@@ -22,10 +48,16 @@ docs/*.run.xml
 docs/*.blg
 docs/*.bbl
 
-# OS
+# ── OS ───────────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# IDE
+# ── IDE ──────────────────────────────────────────────────────────────────────
 .vscode/settings.json
 *.swp
+*.swo
+.idea/
+
+.vercel
+.env*.local

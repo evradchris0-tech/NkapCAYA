@@ -1,0 +1,22 @@
+# CODEOWNERS — NkapCAYA
+# Chaque PR modifiant ces fichiers requiert l'approbation du propriétaire désigné.
+# Doc : https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ── Défaut : toute modification requiert review du lead ──────────────────────
+*                               @evradchris0-tech
+
+# ── Schéma base de données (critique) ───────────────────────────────────────
+database/schema.prisma          @evradchris0-tech
+database/seeds/                 @evradchris0-tech
+
+# ── Workflows CI/CD ──────────────────────────────────────────────────────────
+.github/workflows/              @evradchris0-tech
+
+# ── Module Auth (sécurité sensible) ─────────────────────────────────────────
+apps/api/src/modules/auth/      @evradchris0-tech
+apps/api/src/common/guards/     @evradchris0-tech
+apps/api/src/common/decorators/ @evradchris0-tech
+
+# ── Configuration applicative ────────────────────────────────────────────────
+apps/api/src/app.module.ts      @evradchris0-tech
+apps/api/src/main.ts            @evradchris0-tech

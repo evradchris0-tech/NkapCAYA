@@ -1,0 +1,51 @@
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe, VersioningType, RequestMethod } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AppModule } from './app.module';
+
+async function bootstrap(): Promise<void> {
+  const app = await NestFactory.create(AppModule);
+
+  // Versioning API
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+
+  // Validation globale des DTOs
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  // Préfixe global — /health exclu pour Railway health checks
+  app.setGlobalPrefix('api', {
+    exclude: [{ path: 'health', method: RequestMethod.GET }],
+  });
+
+  // Swagger — documentation interactive
+  const config = new DocumentBuilder()
+    .setTitle('CAYA API')
+    .setDescription('API de gestion de la tontine Club des Amis de Yaoundé')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+
+  // CORS — origines autorisées (env var ou liste fixe)
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+    : ['*'];
+  app.enableCors({
+    origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
+
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
+}
+
+bootstrap();

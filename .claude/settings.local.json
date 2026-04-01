@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(file /d/NkapCAYA/*.docx)",
+      "Bash(stat /d/NkapCAYA/*)",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); print\\(data[0][''''text'''']\\)\")",
+      "Bash(git -C \"d:/NkapCAYA\" status)",
+      "Bash(node -e \":*)",
+      "Bash(npm install:*)",
+      "Bash(pdflatex -interaction=nonstopmode cahier_des_charges_CAYA.tex)",
+      "Bash(where pdflatex:*)",
+      "Bash(where xelatex:*)",
+      "Bash(where lualatex:*)",
+      "Bash(cmd /c \"where pdflatex\")",
+      "Bash(cmd /c \"dir \"\"C:\\\\Program Files\\\\MiKTeX\"\" /b 2>&1\")",
+      "Bash(cmd /c \"dir \"\"C:\\\\Users\\\\LENOVO LEGION\\\\AppData\\\\Local\\\\Programs\"\" /b 2>&1\")",
+      "Bash(cmd /c \"dir \"\"C:\\\\Users\\\\LENOVO LEGION\\\\.vscode\\\\extensions\"\" /b\")",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Program Files \\(x86\\)/**)"
+    ]
+  }
+}

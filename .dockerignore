@@ -1,0 +1,8 @@
+**/.env
+**/.env.*
+**/node_modules
+apps/mobile
+apps/web
+**/*.log
+.git
+.github
