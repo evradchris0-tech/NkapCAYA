@@ -164,8 +164,22 @@ jobs:
         run: |
           mkdir -p _web_deploy
 
-          # Mode standalone : bundle auto-suffisant, zéro npm install sur serveur
-          cp -r apps/web/.next/standalone/. _web_deploy/
+          # En pnpm monorepo, Next.js standalone nest server.js par le chemin workspace :
+          # .next/standalone/apps/web/server.js  (pas à la racine de standalone/)
+          STANDALONE_APP="apps/web/.next/standalone/apps/web"
+          STANDALONE_ROOT="apps/web/.next/standalone"
+
+          # Debug — confirmer la structure générée
+          echo "=== standalone root ===" && ls "$STANDALONE_ROOT/"
+          echo "=== standalone app ===" && ls "$STANDALONE_APP/" 2>/dev/null || echo "ABSENT - verifier output:standalone dans next.config.js"
+
+          # Copier les fichiers serveur depuis le sous-chemin monorepo
+          cp -r "$STANDALONE_APP/." _web_deploy/
+
+          # node_modules partagés depuis la racine standalone
+          [ -d "$STANDALONE_ROOT/node_modules" ] && cp -r "$STANDALONE_ROOT/node_modules" _web_deploy/node_modules || true
+
+          # Fichiers statiques et public
           mkdir -p _web_deploy/.next/static
           cp -r apps/web/.next/static/. _web_deploy/.next/static/
           cp -r apps/web/public _web_deploy/public
