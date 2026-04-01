@@ -45,6 +45,8 @@ jobs:
           mkdir -p _web_deploy
 
           cp -r apps/web/.next _web_deploy/.next
+          # Supprimer le cache de build (inutile en prod, peut faire +200MB)
+          rm -rf _web_deploy/.next/cache
           cp -r apps/web/public _web_deploy/public
           cp apps/web/package.json _web_deploy/package.json
           cp apps/web/next.config.* _web_deploy/ 2>/dev/null || true
@@ -76,6 +78,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: web-deploy.tar.gz
           target: /tmp/
+          timeout: 60s
+          command_timeout: 30m
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
