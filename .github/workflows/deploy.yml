@@ -57,6 +57,14 @@ jobs:
           mkdir -p _api_deploy/node_modules/@prisma
           cp -r "$PRISMA_PARENT/@prisma/client" _api_deploy/node_modules/@prisma/client
 
+          # Prisma CLI + migration engine (pour prisma migrate deploy sur le serveur)
+          PRISMA_CLI_DIR=$(find node_modules/.pnpm -path "*/node_modules/prisma" -type d -not -path "*/@prisma/*" 2>/dev/null | head -1)
+          echo "Prisma CLI: $PRISMA_CLI_DIR"
+          cp -r "$PRISMA_CLI_DIR" _api_deploy/node_modules/prisma
+          mkdir -p _api_deploy/node_modules/.bin
+          ln -sf ../prisma/build/index.js _api_deploy/node_modules/.bin/prisma
+          chmod +x _api_deploy/node_modules/.bin/prisma
+
           node -e "
             const pkg = require('./apps/api/package.json');
             const out = {
@@ -67,12 +75,19 @@ jobs:
               engines: { node: '>=20.0.0' },
               scripts: {
                 start: 'node index.js',
-                migrate: 'npx prisma@5.22.0 migrate deploy --schema=./schema.prisma'
+                migrate: './node_modules/.bin/prisma migrate deploy --schema=./schema.prisma'
               },
               dependencies: pkg.dependencies
             };
             require('fs').writeFileSync('_api_deploy/package.json', JSON.stringify(out, null, 2));
           "
+
+          # Vérifier que le CLI est bien présent
+          if [ ! -f "_api_deploy/node_modules/.bin/prisma" ]; then
+            echo "ERREUR: prisma CLI absent du package de déploiement"
+            ls -la _api_deploy/node_modules/.bin/ 2>/dev/null || echo "Dossier .bin absent"
+            exit 1
+          fi
 
           tar -czf api-deploy.tar.gz -C _api_deploy .
           echo "Archive API: $(du -sh api-deploy.tar.gz | cut -f1)"
@@ -201,6 +216,13 @@ jobs:
             }],
           };
           EOF
+
+          # Vérifier que server.js est présent
+          if [ ! -f "_web_deploy/server.js" ]; then
+            echo "ERREUR: server.js absent de _web_deploy/"
+            ls -la _web_deploy/
+            exit 1
+          fi
 
           tar -czf web-deploy.tar.gz -C _web_deploy .
           echo "Archive Web: $(du -sh web-deploy.tar.gz | cut -f1)"
