@@ -57,10 +57,17 @@ jobs:
           mkdir -p _api_deploy/node_modules/@prisma
           cp -r "$PRISMA_PARENT/@prisma/client" _api_deploy/node_modules/@prisma/client
 
-          # Prisma CLI + migration engine (pour prisma migrate deploy sur le serveur)
+          # Prisma CLI + toutes ses dépendances (@prisma/engines, debug, fetch-engine…)
           PRISMA_CLI_DIR=$(find node_modules/.pnpm -path "*/node_modules/prisma" -type d -not -path "*/@prisma/*" 2>/dev/null | head -1)
+          PRISMA_CLI_DEPS=$(dirname "$PRISMA_CLI_DIR")
           echo "Prisma CLI: $PRISMA_CLI_DIR"
+          echo "Prisma CLI deps: $(ls "$PRISMA_CLI_DEPS/@prisma/" 2>/dev/null || echo 'none')"
           cp -r "$PRISMA_CLI_DIR" _api_deploy/node_modules/prisma
+          for dep in "$PRISMA_CLI_DEPS"/@prisma/*/; do
+            name=$(basename "$dep")
+            [ "$name" = "client" ] && continue
+            cp -r "$dep" "_api_deploy/node_modules/@prisma/$name"
+          done
           mkdir -p _api_deploy/node_modules/.bin
           ln -sf ../prisma/build/index.js _api_deploy/node_modules/.bin/prisma
           chmod +x _api_deploy/node_modules/.bin/prisma
