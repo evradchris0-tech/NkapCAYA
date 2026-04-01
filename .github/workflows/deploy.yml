@@ -40,6 +40,33 @@ jobs:
       - name: Build API
         run: pnpm build:api
 
+      # ── Migrations via tunnel SSH (CI → MySQL Hostinger) ──────
+      - name: Run migrations via SSH tunnel
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+
+          # Tunnel : CI:3307 → serveur Hostinger 127.0.0.1:3306
+          ssh -i /tmp/deploy_key \
+            -p ${{ secrets.SSH_PORT }} \
+            -o StrictHostKeyChecking=no \
+            -f -N -L 3307:127.0.0.1:3306 \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+
+          # Remplacer le port 3306 par 3307 (tunnel local)
+          export DATABASE_URL=$(echo "$DATABASE_URL" | sed 's/:3306/:3307/')
+
+          echo "Migration en cours via tunnel SSH..."
+          pnpm exec prisma migrate deploy --schema=database/schema.prisma
+          echo "Migrations OK"
+
+          # Fermer le tunnel
+          kill $(lsof -t -i:3307) 2>/dev/null || true
+          rm -f /tmp/deploy_key
+
+      # ── Packaging ─────────────────────────────────────────────
       - name: Prepare deployment package
         run: |
           mkdir -p _api_deploy/node_modules
@@ -47,30 +74,14 @@ jobs:
           cp -r apps/api/dist _api_deploy/dist
           printf "'use strict';\nrequire('./dist/main');\n" > _api_deploy/index.js
           cp database/schema.prisma _api_deploy/schema.prisma
-          cp -r database/migrations _api_deploy/migrations
 
           # Prisma client pré-compilé (Linux CI = même binaire que le serveur)
           PRISMA_DIR=$(find node_modules/.pnpm -path "*/.prisma" -type d 2>/dev/null | head -1)
-          echo "Prisma: $PRISMA_DIR"
+          echo "Prisma client: $PRISMA_DIR"
           cp -r "$PRISMA_DIR" _api_deploy/node_modules/.prisma
           PRISMA_PARENT=$(dirname "$PRISMA_DIR")
           mkdir -p _api_deploy/node_modules/@prisma
           cp -r "$PRISMA_PARENT/@prisma/client" _api_deploy/node_modules/@prisma/client
-
-          # Prisma CLI + toutes ses dépendances (@prisma/engines, debug, fetch-engine…)
-          PRISMA_CLI_DIR=$(find node_modules/.pnpm -path "*/node_modules/prisma" -type d -not -path "*/@prisma/*" 2>/dev/null | head -1)
-          PRISMA_CLI_DEPS=$(dirname "$PRISMA_CLI_DIR")
-          echo "Prisma CLI: $PRISMA_CLI_DIR"
-          echo "Prisma CLI deps: $(ls "$PRISMA_CLI_DEPS/@prisma/" 2>/dev/null || echo 'none')"
-          cp -r "$PRISMA_CLI_DIR" _api_deploy/node_modules/prisma
-          for dep in "$PRISMA_CLI_DEPS"/@prisma/*/; do
-            name=$(basename "$dep")
-            [ "$name" = "client" ] && continue
-            cp -r "$dep" "_api_deploy/node_modules/@prisma/$name"
-          done
-          mkdir -p _api_deploy/node_modules/.bin
-          ln -sf ../prisma/build/index.js _api_deploy/node_modules/.bin/prisma
-          chmod +x _api_deploy/node_modules/.bin/prisma
 
           node -e "
             const pkg = require('./apps/api/package.json');
@@ -80,25 +91,16 @@ jobs:
               private: true,
               main: 'index.js',
               engines: { node: '>=20.0.0' },
-              scripts: {
-                start: 'node index.js',
-                migrate: './node_modules/.bin/prisma migrate deploy --schema=./schema.prisma'
-              },
+              scripts: { start: 'node index.js' },
               dependencies: pkg.dependencies
             };
             require('fs').writeFileSync('_api_deploy/package.json', JSON.stringify(out, null, 2));
           "
 
-          # Vérifier que le CLI est bien présent
-          if [ ! -f "_api_deploy/node_modules/.bin/prisma" ]; then
-            echo "ERREUR: prisma CLI absent du package de déploiement"
-            ls -la _api_deploy/node_modules/.bin/ 2>/dev/null || echo "Dossier .bin absent"
-            exit 1
-          fi
-
           tar -czf api-deploy.tar.gz -C _api_deploy .
           echo "Archive API: $(du -sh api-deploy.tar.gz | cut -f1)"
 
+      # ── Upload + Deploy ───────────────────────────────────────
       - name: Upload archive
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
@@ -134,17 +136,6 @@ jobs:
             [ -f /tmp/caya-api.env ] && cp /tmp/caya-api.env "$APP_DIR/.env"
 
             cd "$APP_DIR"
-
-            # Migrations AVANT npm install — le CLI prisma pré-compilé vient de l'archive CI
-            # (npm install le supprimerait car prisma n'est pas dans dependencies)
-            if [ -f ".env" ]; then
-              set -a && source .env && set +a
-              ./node_modules/.bin/prisma migrate deploy --schema=./schema.prisma
-            else
-              echo "ERREUR: .env absent dans $APP_DIR"
-              exit 1
-            fi
-
             npm install --omit=dev --legacy-peer-deps --ignore-scripts
 
             pm2 restart caya-api 2>/dev/null || pm2 start index.js --name caya-api
@@ -193,7 +184,7 @@ jobs:
 
           echo "=== standalone root ===" && ls "$STANDALONE_ROOT/"
 
-          # Détecter le layout : monorepo (apps/web/server.js) ou workspace (server.js à la racine)
+          # Détecter le layout : monorepo ou workspace
           if [ -f "$STANDALONE_ROOT/apps/web/server.js" ]; then
             echo "Layout: monorepo — server.js dans apps/web/"
             cp -r "$STANDALONE_ROOT/apps/web/." _web_deploy/
@@ -212,7 +203,7 @@ jobs:
           cp -r apps/web/.next/static/. _web_deploy/.next/static/
           cp -r apps/web/public _web_deploy/public
 
-          cat > _web_deploy/ecosystem.config.js << 'EOF'
+          cat > _web_deploy/ecosystem.config.js << 'EOFPM2'
           module.exports = {
             apps: [{
               name: 'caya-web',
@@ -224,9 +215,9 @@ jobs:
               },
             }],
           };
-          EOF
+          EOFPM2
 
-          # Vérifier que server.js est présent
+          # Fail-fast si server.js manque
           if [ ! -f "_web_deploy/server.js" ]; then
             echo "ERREUR: server.js absent de _web_deploy/"
             ls -la _web_deploy/
