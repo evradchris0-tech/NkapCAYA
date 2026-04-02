@@ -50,6 +50,19 @@ if (existsSync(PUBLIC_SRC)) {
   console.log('Public files copied');
 }
 
+// 5) Créer un package.json minimal (requis par certains hébergeurs)
+const deployPkg = {
+  name: 'caya-web',
+  version: '1.0.0',
+  private: true,
+  scripts: { start: 'node server.js' },
+};
+require('fs').writeFileSync(
+  path.join(DEPLOY, 'package.json'),
+  JSON.stringify(deployPkg, null, 2),
+);
+console.log('package.json created');
+
 // Vérification
 const serverJs = path.join(DEPLOY, 'server.js');
 const nextPkg = path.join(DEPLOY, 'node_modules', 'next', 'package.json');
