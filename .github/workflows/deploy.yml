@@ -196,10 +196,12 @@ jobs:
           if [ -f "$STANDALONE_ROOT/apps/web/server.js" ]; then
             echo "Layout: monorepo — server.js dans apps/web/"
             cp -r "$STANDALONE_ROOT/apps/web/." _web_deploy/
-            # Fusionner les node_modules partagés (éviter imbrication)
+
+            # Merger les node_modules racine (contient 'next' et les deps partagées)
             if [ -d "$STANDALONE_ROOT/node_modules" ]; then
               mkdir -p _web_deploy/node_modules
-              cp -r "$STANDALONE_ROOT/node_modules/." _web_deploy/node_modules/
+              cp -rn "$STANDALONE_ROOT/node_modules/." _web_deploy/node_modules/
+              echo "Root node_modules merged"
             fi
           elif [ -f "$STANDALONE_ROOT/server.js" ]; then
             echo "Layout: workspace — server.js à la racine"
@@ -210,10 +212,16 @@ jobs:
             exit 1
           fi
 
+          # Diagnostic : vérifier que next est dans node_modules
+          echo "=== next module check ==="
+          ls _web_deploy/node_modules/next/package.json 2>/dev/null && echo "next: OK" || echo "WARN: next manquant"
+          echo "=== node_modules top-level packages ==="
+          ls _web_deploy/node_modules/ | head -30
+
           # Fichiers statiques et public
           mkdir -p _web_deploy/.next/static
           cp -r apps/web/.next/static/. _web_deploy/.next/static/
-          cp -r apps/web/public _web_deploy/public
+          [ -d apps/web/public ] && cp -r apps/web/public _web_deploy/public || true
 
           cat > _web_deploy/ecosystem.config.js << 'EOFPM2'
           module.exports = {
@@ -265,6 +273,8 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
             APP_DIR="$HOME/domains/caya.nkapzen.com/public_html"
+
+            # Nettoyage complet avant extraction
             rm -rf "$APP_DIR"
             mkdir -p "$APP_DIR"
             tar -xzf /tmp/web-deploy.tar.gz -C "$APP_DIR"
@@ -276,6 +286,11 @@ jobs:
             HTEOF
 
             cd "$APP_DIR"
+
+            # Diagnostic
+            echo "=== server.js ===" && ls -la server.js
+            echo "=== next module ===" && ls node_modules/next/package.json 2>/dev/null && echo "OK" || echo "MANQUANT"
+
             pm2 restart caya-web 2>/dev/null || pm2 start ecosystem.config.js
             pm2 save
 
