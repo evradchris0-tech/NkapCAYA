@@ -144,7 +144,7 @@ jobs:
             HTEOF
 
             cd "$APP_DIR"
-            npm install --omit=dev --legacy-peer-deps --ignore-scripts
+            npm install --omit=dev --legacy-peer-deps
 
             pm2 restart caya-api 2>/dev/null || pm2 start index.js --name caya-api
             pm2 save
@@ -196,7 +196,11 @@ jobs:
           if [ -f "$STANDALONE_ROOT/apps/web/server.js" ]; then
             echo "Layout: monorepo — server.js dans apps/web/"
             cp -r "$STANDALONE_ROOT/apps/web/." _web_deploy/
-            [ -d "$STANDALONE_ROOT/node_modules" ] && cp -r "$STANDALONE_ROOT/node_modules" _web_deploy/node_modules || true
+            # Fusionner les node_modules partagés (éviter imbrication)
+            if [ -d "$STANDALONE_ROOT/node_modules" ]; then
+              mkdir -p _web_deploy/node_modules
+              cp -r "$STANDALONE_ROOT/node_modules/." _web_deploy/node_modules/
+            fi
           elif [ -f "$STANDALONE_ROOT/server.js" ]; then
             echo "Layout: workspace — server.js à la racine"
             cp -r "$STANDALONE_ROOT/." _web_deploy/
