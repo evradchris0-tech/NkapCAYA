@@ -105,14 +105,24 @@ jobs:
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
-          ssh -i /tmp/deploy_key \
-            -p ${{ secrets.SSH_PORT }} \
-            -o StrictHostKeyChecking=no \
-            -o BatchMode=yes \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "cat > /tmp/api-deploy.tar.gz" < api-deploy.tar.gz
+          for attempt in 1 2 3; do
+            echo "Upload API tentative $attempt..."
+            if ssh -i /tmp/deploy_key \
+              -p ${{ secrets.SSH_PORT }} \
+              -o StrictHostKeyChecking=no \
+              -o BatchMode=yes \
+              -o ConnectTimeout=30 \
+              -o ServerAliveInterval=15 \
+              -o ServerAliveCountMax=4 \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+              "cat > /tmp/api-deploy.tar.gz" < api-deploy.tar.gz; then
+              echo "Upload API OK"
+              break
+            fi
+            [ "$attempt" -eq 3 ] && echo "Upload API echoue apres 3 tentatives" && exit 1
+            sleep 10
+          done
           rm -f /tmp/deploy_key
-          echo "Upload API OK"
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
@@ -251,14 +261,24 @@ jobs:
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
-          ssh -i /tmp/deploy_key \
-            -p ${{ secrets.SSH_PORT }} \
-            -o StrictHostKeyChecking=no \
-            -o BatchMode=yes \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "cat > /tmp/web-deploy.tar.gz" < web-deploy.tar.gz
+          for attempt in 1 2 3; do
+            echo "Upload Web tentative $attempt..."
+            if ssh -i /tmp/deploy_key \
+              -p ${{ secrets.SSH_PORT }} \
+              -o StrictHostKeyChecking=no \
+              -o BatchMode=yes \
+              -o ConnectTimeout=30 \
+              -o ServerAliveInterval=15 \
+              -o ServerAliveCountMax=4 \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+              "cat > /tmp/web-deploy.tar.gz" < web-deploy.tar.gz; then
+              echo "Upload Web OK"
+              break
+            fi
+            [ "$attempt" -eq 3 ] && echo "Upload Web echoue apres 3 tentatives" && exit 1
+            sleep 10
+          done
           rm -f /tmp/deploy_key
-          echo "Upload Web OK"
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
