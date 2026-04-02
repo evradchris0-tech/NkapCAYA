@@ -252,8 +252,30 @@ jobs:
             pm2 restart caya-web 2>/dev/null || pm2 start ecosystem.config.js
 
             pm2 save
+
+            # Attendre que les apps démarrent
+            sleep 3
+
             echo "=== PM2 STATUS ==="
             pm2 list
+
+            # Diagnostic : les apps répondent-elles en local ?
+            echo "=== CURL API ==="
+            curl -s -o /dev/null -w "API localhost:3000 → HTTP %{http_code}" http://localhost:3000/api/v1/health || echo "API non joignable"
+            echo ""
+            echo "=== CURL WEB ==="
+            curl -s -o /dev/null -w "Web localhost:3001 → HTTP %{http_code}" http://localhost:3001 || echo "Web non joignable"
+            echo ""
+
+            # Logs en cas d'erreur
+            echo "=== PM2 LOGS API (last 5) ==="
+            pm2 logs caya-api --nostream --lines 5 2>&1 || true
+            echo "=== PM2 LOGS WEB (last 5) ==="
+            pm2 logs caya-web --nostream --lines 5 2>&1 || true
+
+            # Vérifier si mod_proxy est dispo
+            echo "=== APACHE MODULES ==="
+            apache2ctl -M 2>/dev/null | grep proxy || httpd -M 2>/dev/null | grep proxy || echo "mod_proxy: impossible a verifier"
 
             # Nettoyage
             rm -f /tmp/api-deploy.tar.gz /tmp/web-deploy.tar.gz /tmp/caya-api.env
