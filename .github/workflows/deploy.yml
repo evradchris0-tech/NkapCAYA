@@ -9,11 +9,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # ─────────────────────────────────────────────────────────────
-  # JOB 1 — API NestJS
-  # ─────────────────────────────────────────────────────────────
-  deploy-api:
-    name: Build & Deploy API
+  deploy:
+    name: Build & Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -34,13 +31,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma client (Linux binary)
+      - name: Generate Prisma client
         run: pnpm db:generate
 
+      # ── Build API + Web ───────────────────────────────────────
       - name: Build API
         run: pnpm build:api
 
-      # ── Migrations via tunnel SSH (CI → MySQL Hostinger) ──────
+      - name: Build Web
+        run: pnpm build:web
+        env:
+          NEXT_PUBLIC_API_URL: https://api.nkapzen.com/api/v1
+          NEXT_PUBLIC_APP_URL: https://caya.nkapzen.com
+
+      # ── Migrations via tunnel SSH ─────────────────────────────
       - name: Run migrations via SSH tunnel
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -48,26 +52,24 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
 
-          # Tunnel : CI:3307 → serveur Hostinger 127.0.0.1:3306
           ssh -i /tmp/deploy_key \
             -p ${{ secrets.SSH_PORT }} \
             -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=30 \
             -f -N -L 3307:127.0.0.1:3306 \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
 
-          # Remplacer le port 3306 par 3307 (tunnel local)
           export DATABASE_URL=$(echo "$DATABASE_URL" | sed 's/:3306/:3307/')
 
           echo "Migration en cours via tunnel SSH..."
           pnpm exec prisma migrate deploy --schema=database/schema.prisma
           echo "Migrations OK"
 
-          # Fermer le tunnel
           kill $(lsof -t -i:3307) 2>/dev/null || true
           rm -f /tmp/deploy_key
 
-      # ── Packaging ─────────────────────────────────────────────
-      - name: Prepare deployment package
+      # ── Package API ───────────────────────────────────────────
+      - name: Package API
         run: |
           mkdir -p _api_deploy/node_modules
 
@@ -75,7 +77,7 @@ jobs:
           printf "'use strict';\nrequire('./dist/main');\n" > _api_deploy/index.js
           cp database/schema.prisma _api_deploy/schema.prisma
 
-          # Prisma client pré-compilé (Linux CI = même binaire que le serveur)
+          # Prisma client pré-compilé
           PRISMA_DIR=$(find node_modules/.pnpm -path "*/.prisma" -type d 2>/dev/null | head -1)
           echo "Prisma client: $PRISMA_DIR"
           cp -r "$PRISMA_DIR" _api_deploy/node_modules/.prisma
@@ -100,109 +102,14 @@ jobs:
           tar -czf api-deploy.tar.gz -C _api_deploy .
           echo "Archive API: $(du -sh api-deploy.tar.gz | cut -f1)"
 
-      # ── Upload + Deploy ───────────────────────────────────────
-      - name: Upload archive
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
-          for attempt in 1 2 3; do
-            echo "Upload API tentative $attempt..."
-            if ssh -i /tmp/deploy_key \
-              -p ${{ secrets.SSH_PORT }} \
-              -o StrictHostKeyChecking=no \
-              -o BatchMode=yes \
-              -o ConnectTimeout=30 \
-              -o ServerAliveInterval=15 \
-              -o ServerAliveCountMax=4 \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-              "cat > /tmp/api-deploy.tar.gz" < api-deploy.tar.gz; then
-              echo "Upload API OK"
-              break
-            fi
-            [ "$attempt" -eq 3 ] && echo "Upload API echoue apres 3 tentatives" && exit 1
-            sleep 10
-          done
-          rm -f /tmp/deploy_key
-
-      - name: Deploy on server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 30m
-          script: |
-            set -e
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-            APP_DIR="$HOME/domains/nkapzen.com/public_html/api"
-            mkdir -p "$APP_DIR"
-
-            cp "$APP_DIR/.env" /tmp/caya-api.env 2>/dev/null || true
-            rm -rf "$APP_DIR"
-            mkdir -p "$APP_DIR"
-            tar -xzf /tmp/api-deploy.tar.gz -C "$APP_DIR"
-            chmod -R 755 "$APP_DIR/dist"
-            [ -f /tmp/caya-api.env ] && cp /tmp/caya-api.env "$APP_DIR/.env"
-
-            # .htaccess — Apache redirige vers Node.js port 3000
-            cat > "$APP_DIR/.htaccess" << 'HTEOF'
-            RewriteEngine On
-            RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
-            HTEOF
-
-            cd "$APP_DIR"
-            npm install --omit=dev --legacy-peer-deps
-
-            pm2 restart caya-api 2>/dev/null || pm2 start index.js --name caya-api
-            pm2 save
-
-            echo "API deployee"
-            pm2 show caya-api | grep -E "status|uptime|restarts"
-
-  # ─────────────────────────────────────────────────────────────
-  # JOB 2 — Web Next.js  (attend que l'API soit terminée)
-  # ─────────────────────────────────────────────────────────────
-  deploy-web:
-    name: Build & Deploy Web
-    runs-on: ubuntu-latest
-    needs: deploy-api
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Next.js (production)
-        run: pnpm build:web
-        env:
-          NEXT_PUBLIC_API_URL: https://api.nkapzen.com/api/v1
-          NEXT_PUBLIC_APP_URL: https://caya.nkapzen.com
-
-      - name: Prepare deployment package (standalone)
+      # ── Package Web (standalone) ──────────────────────────────
+      - name: Package Web
         run: |
           mkdir -p _web_deploy
-
           STANDALONE_ROOT="apps/web/.next/standalone"
 
           echo "=== standalone root ===" && ls "$STANDALONE_ROOT/"
 
-          # Détecter le layout : monorepo ou workspace
           if [ -f "$STANDALONE_ROOT/apps/web/server.js" ]; then
             echo "Layout: monorepo — server.js dans apps/web/"
             cp -r "$STANDALONE_ROOT/apps/web/." _web_deploy/
@@ -222,10 +129,10 @@ jobs:
             exit 1
           fi
 
-          # Diagnostic : vérifier que next est dans node_modules
+          # Diagnostic
           echo "=== next module check ==="
           ls _web_deploy/node_modules/next/package.json 2>/dev/null && echo "next: OK" || echo "WARN: next manquant"
-          echo "=== node_modules top-level packages ==="
+          echo "=== node_modules top-level ==="
           ls _web_deploy/node_modules/ | head -30
 
           # Fichiers statiques et public
@@ -247,7 +154,6 @@ jobs:
           };
           EOFPM2
 
-          # Fail-fast si server.js manque
           if [ ! -f "_web_deploy/server.js" ]; then
             echo "ERREUR: server.js absent de _web_deploy/"
             ls -la _web_deploy/
@@ -257,29 +163,38 @@ jobs:
           tar -czf web-deploy.tar.gz -C _web_deploy .
           echo "Archive Web: $(du -sh web-deploy.tar.gz | cut -f1)"
 
-      - name: Upload archive
+      # ── Upload les 2 archives en UNE seule session SSH ────────
+      - name: Upload archives
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
+
+          SSH_OPTS="-i /tmp/deploy_key -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=30 -o ServerAliveInterval=15 -o ServerAliveCountMax=4"
+          SSH_TARGET="${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
+
+          # Combiner les 2 archives en un seul fichier pour un seul transfert
+          cat api-deploy.tar.gz web-deploy.tar.gz > /tmp/combined-payload
+          SPLIT_POINT=$(wc -c < api-deploy.tar.gz)
+          echo "API: $(du -sh api-deploy.tar.gz | cut -f1), Web: $(du -sh web-deploy.tar.gz | cut -f1), Split: $SPLIT_POINT"
+
           for attempt in 1 2 3; do
-            echo "Upload Web tentative $attempt..."
-            if ssh -i /tmp/deploy_key \
-              -p ${{ secrets.SSH_PORT }} \
-              -o StrictHostKeyChecking=no \
-              -o BatchMode=yes \
-              -o ConnectTimeout=30 \
-              -o ServerAliveInterval=15 \
-              -o ServerAliveCountMax=4 \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-              "cat > /tmp/web-deploy.tar.gz" < web-deploy.tar.gz; then
-              echo "Upload Web OK"
+            echo "Upload tentative $attempt..."
+            if ssh $SSH_OPTS $SSH_TARGET "
+              cat > /tmp/combined-payload
+              head -c $SPLIT_POINT /tmp/combined-payload > /tmp/api-deploy.tar.gz
+              tail -c +\$(($SPLIT_POINT + 1)) /tmp/combined-payload > /tmp/web-deploy.tar.gz
+              rm /tmp/combined-payload
+              echo 'Split OK: API=$(wc -c < /tmp/api-deploy.tar.gz) Web=$(wc -c < /tmp/web-deploy.tar.gz)'
+            " < /tmp/combined-payload; then
+              echo "Upload OK"
               break
             fi
-            [ "$attempt" -eq 3 ] && echo "Upload Web echoue apres 3 tentatives" && exit 1
-            sleep 10
+            [ "$attempt" -eq 3 ] && echo "Upload echoue apres 3 tentatives" && exit 1
+            sleep 15
           done
-          rm -f /tmp/deploy_key
+          rm -f /tmp/deploy_key /tmp/combined-payload
 
+      # ── Deploy API + Web sur le serveur ───────────────────────
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -287,32 +202,58 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 30m
           script: |
             set -e
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-            APP_DIR="$HOME/domains/caya.nkapzen.com/public_html"
+            # ── API ──
+            echo "=== DEPLOYING API ==="
+            API_DIR="$HOME/domains/nkapzen.com/public_html/api"
+            mkdir -p "$API_DIR"
 
-            # Nettoyage complet avant extraction
-            rm -rf "$APP_DIR"
-            mkdir -p "$APP_DIR"
-            tar -xzf /tmp/web-deploy.tar.gz -C "$APP_DIR"
+            cp "$API_DIR/.env" /tmp/caya-api.env 2>/dev/null || true
+            rm -rf "$API_DIR"
+            mkdir -p "$API_DIR"
+            tar -xzf /tmp/api-deploy.tar.gz -C "$API_DIR"
+            chmod -R 755 "$API_DIR/dist"
+            [ -f /tmp/caya-api.env ] && cp /tmp/caya-api.env "$API_DIR/.env"
 
-            # .htaccess — Apache redirige vers Node.js port 3001
-            cat > "$APP_DIR/.htaccess" << 'HTEOF'
+            cat > "$API_DIR/.htaccess" << 'HTEOF'
+            RewriteEngine On
+            RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
+            HTEOF
+
+            cd "$API_DIR"
+            npm install --omit=dev --legacy-peer-deps
+
+            pm2 restart caya-api 2>/dev/null || pm2 start index.js --name caya-api
+            echo "API deployee"
+            pm2 show caya-api | grep -E "status|uptime|restarts"
+
+            # ── WEB ──
+            echo "=== DEPLOYING WEB ==="
+            WEB_DIR="$HOME/domains/caya.nkapzen.com/public_html"
+
+            rm -rf "$WEB_DIR"
+            mkdir -p "$WEB_DIR"
+            tar -xzf /tmp/web-deploy.tar.gz -C "$WEB_DIR"
+
+            cat > "$WEB_DIR/.htaccess" << 'HTEOF'
             RewriteEngine On
             RewriteRule ^(.*)$ http://localhost:3001/$1 [P,L]
             HTEOF
 
-            cd "$APP_DIR"
-
-            # Diagnostic
+            cd "$WEB_DIR"
             echo "=== server.js ===" && ls -la server.js
             echo "=== next module ===" && ls node_modules/next/package.json 2>/dev/null && echo "OK" || echo "MANQUANT"
 
             pm2 restart caya-web 2>/dev/null || pm2 start ecosystem.config.js
-            pm2 save
 
-            echo "Web deploye"
-            pm2 show caya-web | grep -E "status|uptime|restarts"
+            pm2 save
+            echo "=== PM2 STATUS ==="
+            pm2 list
+
+            # Nettoyage
+            rm -f /tmp/api-deploy.tar.gz /tmp/web-deploy.tar.gz /tmp/caya-api.env
