@@ -4,6 +4,11 @@ const path = require('path');
 const nextConfig = {
   output: 'standalone',
   outputFileTracingRoot: path.join(__dirname, '../../'),
+  experimental: {
+    outputFileTracingIncludes: {
+      '/**': ['./node_modules/next/**', './node_modules/react/**', './node_modules/react-dom/**'],
+    },
+  },
 };
 
 module.exports = nextConfig;

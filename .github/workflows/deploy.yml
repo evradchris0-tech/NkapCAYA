@@ -110,14 +110,22 @@ jobs:
 
           echo "=== standalone root ===" && ls "$STANDALONE_ROOT/"
 
+          # Diagnostic : où est 'next' dans le standalone ?
+          echo "=== FIND next dans standalone ==="
+          find "$STANDALONE_ROOT" -path "*/next/package.json" -not -path "*/next/node_modules/*" 2>/dev/null | head -10
+          echo "=== root node_modules ==="
+          ls "$STANDALONE_ROOT/node_modules/" 2>/dev/null | head -20 || echo "pas de root node_modules"
+          echo "=== apps/web node_modules ==="
+          ls "$STANDALONE_ROOT/apps/web/node_modules/" 2>/dev/null | head -20 || echo "pas de apps/web node_modules"
+
           if [ -f "$STANDALONE_ROOT/apps/web/server.js" ]; then
             echo "Layout: monorepo — server.js dans apps/web/"
             cp -r "$STANDALONE_ROOT/apps/web/." _web_deploy/
 
-            # Merger les node_modules racine (contient 'next' et les deps partagées)
+            # Merger les node_modules racine
             if [ -d "$STANDALONE_ROOT/node_modules" ]; then
               mkdir -p _web_deploy/node_modules
-              cp -rn "$STANDALONE_ROOT/node_modules/." _web_deploy/node_modules/
+              cp -r "$STANDALONE_ROOT/node_modules/." _web_deploy/node_modules/
               echo "Root node_modules merged"
             fi
           elif [ -f "$STANDALONE_ROOT/server.js" ]; then
@@ -129,11 +137,11 @@ jobs:
             exit 1
           fi
 
-          # Diagnostic
+          # Vérifier next
           echo "=== next module check ==="
-          ls _web_deploy/node_modules/next/package.json 2>/dev/null && echo "next: OK" || echo "WARN: next manquant"
-          echo "=== node_modules top-level ==="
-          ls _web_deploy/node_modules/ | head -30
+          ls _web_deploy/node_modules/next/package.json 2>/dev/null && echo "next: OK" || echo "WARN: next manquant dans _web_deploy"
+          echo "=== _web_deploy node_modules ==="
+          ls _web_deploy/node_modules/ 2>/dev/null | head -30
 
           # Fichiers statiques et public
           mkdir -p _web_deploy/.next/static
@@ -268,10 +276,10 @@ jobs:
             echo ""
 
             # Logs en cas d'erreur
-            echo "=== PM2 LOGS API (last 5) ==="
-            pm2 logs caya-api --nostream --lines 5 2>&1 || true
-            echo "=== PM2 LOGS WEB (last 5) ==="
-            pm2 logs caya-web --nostream --lines 5 2>&1 || true
+            echo "=== PM2 LOGS API (last 15) ==="
+            pm2 logs caya-api --nostream --lines 15 2>&1 || true
+            echo "=== PM2 LOGS WEB (last 10) ==="
+            pm2 logs caya-web --nostream --lines 10 2>&1 || true
 
             # Vérifier si mod_proxy est dispo
             echo "=== APACHE MODULES ==="
