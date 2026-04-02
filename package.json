@@ -11,6 +11,7 @@
   "scripts": {
     "dev:api": "pnpm --filter api dev",
     "dev:web": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
     "build:api": "pnpm --filter api build",
     "build:web": "pnpm --filter web build",
     "test": "pnpm --filter api test",
