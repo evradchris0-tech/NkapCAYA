@@ -11,7 +11,8 @@
   "scripts": {
     "dev:api": "pnpm --filter api dev",
     "dev:web": "pnpm --filter web dev",
-    "build": "npm run build -w apps/web",
+    "build": "npm run build -w apps/web && npm run postbuild:web",
+    "postbuild:web": "node scripts/prepare-web-deploy.js",
     "build:api": "pnpm --filter api build",
     "build:web": "pnpm --filter web build",
     "test": "pnpm --filter api test",
