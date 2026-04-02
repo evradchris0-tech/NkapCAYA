@@ -24,10 +24,22 @@ if (!existsSync(API_DIST)) {
 cpSync(API_DIST, path.join(DEPLOY, 'dist'), { recursive: true });
 console.log('dist/ copied');
 
-// 2) Creer index.js (point d'entree)
+// 2) Creer index.js (point d'entree avec error handling)
 writeFileSync(
   path.join(DEPLOY, 'index.js'),
-  `'use strict';\nrequire('./dist/main');\n`,
+  `'use strict';
+console.log('[CAYA API] Starting...');
+console.log('[CAYA API] cwd:', process.cwd());
+console.log('[CAYA API] __dirname:', __dirname);
+console.log('[CAYA API] PORT:', process.env.PORT);
+try {
+  require('./dist/main');
+} catch (err) {
+  console.error('[CAYA API] FATAL:', err.message);
+  console.error(err.stack);
+  process.exit(1);
+}
+`,
 );
 console.log('index.js created');
 
