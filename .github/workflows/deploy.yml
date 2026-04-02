@@ -137,6 +137,12 @@ jobs:
             chmod -R 755 "$APP_DIR/dist"
             [ -f /tmp/caya-api.env ] && cp /tmp/caya-api.env "$APP_DIR/.env"
 
+            # .htaccess — Apache redirige vers Node.js port 3000
+            cat > "$APP_DIR/.htaccess" << 'HTEOF'
+            RewriteEngine On
+            RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
+            HTEOF
+
             cd "$APP_DIR"
             npm install --omit=dev --legacy-peer-deps --ignore-scripts
 
@@ -258,6 +264,12 @@ jobs:
             rm -rf "$APP_DIR"
             mkdir -p "$APP_DIR"
             tar -xzf /tmp/web-deploy.tar.gz -C "$APP_DIR"
+
+            # .htaccess — Apache redirige vers Node.js port 3001
+            cat > "$APP_DIR/.htaccess" << 'HTEOF'
+            RewriteEngine On
+            RewriteRule ^(.*)$ http://localhost:3001/$1 [P,L]
+            HTEOF
 
             cd "$APP_DIR"
             pm2 restart caya-web 2>/dev/null || pm2 start ecosystem.config.js
