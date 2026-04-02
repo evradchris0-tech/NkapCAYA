@@ -122,12 +122,37 @@ jobs:
             echo "Layout: monorepo — server.js dans apps/web/"
             cp -r "$STANDALONE_ROOT/apps/web/." _web_deploy/
 
-            # Merger les node_modules racine
-            if [ -d "$STANDALONE_ROOT/node_modules" ]; then
-              mkdir -p _web_deploy/node_modules
-              cp -r "$STANDALONE_ROOT/node_modules/." _web_deploy/node_modules/
-              echo "Root node_modules merged"
+            # pnpm standalone met les deps dans .pnpm/pkg@version/node_modules/
+            # Il faut aplatir cette structure pour que Node.js les trouve
+            mkdir -p _web_deploy/node_modules
+
+            # 1) Copier depuis le store .pnpm : chaque package + ses deps
+            for pnpm_nm in $(find "$STANDALONE_ROOT/node_modules/.pnpm" -mindepth 2 -maxdepth 2 -name "node_modules" -type d 2>/dev/null); do
+              # Packages non-scopés
+              for pkg in "$pnpm_nm"/[!@.]*/; do
+                [ -d "$pkg" ] || continue
+                name=$(basename "$pkg")
+                [ ! -d "_web_deploy/node_modules/$name" ] && cp -r "$pkg" "_web_deploy/node_modules/$name"
+              done
+              # Packages scopés (@next/*, @swc/*, etc.)
+              for scope in "$pnpm_nm"/@*/; do
+                [ -d "$scope" ] || continue
+                scope_name=$(basename "$scope")
+                for pkg in "$scope"/*/; do
+                  [ -d "$pkg" ] || continue
+                  pkg_name=$(basename "$pkg")
+                  mkdir -p "_web_deploy/node_modules/$scope_name"
+                  [ ! -d "_web_deploy/node_modules/$scope_name/$pkg_name" ] && cp -r "$pkg" "_web_deploy/node_modules/$scope_name/$pkg_name"
+                done
+              done
+            done
+
+            # 2) Écraser avec les packages de apps/web/node_modules (priorité)
+            if [ -d "$STANDALONE_ROOT/apps/web/node_modules" ]; then
+              cp -r "$STANDALONE_ROOT/apps/web/node_modules/." _web_deploy/node_modules/
             fi
+
+            echo "node_modules aplati depuis .pnpm store"
           elif [ -f "$STANDALONE_ROOT/server.js" ]; then
             echo "Layout: workspace — server.js à la racine"
             cp -r "$STANDALONE_ROOT/." _web_deploy/
@@ -137,10 +162,11 @@ jobs:
             exit 1
           fi
 
-          # Vérifier next
+          # Vérifier
           echo "=== next module check ==="
-          ls _web_deploy/node_modules/next/package.json 2>/dev/null && echo "next: OK" || echo "WARN: next manquant dans _web_deploy"
-          echo "=== _web_deploy node_modules ==="
+          ls _web_deploy/node_modules/next/package.json 2>/dev/null && echo "next: OK" || echo "WARN: next manquant"
+          echo "=== _web_deploy packages count ==="
+          ls _web_deploy/node_modules/ 2>/dev/null | wc -l
           ls _web_deploy/node_modules/ 2>/dev/null | head -30
 
           # Fichiers statiques et public
@@ -235,6 +261,18 @@ jobs:
 
             cd "$API_DIR"
             npm install --omit=dev --legacy-peer-deps
+
+            # Fix Prisma : le client généré en CI a des chemins hardcodés du runner
+            # On injecte PRISMA_QUERY_ENGINE_LIBRARY pour pointer vers le bon binaire
+            ENGINE_PATH=$(find "$API_DIR/node_modules/.prisma/client" -name "libquery_engine*" 2>/dev/null | head -1)
+            if [ -n "$ENGINE_PATH" ]; then
+              echo "Prisma engine: $ENGINE_PATH"
+              grep -q "PRISMA_QUERY_ENGINE_LIBRARY" "$API_DIR/.env" 2>/dev/null || \
+                echo "PRISMA_QUERY_ENGINE_LIBRARY=$ENGINE_PATH" >> "$API_DIR/.env"
+            else
+              echo "WARN: Prisma engine binary introuvable"
+              find "$API_DIR/node_modules/.prisma" -type f -name "*.node" 2>/dev/null || true
+            fi
 
             pm2 restart caya-api 2>/dev/null || pm2 start index.js --name caya-api
             echo "API deployee"
