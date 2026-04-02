@@ -122,6 +122,9 @@ jobs:
             echo "Layout: monorepo — server.js dans apps/web/"
             cp -r "$STANDALONE_ROOT/apps/web/." _web_deploy/
 
+            # Supprimer les symlinks pnpm cassés (pointent vers ../../node_modules/.pnpm/...)
+            rm -rf _web_deploy/node_modules
+
             # pnpm standalone met les deps dans .pnpm/pkg@version/node_modules/
             # Il faut aplatir cette structure pour que Node.js les trouve
             mkdir -p _web_deploy/node_modules
@@ -147,9 +150,14 @@ jobs:
               done
             done
 
-            # 2) Écraser avec les packages de apps/web/node_modules (priorité)
+            # 2) Copier les packages réels (non-symlinks) de apps/web/node_modules
             if [ -d "$STANDALONE_ROOT/apps/web/node_modules" ]; then
-              cp -r "$STANDALONE_ROOT/apps/web/node_modules/." _web_deploy/node_modules/
+              for item in "$STANDALONE_ROOT/apps/web/node_modules"/*/; do
+                [ -L "${item%/}" ] && continue  # ignorer les symlinks
+                [ -d "$item" ] || continue
+                name=$(basename "$item")
+                cp -r "$item" "_web_deploy/node_modules/$name" 2>/dev/null || true
+              done
             fi
 
             echo "node_modules aplati depuis .pnpm store"
