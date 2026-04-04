@@ -27,7 +27,11 @@
     "tsc-alias": "^1.8.10",
     "typescript": "^5.3.3",
     "prisma": "^5.22.0",
-    "@prisma/client": "^5.22.0"
+    "@prisma/client": "^5.22.0",
+    "@types/express": "^5.0.0",
+    "@types/bcrypt": "^5.0.2",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/node": "^20.11.16"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.3.0",
