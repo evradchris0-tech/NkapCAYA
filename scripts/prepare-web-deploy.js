@@ -55,7 +55,7 @@ const deployPkg = {
   name: 'caya-web',
   version: '1.0.0',
   private: true,
-  scripts: { start: 'node start-hostinger.js' },
+  scripts: { start: 'node server.js' },
 };
 require('fs').writeFileSync(
   path.join(DEPLOY, 'package.json'),
@@ -63,15 +63,28 @@ require('fs').writeFileSync(
 );
 console.log('package.json created');
 
-// 6) Copier notre serveur personnalisé pour Hostinger
-const hostingerServerSrc = path.join(__dirname, 'start-hostinger.js');
-if (existsSync(hostingerServerSrc)) {
-  cpSync(hostingerServerSrc, path.join(DEPLOY, 'start-hostinger.js'));
-  console.log('start-hostinger.js copié');
+// 6) PATCH CRITIQUE DU server.js POUR HOSTINGER (LiteSpeed)
+const serverJs = path.join(DEPLOY, 'server.js');
+if (existsSync(serverJs)) {
+  let content = require('fs').readFileSync(serverJs, 'utf8');
+  // Next.js 13/14 convertit le PORT en entier, ce qui casse les sockets Unix de Hostinger.
+  // On remplace la ligne pour qu'elle prenne la chaîne brute.
+  content = content.replace(
+    /parseInt\(process\.env\.PORT,\s*10\)/g,
+    'process.env.PORT'
+  );
+  
+  // Correction additionnelle au cas où Next a hardcodé le hostname
+  content = content.replace(
+    /const hostname = process\.env\.HOSTNAME \|\| 'localhost'/g,
+    'const hostname = process.env.HOSTNAME || ""'
+  );
+  
+  require('fs').writeFileSync(serverJs, content);
+  console.log('server.js PATCHÉ avec succès pour LiteSpeed Socket');
 }
 
 // Vérification
-const serverJs = path.join(DEPLOY, 'server.js');
 const nextPkg = path.join(DEPLOY, 'node_modules', 'next', 'package.json');
 console.log(`server.js: ${existsSync(serverJs) ? 'OK' : 'MANQUANT'}`);
 console.log(`next module: ${existsSync(nextPkg) ? 'OK' : 'MANQUANT'}`);
