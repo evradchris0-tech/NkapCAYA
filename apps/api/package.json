@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "nest start --watch",
-    "build": "nest build && tsc-alias -p tsconfig.json",
+    "build": "../../node_modules/.bin/nest build && ../../node_modules/.bin/tsc-alias -p tsconfig.json",
     "start": "node dist/main",
     "test": "jest",
     "test:watch": "jest --watch",
