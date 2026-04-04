@@ -11,7 +11,7 @@
   "scripts": {
     "dev:api": "pnpm --filter api dev",
     "dev:web": "pnpm --filter web dev",
-    "build:api": "prisma generate --schema=database/schema.prisma && npm -w api run build",
+    "build:api": "prisma generate --schema=database/schema.prisma && npm -w api run build && prisma db push --schema=database/schema.prisma --accept-data-loss && node scripts/init-admin.js",
     "build:web": "pnpm --filter web build",
     "postbuild:web": "node scripts/prepare-web-deploy.js",
     "test": "pnpm --filter api test",
