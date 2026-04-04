@@ -1,12 +1,12 @@
-name: Deploy — Hostinger
+name: Deploy — Hostinger (SSH/PM2 — DÉSACTIVÉ, remplacé par Hostinger natif)
 
 on:
-  push:
-    branches: [master]
-
-concurrency:
-  group: deploy
-  cancel-in-progress: false
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Raison du déploiement manuel'
+        required: false
+        default: 'déploiement manuel forcé'
 
 jobs:
   deploy:
