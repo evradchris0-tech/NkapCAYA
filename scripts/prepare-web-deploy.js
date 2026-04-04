@@ -55,13 +55,20 @@ const deployPkg = {
   name: 'caya-web',
   version: '1.0.0',
   private: true,
-  scripts: { start: 'node server.js' },
+  scripts: { start: 'node start-hostinger.js' },
 };
 require('fs').writeFileSync(
   path.join(DEPLOY, 'package.json'),
   JSON.stringify(deployPkg, null, 2),
 );
 console.log('package.json created');
+
+// 6) Copier notre serveur personnalisé pour Hostinger
+const hostingerServerSrc = path.join(__dirname, 'start-hostinger.js');
+if (existsSync(hostingerServerSrc)) {
+  cpSync(hostingerServerSrc, path.join(DEPLOY, 'start-hostinger.js'));
+  console.log('start-hostinger.js copié');
+}
 
 // Vérification
 const serverJs = path.join(DEPLOY, 'server.js');
