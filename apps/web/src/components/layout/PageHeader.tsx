@@ -23,7 +23,7 @@ export default function PageHeader({
         <div className="w-1 h-8 rounded-full shrink-0" style={{ background: 'linear-gradient(180deg, #6366f1 0%, #3b82f6 100%)' }} />
         <div>
           {breadcrumbs && breadcrumbs.length > 0 && (
-            <nav className="flex items-center gap-1 text-xs text-indigo-400/70 mb-0.5">
+            <nav className="flex flex-wrap items-center gap-1 text-[10px] sm:text-xs text-indigo-400/70 mb-0.5">
               {breadcrumbs.map((crumb, index) => (
                 <span key={index} className="flex items-center gap-1">
                   {index > 0 && <span className="text-indigo-200">/</span>}
@@ -38,7 +38,7 @@ export default function PageHeader({
               ))}
             </nav>
           )}
-          <h1 className="text-2xl font-bold" style={{ background: 'linear-gradient(90deg, #1e1b4b 0%, #1d4ed8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+          <h1 className="text-xl sm:text-2xl font-bold leading-tight" style={{ background: 'linear-gradient(90deg, #1e1b4b 0%, #1d4ed8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
             {title}
           </h1>
         </div>

@@ -1,15 +1,19 @@
 import {
   Controller,
   Get,
+  Post,
+  Body,
   Param,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ReportsService } from '../services/reports.service';
+import { ImportFiscalYearDto } from '../dto/import-fiscal-year.dto';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { BureauRole } from '@prisma/client';
 
 @ApiTags('reports')
@@ -29,6 +33,16 @@ export class ReportsController {
     @Query('format') format?: string,
   ) {
     return this.reportsService.generateAnnualSummary(fiscalYearId, format);
+  }
+
+  @Post('import-fiscal-year')
+  @Roles(BureauRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Import a complete fiscal year from CAYABASE Excel data' })
+  importFiscalYear(
+    @Body() dto: ImportFiscalYearDto,
+    @CurrentUser('id') actorId: string,
+  ) {
+    return this.reportsService.importFiscalYear(dto, actorId);
   }
 
   @Get('member/:id')

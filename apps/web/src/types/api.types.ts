@@ -204,6 +204,7 @@ export interface FiscalYear {
   closedAt: string | null;
   closedById: string | null;
   notes: string | null;
+  isImported: boolean;
   config?: FiscalYearConfig;
 }
 
@@ -540,3 +541,41 @@ export type Transaction = SessionEntry;
 
 /** @deprecated Utiliser LoanAccount */
 export type Loan = LoanAccount;
+
+// ─────────────────────────────────────────────────────────
+// EXPORT COMPLET EXERCICE (endpoint GET /reports/annual-summary)
+// ─────────────────────────────────────────────────────────
+
+/** Membership enrichi avec profile complet (retourné par l'endpoint reports) */
+export interface ExportMembership extends Membership {
+  profile: Pick<Member, 'id' | 'firstName' | 'lastName' | 'memberCode'>;
+}
+
+/** Session enrichie avec toutes les entries */
+export interface ExportSession extends MonthlySession {
+  entries: SessionEntry[];
+  interestDistribution?: InterestDistributionSnapshot | null;
+}
+
+/** SavingsLedger enrichi avec entries et membership */
+export interface ExportSavingsLedger extends SavingsLedger {
+  entries: SavingsEntry[];
+  membership: { profile: Pick<Member, 'id' | 'firstName' | 'lastName' | 'memberCode'> };
+}
+
+/** LoanAccount enrichi avec accruals, repayments et membership */
+export interface ExportLoanAccount extends Omit<LoanAccount, 'membership' | 'monthlyAccruals' | 'repayments'> {
+  monthlyAccruals: MonthlyLoanAccrual[];
+  repayments: LoanRepayment[];
+  membership: { profile: Pick<Member, 'id' | 'firstName' | 'lastName' | 'memberCode'> };
+}
+
+/** Réponse complète du endpoint GET /reports/annual-summary */
+export interface FiscalYearExportData {
+  fiscalYear: FiscalYear & { config?: FiscalYearConfig };
+  memberships: ExportMembership[];
+  sessions: ExportSession[];
+  savingsLedgers: ExportSavingsLedger[];
+  loans: ExportLoanAccount[];
+  poolParticipants: PoolParticipant[];
+}

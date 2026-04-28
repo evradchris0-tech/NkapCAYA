@@ -15,6 +15,9 @@ import {
   Clock,
   Activity,
   Medal,
+  Wallet,
+  Banknote,
+  Coins,
   type LucideIcon,
 } from 'lucide-react';
 import PageHeader from '@components/layout/PageHeader';
@@ -32,6 +35,7 @@ import type { MonthlySession } from '@/types/api.types';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
+  LineChart, Line,
 } from 'recharts';
 
 // ── Palette centralisée ──────────────────────────────────────────────────────
@@ -185,6 +189,39 @@ export default function DashboardPage() {
   const activeMembers  = activeMembersData?.total ?? 0;
   const enrolledCount  = memberships?.length ?? 0;
   const rescueBalance  = rescueLedger ? Number(rescueLedger.totalBalance) : 0;
+
+  // ── KPI financiers ─────────────────────────────────────────────────────
+  const totalEpargne = useMemo(
+    () => (savingsLedgers ?? []).reduce((s, l) => s + parseFloat(l.principalBalance || '0'), 0),
+    [savingsLedgers],
+  );
+  const totalInterets = useMemo(
+    () => (savingsLedgers ?? []).reduce((s, l) => s + parseFloat(l.totalInterestReceived || '0'), 0),
+    [savingsLedgers],
+  );
+  const activeLoansCount = useMemo(
+    () => (fyLoans ?? []).filter((l) => l.status !== 'CLOSED').length,
+    [fyLoans],
+  );
+  const totalEncoursPrets = useMemo(
+    () => (fyLoans ?? []).filter((l) => l.status !== 'CLOSED').reduce((s, l) => s + parseFloat(l.outstandingBalance || '0'), 0),
+    [fyLoans],
+  );
+  const totalCotisations = useMemo(
+    () => (sessions ?? []).reduce((s, sess) => s + parseFloat(sess.totalCotisation || '0'), 0),
+    [sessions],
+  );
+
+  // ── Données graphes supplémentaires ────────────────────────────────────
+  const savingsChartData = useMemo(() => (sessions ?? []).map((s) => ({
+    label: `S${s.sessionNumber}`,
+    Épargne: Math.round(parseFloat(s.totalEpargne || '0')),
+  })), [sessions]);
+
+  const cotisationsChartData = useMemo(() => (sessions ?? []).map((s) => ({
+    label: `S${s.sessionNumber}`,
+    Cotisations: Math.round(parseFloat(s.totalCotisation || '0')),
+  })), [sessions]);
 
   // Session ouverte en cours
   const openSession = sessions?.find((s) => s.status === 'OPEN');
@@ -363,6 +400,44 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* ── KPI Financiers ── */}
+      {selectedFy && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard
+            icon={Wallet}
+            iconBg="bg-emerald-50" iconColor="text-emerald-600"
+            borderColor="border-emerald-100"
+            label="Total Épargne"
+            value={`${totalEpargne.toLocaleString('fr-FR')} XAF`}
+            description="Somme des capitaux déposés par tous les membres."
+          />
+          <KpiCard
+            icon={TrendingUp}
+            iconBg="bg-amber-50" iconColor="text-amber-600"
+            borderColor="border-amber-100"
+            label="Total Intérêts"
+            value={`${totalInterets.toLocaleString('fr-FR')} XAF`}
+            description="Intérêts distribués sur l'épargne de l'exercice."
+          />
+          <KpiCard
+            icon={Banknote}
+            iconBg="bg-orange-50" iconColor="text-orange-500"
+            borderColor="border-orange-100"
+            label="Prêts en cours"
+            value={`${activeLoansCount} — ${formatAmount(totalEncoursPrets)} XAF`}
+            description={`${activeLoansCount} prêt${activeLoansCount > 1 ? 's' : ''} actif${activeLoansCount > 1 ? 's' : ''}, encours total.`}
+          />
+          <KpiCard
+            icon={Coins}
+            iconBg="bg-blue-50" iconColor="text-blue-600"
+            borderColor="border-blue-100"
+            label="Total Cotisations"
+            value={`${totalCotisations.toLocaleString('fr-FR')} XAF`}
+            description="Cotisations collectées sur toutes les sessions."
+          />
+        </div>
+      )}
+
       {/* ── Actions rapides ── */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-card p-5">
         <h2 className="text-sm font-semibold text-gray-700 mb-4">
@@ -470,6 +545,69 @@ export default function DashboardPage() {
                       contentStyle={{ borderRadius: 8, fontSize: 13 }}
                     />
                   </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </ChartCard>
+
+        </div>
+      )}
+
+      {/* ── Graphes financiers ── */}
+      {selectedFy && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+          {/* Barres : Épargne déposée par session */}
+          <ChartCard
+            title="Épargne déposée par session"
+            subtitle={selectedFy.label}
+          >
+            {loadingSessions ? (
+              <div className="h-56 flex items-center justify-center">
+                <Skeleton className="h-40 w-full" />
+              </div>
+            ) : savingsChartData.every((d) => d.Épargne === 0) ? (
+              <div className="h-56 flex items-center justify-center text-gray-300 text-sm">
+                Aucune épargne enregistrée
+              </div>
+            ) : (
+              <div className="h-56 px-2 pb-3">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={savingsChartData} barSize={14} margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                    <YAxis tickFormatter={formatAmount} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={52} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
+                    <Bar dataKey="Épargne" fill={COLORS.emerald} radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </ChartCard>
+
+          {/* Ligne : Évolution des cotisations */}
+          <ChartCard
+            title="Évolution des cotisations"
+            subtitle={selectedFy.label}
+          >
+            {loadingSessions ? (
+              <div className="h-56 flex items-center justify-center">
+                <Skeleton className="h-40 w-full" />
+              </div>
+            ) : cotisationsChartData.every((d) => d.Cotisations === 0) ? (
+              <div className="h-56 flex items-center justify-center text-gray-300 text-sm">
+                Aucune cotisation enregistrée
+              </div>
+            ) : (
+              <div className="h-56 px-2 pb-3">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={cotisationsChartData} margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                    <YAxis tickFormatter={formatAmount} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={52} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#e2e8f0' }} />
+                    <Line type="monotone" dataKey="Cotisations" stroke={COLORS.blue} strokeWidth={2.5} dot={{ fill: COLORS.blue, r: 3 }} />
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
             )}

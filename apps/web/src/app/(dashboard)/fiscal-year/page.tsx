@@ -97,6 +97,11 @@ export default function FiscalYearListPage() {
                       >
                         {STATUS_LABELS[fy.status]}
                       </span>
+                      {fy.isImported && (
+                        <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 ml-1.5">
+                          Importé
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">

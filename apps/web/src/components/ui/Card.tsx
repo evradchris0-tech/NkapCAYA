@@ -8,9 +8,9 @@ interface CardProps {
 }
 
 const paddingStyles = {
-  sm: 'p-3',
-  md: 'p-5',
-  lg: 'p-6',
+  sm: 'p-2 sm:p-3',
+  md: 'p-3 sm:p-5',
+  lg: 'p-4 sm:p-6',
 };
 
 export default function Card({

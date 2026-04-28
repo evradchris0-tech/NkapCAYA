@@ -14,11 +14,19 @@ function fyKey(fiscalYearId: string) {
   return [...BENE_KEY, fiscalYearId] as const;
 }
 
-export function useBeneficiarySchedule(fiscalYearId: string) {
+export function useBeneficiarySchedule(fiscalYearId: string, status?: string) {
   return useQuery({
     queryKey: fyKey(fiscalYearId),
-    queryFn: () => beneficiariesApi.getSchedule(fiscalYearId),
-    enabled: Boolean(fiscalYearId),
+    queryFn: () => beneficiariesApi.getSchedule(fiscalYearId).catch((err) => {
+      // Pour un exercice PENDING, le schedule n'existe pas encore => 404 (Normal)
+      if (err?.response?.status === 404) return null;
+      throw err;
+    }),
+    enabled: Boolean(fiscalYearId) && status !== 'PENDING',
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status === 404) return false;
+      return failureCount < 2;
+    }
   });
 }
 

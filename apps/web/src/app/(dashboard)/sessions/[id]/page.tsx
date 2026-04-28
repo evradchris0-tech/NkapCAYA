@@ -216,11 +216,11 @@ export default function SessionDetailPage({ params }: Props) {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title={`Session #${session.sessionNumber}`}
+        title={`Session #${session.sessionNumber} — ${new Date(session.meetingDate).toLocaleDateString('fr-FR', { month: 'long' })}`}
         breadcrumbs={[
           { label: 'Accueil', href: '/' },
           { label: 'Sessions', href: '/sessions' },
-          { label: `Session #${session.sessionNumber}` },
+          { label: `Session #${session.sessionNumber} — ${new Date(session.meetingDate).toLocaleDateString('fr-FR', { month: 'long' })}` },
         ]}
         action={
           <div className="flex gap-2">

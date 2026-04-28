@@ -36,18 +36,24 @@ if (existsSync(rootNM)) {
   console.log('Root node_modules merged');
 }
 
-// 3) Fichiers statiques
+// 3) Fichiers statiques internes
 const staticDest = path.join(DEPLOY, '.next', 'static');
 if (existsSync(STATIC_SRC)) {
   mkdirSync(staticDest, { recursive: true });
   cpSync(STATIC_SRC, staticDest, { recursive: true });
-  console.log('Static files copied');
+  // COPIE POUR HOSTINGER LITESPEED (qui cherche les assets à la racine)
+  const litespeedStaticDest = path.join(__dirname, '..', '_next', 'static');
+  mkdirSync(litespeedStaticDest, { recursive: true });
+  cpSync(STATIC_SRC, litespeedStaticDest, { recursive: true });
+  console.log('Static files copied (and exported for LiteSpeed)');
 }
 
-// 4) Public
+// 4) Fichiers publics (Images, favicon...)
 if (existsSync(PUBLIC_SRC)) {
   cpSync(PUBLIC_SRC, path.join(DEPLOY, 'public'), { recursive: true });
-  console.log('Public files copied');
+  // COPIE POUR HOSTINGER LITESPEED (les images doivent être à la racine)
+  cpSync(PUBLIC_SRC, path.join(__dirname, '..'), { recursive: true });
+  console.log('Public files copied (and exported for LiteSpeed root)');
 }
 
 // 5) Créer un package.json minimal (requis par certains hébergeurs)
@@ -67,17 +73,18 @@ console.log('package.json created');
 const serverJs = path.join(DEPLOY, 'server.js');
 if (existsSync(serverJs)) {
   let content = require('fs').readFileSync(serverJs, 'utf8');
-  // Next.js 13/14 convertit le PORT en entier, ce qui casse les sockets Unix de Hostinger.
-  // On remplace la ligne pour qu'elle prenne la chaîne brute.
+  
+  // 1. Next.js convertit le PORT en entier, cassant les sockets Unix
   content = content.replace(
     /parseInt\(process\.env\.PORT,\s*10\)/g,
     'process.env.PORT'
   );
   
-  // Correction additionnelle au cas où Next a hardcodé le hostname
+  // 2. Node.js crash si on lui passe 'localhost' en même temps qu'un socket !
+  // On remplace 'server.listen(currentPort, hostname,' par 'server.listen(currentPort,'
   content = content.replace(
-    /const hostname = process\.env\.HOSTNAME \|\| 'localhost'/g,
-    'const hostname = process.env.HOSTNAME || ""'
+    /server\.listen\(currentPort,\s*hostname,/g,
+    'server.listen(currentPort,'
   );
   
   require('fs').writeFileSync(serverJs, content);
@@ -88,4 +95,17 @@ if (existsSync(serverJs)) {
 const nextPkg = path.join(DEPLOY, 'node_modules', 'next', 'package.json');
 console.log(`server.js: ${existsSync(serverJs) ? 'OK' : 'MANQUANT'}`);
 console.log(`next module: ${existsSync(nextPkg) ? 'OK' : 'MANQUANT'}`);
+
+// 7) Nettoyage agressif des caches (Économie de ressources Hostinger)
+console.log('🧹 Nettoyage des caches inutiles pour libérer l\'espace disque...');
+const nextCache = path.join(__dirname, '..', 'apps', 'web', '.next', 'cache');
+if (existsSync(nextCache)) {
+  require('fs').rmSync(nextCache, { recursive: true, force: true });
+  console.log('   ✓ Cache webpack Next.js supprimé');
+}
+if (existsSync(STANDALONE)) {
+  require('fs').rmSync(STANDALONE, { recursive: true, force: true });
+  console.log('   ✓ Source standalone purgée (déjà copiée dans _deploy/)');
+}
+
 console.log('_deploy/ ready');

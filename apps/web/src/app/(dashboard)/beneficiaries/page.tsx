@@ -207,7 +207,7 @@ export default function BeneficiariesPage() {
   const { data: currentUser } = useCurrentUser();
   const { selectedFyId, fiscalYears, setSelectedFyId } = useFiscalYearContext();
   const { data: memberships } = useFiscalYearMemberships(selectedFyId);
-  const { data: schedule, isLoading } = useBeneficiarySchedule(selectedFyId);
+  const { data: schedule, isLoading } = useBeneficiarySchedule(selectedFyId, fiscalYears?.find(fy => fy.id === selectedFyId)?.status);
   const assignSlot = useAssignSlot(selectedFyId);
   const markDelivered = useMarkDelivered(selectedFyId);
   const addSlot = useAddSlotToSession(selectedFyId);
@@ -317,134 +317,136 @@ export default function BeneficiariesPage() {
                   )}
                 </div>
 
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-100">
-                    <tr>
-                      <th className="text-left px-6 py-2.5 font-medium text-gray-500 text-xs">Slot</th>
-                      <th className="text-left px-6 py-2.5 font-medium text-gray-500 text-xs">Bénéficiaire</th>
-                      <th className="text-right px-6 py-2.5 font-medium text-gray-500 text-xs">Montant livré</th>
-                      <th className="text-left px-6 py-2.5 font-medium text-gray-500 text-xs">Statut</th>
-                      <th className="px-6 py-2.5"><span className="sr-only">Actions</span></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {slots.map((slot) => (
-                      <tr key={slot.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-3 text-gray-500 text-xs font-mono">#{slot.slotIndex}</td>
-                        <td className="px-6 py-3">
-                          {assigningSlotId === slot.id ? (
-                            <div className="flex items-center gap-2">
-                              <Select
-                                value={selectedMembership}
-                                onChange={(e) => setSelectedMembership(e.target.value)}
-                                aria-label="Sélectionner un membre"
-                                className="w-48"
-                                size="sm"
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[600px]">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                      <tr>
+                        <th className="text-left px-6 py-2.5 font-medium text-gray-500 text-xs">Slot</th>
+                        <th className="text-left px-6 py-2.5 font-medium text-gray-500 text-xs">Bénéficiaire</th>
+                        <th className="text-right px-6 py-2.5 font-medium text-gray-500 text-xs">Montant livré</th>
+                        <th className="text-left px-6 py-2.5 font-medium text-gray-500 text-xs">Statut</th>
+                        <th className="px-6 py-2.5"><span className="sr-only">Actions</span></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {slots.map((slot) => (
+                        <tr key={slot.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-3 text-gray-500 text-xs font-mono">#{slot.slotIndex}</td>
+                          <td className="px-6 py-3">
+                            {assigningSlotId === slot.id ? (
+                              <div className="flex items-center gap-2">
+                                <Select
+                                  value={selectedMembership}
+                                  onChange={(e) => setSelectedMembership(e.target.value)}
+                                  aria-label="Sélectionner un membre"
+                                  className="w-48"
+                                  size="sm"
+                                >
+                                  <option value="">Choisir…</option>
+                                  {memberships?.map((m) => (
+                                    <option key={m.id} value={m.id}>
+                                      {m.profile?.lastName} {m.profile?.firstName}
+                                    </option>
+                                  ))}
+                                </Select>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleAssign(slot.id)}
+                                  isLoading={assignSlot.isPending}
+                                >
+                                  OK
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => { setAssigningSlotId(null); setSelectedMembership(''); }}
+                                >
+                                  ✕
+                                </Button>
+                              </div>
+                            ) : slot.membership?.profile ? (
+                              <span className="text-gray-900 font-medium flex items-center gap-1.5">
+                                {slot.membership.profile.lastName} {slot.membership.profile.firstName}
+                                {slot.isHost && (
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Hôte</span>
+                                )}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs italic">Non désigné</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-3 text-right tabular-nums font-medium">
+                            {parseFloat(slot.amountDelivered).toLocaleString('fr-FR')} XAF
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[slot.status]}`}>
+                              {STATUS_LABELS[slot.status]}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3 text-right">
+                            {slot.membershipId && (
+                              <button
+                                title="Détail brut / retenues / net"
+                                onClick={() => setDetailSlot(slot)}
+                                className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors mr-1"
                               >
-                                <option value="">Choisir…</option>
-                                {memberships?.map((m) => (
-                                  <option key={m.id} value={m.id}>
-                                    {m.profile?.lastName} {m.profile?.firstName}
-                                  </option>
-                                ))}
-                              </Select>
-                              <Button
-                                size="sm"
-                                onClick={() => handleAssign(slot.id)}
-                                isLoading={assignSlot.isPending}
-                              >
-                                OK
-                              </Button>
+                                <FileText className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                            {['UNASSIGNED', 'ASSIGNED'].includes(slot.status) && canAssign && assigningSlotId !== slot.id && (
                               <Button
                                 size="sm"
                                 variant="secondary"
-                                onClick={() => { setAssigningSlotId(null); setSelectedMembership(''); }}
+                                onClick={() => {
+                                  setAssigningSlotId(slot.id);
+                                  setSelectedMembership(slot.membershipId || '');
+                                }}
+                                className="mr-2"
                               >
-                                ✕
+                                {slot.status === 'ASSIGNED' ? 'Modifier' : 'Désigner'}
                               </Button>
-                            </div>
-                          ) : slot.membership?.profile ? (
-                            <span className="text-gray-900 font-medium flex items-center gap-1.5">
-                              {slot.membership.profile.lastName} {slot.membership.profile.firstName}
-                              {slot.isHost && (
-                                <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Hôte</span>
-                              )}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400 text-xs italic">Non désigné</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-3 text-right tabular-nums font-medium">
-                          {parseFloat(slot.amountDelivered).toLocaleString('fr-FR')} XAF
-                        </td>
-                        <td className="px-6 py-3">
-                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[slot.status]}`}>
-                            {STATUS_LABELS[slot.status]}
-                          </span>
-                        </td>
-                        <td className="px-6 py-3 text-right">
-                          {slot.membershipId && (
-                            <button
-                              title="Détail brut / retenues / net"
-                              onClick={() => setDetailSlot(slot)}
-                              className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors mr-1"
-                            >
-                              <FileText className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                          {['UNASSIGNED', 'ASSIGNED'].includes(slot.status) && canAssign && assigningSlotId !== slot.id && (
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => {
-                                setAssigningSlotId(slot.id);
-                                setSelectedMembership(slot.membershipId || '');
-                              }}
-                              className="mr-2"
-                            >
-                              {slot.status === 'ASSIGNED' ? 'Modifier' : 'Désigner'}
-                            </Button>
-                          )}
-                          {slot.status !== 'DELIVERED' && canAssign && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setDeletingSlotId(slot.id)}
-                              title="Retirer ce bénéficiaire"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {slot.status === 'ASSIGNED' && canDeliver && (
-                            <Button
-                              size="sm"
-                              className="ml-2"
-                              onClick={() => {
-                                setDeliverySlotId(slot.id);
-                                setDeliveryAmount('');
-                              }}
-                              isLoading={markDelivered.isPending}
-                            >
-                              Marquer livré
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  {slots.some((s) => parseFloat(s.amountDelivered || '0') > 0) && (
-                    <tfoot className="border-t border-gray-200 bg-gray-50">
-                      <tr>
-                        <td colSpan={2} className="px-6 py-2.5 text-xs font-bold text-gray-700">Total</td>
-                        <td className="px-6 py-2.5 text-right tabular-nums font-bold text-gray-900 text-xs">
-                          {slots.reduce((sum, s) => sum + parseFloat(s.amountDelivered || '0'), 0).toLocaleString('fr-FR')} XAF
-                        </td>
-                        <td colSpan={2} />
-                      </tr>
-                    </tfoot>
-                  )}
-                </table>
+                            )}
+                            {slot.status !== 'DELIVERED' && canAssign && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setDeletingSlotId(slot.id)}
+                                title="Retirer ce bénéficiaire"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {slot.status === 'ASSIGNED' && canDeliver && (
+                              <Button
+                                size="sm"
+                                className="ml-2"
+                                onClick={() => {
+                                  setDeliverySlotId(slot.id);
+                                  setDeliveryAmount('');
+                                }}
+                                isLoading={markDelivered.isPending}
+                              >
+                                Marquer livré
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    {slots.some((s) => parseFloat(s.amountDelivered || '0') > 0) && (
+                      <tfoot className="border-t border-gray-200 bg-gray-50">
+                        <tr>
+                          <td colSpan={2} className="px-6 py-2.5 text-xs font-bold text-gray-700">Total</td>
+                          <td className="px-6 py-2.5 text-right tabular-nums font-bold text-gray-900 text-xs">
+                            {slots.reduce((sum, s) => sum + parseFloat(s.amountDelivered || '0'), 0).toLocaleString('fr-FR')} XAF
+                          </td>
+                          <td colSpan={2} />
+                        </tr>
+                      </tfoot>
+                    )}
+                  </table>
+                </div>
               </div>
             );
           })}

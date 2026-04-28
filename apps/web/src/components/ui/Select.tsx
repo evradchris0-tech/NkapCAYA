@@ -29,7 +29,9 @@ function extractOptions(children: ReactNode): OptionItem[] {
       };
       opts.push({
         value: String(p.value ?? ''),
-        label: String(p.children ?? ''),
+        label: Array.isArray(p.children)
+          ? p.children.join('')
+          : String(p.children ?? ''),
         disabled: p.disabled,
       });
     }
@@ -232,7 +234,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           {isOpen && (
             <div
               id={`${selectId}-list`}
-              className="absolute left-0 top-full mt-1.5 w-full min-w-[10rem] bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden py-1"
+              className="absolute left-0 top-full mt-1.5 w-full min-w-[10rem] bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden py-1 max-h-64 overflow-y-auto"
             >
               <ul role="listbox" aria-label={label}>
                 {options.map((opt) => {

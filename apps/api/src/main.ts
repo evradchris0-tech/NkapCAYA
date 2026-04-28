@@ -1,10 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType, RequestMethod } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { json } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+
+  // Body parser avec limite augmentée pour les imports
+  app.use(json({ limit: '2mb' }));
 
   // Versioning API
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
@@ -33,12 +37,9 @@ async function bootstrap(): Promise<void> {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  // CORS — origines autorisées (env var ou liste fixe)
-  const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-    : ['*'];
+  // CORS — autorisé pour tous les domaines
   app.enableCors({
-    origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,

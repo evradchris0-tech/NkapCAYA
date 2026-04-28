@@ -34,6 +34,7 @@ export default function Logo({ size = 'md', className, onDark = false }: LogoPro
         width={px}
         height={px}
         priority
+        unoptimized
       />
     </span>
   );

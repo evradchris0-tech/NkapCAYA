@@ -2,9 +2,10 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { Bell, LogOut, Clock, AlertCircle, Gift, Gavel, X, Lock, CalendarRange, ChevronDown, CheckCheck } from 'lucide-react';
+import { Bell, LogOut, Clock, AlertCircle, Gift, Gavel, X, Lock, CalendarRange, ChevronDown, CheckCheck, Menu } from 'lucide-react';
 import { useCurrentUser, useLogout } from '@lib/hooks/useCurrentUser';
 import { useFiscalYearContext } from '@lib/context/FiscalYearContext';
+import { useMobileNav } from '@lib/context/MobileNavContext';
 import { useSessionsByFiscalYear } from '@lib/hooks/useSessions';
 import { useBeneficiarySchedule } from '@lib/hooks/useBeneficiaries';
 import { BUREAU_ROLE_LABELS, BureauRole } from '@/types/domain.types';
@@ -69,6 +70,7 @@ function formatDate(d: string | Date) {
 export default function Header() {
   const { data: user } = useCurrentUser();
   const logout = useLogout();
+  const { toggle } = useMobileNav();
   const { selectedFyId, selectedFy, setSelectedFyId, fiscalYears } = useFiscalYearContext();
   const { data: sessions } = useSessionsByFiscalYear(selectedFyId);
   const { data: schedule } = useBeneficiarySchedule(selectedFyId);
@@ -255,10 +257,19 @@ export default function Header() {
 
   return (
     <>
-      <header className="h-14 shrink-0 border-b border-indigo-100 flex items-center justify-between px-6 shadow-sm gap-3" style={{ background: 'linear-gradient(90deg, #ffffff 0%, #f5f3ff 50%, #eff6ff 100%)' }}>
+      <header className="h-14 md:h-16 shrink-0 border-b border-indigo-100 flex items-center justify-between px-4 md:px-6 shadow-sm gap-3 sticky top-0 z-40 bg-white/80 backdrop-blur-md" style={{ background: 'linear-gradient(90deg, #ffffff 0%, #f5f3ff 50%, #eff6ff 100%)' }}>
+        
+        {/* Hamburger Mobile */}
+        <button 
+          onClick={toggle}
+          className="md:hidden p-2 -ml-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+          aria-label="Ouvrir le menu"
+        >
+          <Menu className="h-6 w-6" />
+        </button>
 
         {/* Zone gauche */}
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
 
           {/* Session ouverte */}
           {openSession && (

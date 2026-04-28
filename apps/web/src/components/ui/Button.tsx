@@ -9,6 +9,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   isLoading?: boolean;
+  fullWidth?: boolean;
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
@@ -28,6 +29,7 @@ export default function Button({
   variant = 'primary',
   size = 'md',
   isLoading = false,
+  fullWidth = false,
   disabled,
   className,
   children,
@@ -40,6 +42,7 @@ export default function Button({
       className={twMerge(
         clsx(
           'inline-flex items-center justify-center font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed',
+          fullWidth && 'w-full',
           variantStyles[variant],
           sizeStyles[size],
           className

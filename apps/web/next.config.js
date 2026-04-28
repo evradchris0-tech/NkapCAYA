@@ -3,6 +3,7 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  images: { unoptimized: true },
   outputFileTracingRoot: path.join(__dirname, '../../'),
   experimental: {
     outputFileTracingIncludes: {

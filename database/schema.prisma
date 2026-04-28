@@ -337,6 +337,7 @@ model FiscalYear {
   closedAt      DateTime?        @map("closed_at")
   closedById    String?          @map("closed_by_id") @db.VarChar(36)
   notes         String?          @map("notes") @db.Text
+  isImported    Boolean          @default(false) @map("is_imported")
   deletedAt     DateTime?        @map("deleted_at")
   version       Int              @default(1) @map("version")
 

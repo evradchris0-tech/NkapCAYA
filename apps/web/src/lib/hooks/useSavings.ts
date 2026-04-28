@@ -14,7 +14,11 @@ export function useSavingsByMembership(membershipId: string) {
 export function useFiscalYearSavings(fiscalYearId: string) {
   return useQuery({
     queryKey: [...SAVINGS_KEY, 'fy', fiscalYearId],
-    queryFn: () => savingsApi.getFiscalYearBalances(fiscalYearId),
+    queryFn: () =>
+      savingsApi.getFiscalYearBalances(fiscalYearId).catch((err) => {
+        if (err?.response?.status === 404) return [];
+        throw err;
+      }),
     enabled: Boolean(fiscalYearId),
   });
 }
