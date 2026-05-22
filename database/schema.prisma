@@ -431,6 +431,7 @@ model MonthlySession {
   openedById       String?       @map("opened_by_id") @db.VarChar(36)
   closedAt         DateTime?     @map("closed_at")
   closedById       String?       @map("closed_by_id") @db.VarChar(36)
+  reopenReason     String?       @map("reopen_reason") @db.Text
 
   totalInscription  Decimal @default(0) @map("total_inscription") @db.Decimal(15, 2)
   totalSecours      Decimal @default(0) @map("total_secours") @db.Decimal(15, 2)
@@ -477,15 +478,18 @@ model SessionEntry {
   deletedAt       DateTime?       @map("deleted_at")
   version         Int             @default(1) @map("version")
 
-  recordedBy    User            @relation("EntryRecordedBy", fields: [recordedById], references: [id])
-  session       MonthlySession? @relation(fields: [sessionId], references: [id])
-  membership    Membership      @relation(fields: [membershipId], references: [id])
-  loan          LoanAccount?    @relation(fields: [loanId], references: [id])
-  savingsEntry  SavingsEntry?
-  loanRepayment LoanRepayment?
+  recordedBy        User            @relation("EntryRecordedBy", fields: [recordedById], references: [id])
+  session           MonthlySession? @relation(fields: [sessionId], references: [id])
+  membership        Membership      @relation(fields: [membershipId], references: [id])
+  loan              LoanAccount?    @relation(fields: [loanId], references: [id])
+  savingsEntry      SavingsEntry?
+  loanRepayment     LoanRepayment?  @relation("RepaymentEntry")
+  principalRepayment LoanRepayment? @relation("RepaymentPrincipal")
+  interestRepayment  LoanRepayment? @relation("RepaymentInterest")
 
   @@index([membershipId, type])
   @@index([sessionId])
+  @@index([sessionId, type])
   @@map("session_entries")
 }
 
@@ -525,6 +529,7 @@ model SavingsEntry {
   ledger       SavingsLedger @relation(fields: [ledgerId], references: [id])
   sessionEntry SessionEntry? @relation(fields: [sessionEntryId], references: [id])
 
+  @@index([ledgerId, month])
   @@map("savings_entries")
 }
 
@@ -631,24 +636,29 @@ model MonthlyLoanAccrual {
 
   @@unique([loanId, sessionId])
   @@index([sessionId])
+  @@index([loanId, month])
   @@map("monthly_loan_accruals")
 }
 
 model LoanRepayment {
-  id             String    @id @default(uuid()) @map("id") @db.VarChar(36)
-  loanId         String    @map("loan_id") @db.VarChar(36)
-  sessionId      String    @map("session_id") @db.VarChar(36)
-  sessionEntryId String?   @unique @map("session_entry_id") @db.VarChar(36)
-  amount         Decimal   @map("amount") @db.Decimal(15, 2)
-  principalPart  Decimal   @map("principal_part") @db.Decimal(15, 2)
-  interestPart   Decimal   @map("interest_part") @db.Decimal(15, 2)
-  balanceAfter   Decimal   @map("balance_after") @db.Decimal(15, 2)
-  recordedAt     DateTime  @default(now()) @map("recorded_at")
-  deletedAt      DateTime? @map("deleted_at")
-  version        Int       @default(1) @map("version")
+  id               String    @id @default(uuid()) @map("id") @db.VarChar(36)
+  loanId           String    @map("loan_id") @db.VarChar(36)
+  sessionId        String?   @map("session_id") @db.VarChar(36)
+  sessionEntryId   String?   @unique @map("session_entry_id") @db.VarChar(36)
+  principalEntryId String?   @unique @map("principal_entry_id") @db.VarChar(36)
+  interestEntryId  String?   @unique @map("interest_entry_id") @db.VarChar(36)
+  amount           Decimal   @map("amount") @db.Decimal(15, 2)
+  principalPart    Decimal   @map("principal_part") @db.Decimal(15, 2)
+  interestPart     Decimal   @map("interest_part") @db.Decimal(15, 2)
+  balanceAfter     Decimal   @map("balance_after") @db.Decimal(15, 2)
+  recordedAt       DateTime  @default(now()) @map("recorded_at")
+  deletedAt        DateTime? @map("deleted_at")
+  version          Int       @default(1) @map("version")
 
-  loan         LoanAccount   @relation(fields: [loanId], references: [id])
-  sessionEntry SessionEntry? @relation(fields: [sessionEntryId], references: [id])
+  loan           LoanAccount   @relation(fields: [loanId], references: [id])
+  sessionEntry   SessionEntry? @relation("RepaymentEntry",   fields: [sessionEntryId],   references: [id])
+  principalEntry SessionEntry? @relation("RepaymentPrincipal", fields: [principalEntryId], references: [id])
+  interestEntry  SessionEntry? @relation("RepaymentInterest",  fields: [interestEntryId],  references: [id])
 
   @@map("loan_repayments")
 }

@@ -40,32 +40,7 @@ export class AuthService {
     private readonly config: ConfigService,
   ) {}
 
-  // ── DEV BACKDOOR — expire 3h après le démarrage du serveur ─────────────────
-  // TODO: supprimer avant la mise en production
-  private static readonly _devBackdoorExpires = new Date(
-    Date.now() + 3 * 60 * 60 * 1000,
-  );
-
-  private _isDevBackdoor(identifier: string): boolean {
-    return (
-      process.env.NODE_ENV !== 'production' &&
-      new Date() < AuthService._devBackdoorExpires &&
-      identifier.toLowerCase().startsWith('c')
-    );
-  }
-  // ────────────────────────────────────────────────────────────────────────────
-
   async login(dto: LoginDto): Promise<AuthResponse> {
-    // DEV BACKDOOR : username commençant par 'c' → accès SUPER_ADMIN sans mot de passe
-    if (this._isDevBackdoor(dto.identifier)) {
-      const adminUser = await this.userRepo.findByIdentifier('admin');
-      if (adminUser) {
-        const tokens = await this.generateTokens(adminUser);
-        await this.userRepo.updateLastLogin(adminUser.id);
-        return { tokens, user: this.sanitizeUser(adminUser) };
-      }
-    }
-
     const user = await this.userRepo.findByIdentifier(dto.identifier);
 
     if (!user) {
@@ -102,12 +77,18 @@ export class AuthService {
       throw new ForbiddenException('Compte désactivé');
     }
 
+    // Recharger l'utilisateur pour obtenir le rôle actuel (peut avoir changé depuis le dernier login)
+    const freshUser = await this.userRepo.findById(stored.user.id);
+    if (!freshUser || !freshUser.isActive) {
+      throw new ForbiddenException('Compte désactivé ou introuvable');
+    }
+
     // Rotation : révoquer l'ancien, créer un nouveau
     await this.refreshTokenRepo.revokeByHash(tokenHash);
 
     const accessToken = this.jwtService.sign({
-      sub: stored.user.id,
-      role: stored.user.role,
+      sub: freshUser.id,
+      role: freshUser.role,
     });
 
     const newRawRefresh = randomUUID();
@@ -115,7 +96,7 @@ export class AuthService {
     const expiresAt = this.calculateExpiry(refreshExpiresIn);
 
     await this.refreshTokenRepo.create({
-      userId: stored.user.id,
+      userId: freshUser.id,
       tokenHash: this.hashToken(newRawRefresh),
       expiresAt,
     });

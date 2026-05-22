@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { SessionsController } from './controllers/sessions.controller';
 import { SessionsService } from './services/sessions.service';
 import { SessionsRepository } from './repositories/sessions.repository';
+import { LoansModule } from '../loans/loans.module';
 
 @Module({
+  imports: [LoansModule],
   controllers: [SessionsController],
   providers: [SessionsService, SessionsRepository],
   exports: [SessionsService],

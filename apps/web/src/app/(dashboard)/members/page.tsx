@@ -77,7 +77,6 @@ export default function MembersPage() {
           <option value="SECRETAIRE_ADJOINT">Secrétaire Adjoint</option>
           <option value="TRESORIER">Trésorier</option>
           <option value="COMMISSAIRE_AUX_COMPTES">Commissaire aux comptes</option>
-          <option value="CENSEUR">Censeur</option>
           <option value="MEMBRE">Simple Membre</option>
         </Select>
         <button

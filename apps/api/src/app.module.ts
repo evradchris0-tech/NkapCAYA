@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { TontineConfigModule } from './modules/config/config.module';
@@ -17,8 +19,14 @@ import { PublicModule } from './modules/public/public.module';
 import { HealthModule } from './modules/health/health.module';
 
 @Module({
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard }, // Rate limiting global
+  ],
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([
+      { name: 'global', ttl: 60_000, limit: 120 }, // 120 req/min par défaut
+    ]),
     DatabaseModule,
     // Modules métier — ordre respectant les dépendances
     PublicModule,

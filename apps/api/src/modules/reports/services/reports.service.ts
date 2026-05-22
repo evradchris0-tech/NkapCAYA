@@ -101,16 +101,18 @@ export class ReportsService {
     const result = await this.prisma.$transaction(
       async (tx) => {
         // 2a. Create missing members
-        let seqCounter = Date.now() % 100000;
+        let seqCounter = 0;
         for (const name of membersToCreate) {
           seqCounter++;
           const parts = name.trim().split(/\s+/);
           const lastName = parts[0] || 'INCONNU';
           const firstName = parts.slice(1).join(' ') || 'IMPORT';
 
-          const phone = `+237600${String(seqCounter).padStart(6, '0')}`;
-          const passwordHash = await bcrypt.hash(`Caya@Import${seqCounter}`, 10);
-          const memberCode = `IMP${String(seqCounter).slice(-4)}`;
+          // Identifiants uniques : timestamp + index + random pour éviter les collisions
+          const uniqueSuffix = `${Date.now()}${seqCounter}${Math.random().toString(36).slice(2, 6)}`;
+          const phone = `+2376IMP${uniqueSuffix.slice(-8).padStart(8, '0')}`;
+          const passwordHash = await bcrypt.hash(`Caya@Import${uniqueSuffix}`, 10);
+          const memberCode = `IMP${uniqueSuffix.slice(-6).toUpperCase()}`;
 
           const user = await tx.user.create({
             data: {
@@ -282,9 +284,11 @@ export class ReportsService {
             },
           });
 
-          // Deposit entries
+          // Deposit entries — triées par mois pour garantir la cohérence de balanceAfter
           let runningBalance = 0;
-          for (const [monthStr, amount] of Object.entries(sav.deposits)) {
+          const sortedDeposits = Object.entries(sav.deposits)
+            .sort(([a], [b]) => Number(a) - Number(b));
+          for (const [monthStr, amount] of sortedDeposits) {
             const m = Number(monthStr);
             const amt = num(amount);
             if (amt <= 0) continue;
@@ -302,8 +306,10 @@ export class ReportsService {
             });
           }
 
-          // Interest entries
-          for (const [monthStr, amount] of Object.entries(sav.interests)) {
+          // Interest entries — triées par mois
+          const sortedInterests = Object.entries(sav.interests)
+            .sort(([a], [b]) => Number(a) - Number(b));
+          for (const [monthStr, amount] of sortedInterests) {
             const m = Number(monthStr);
             const amt = num(amount);
             if (amt <= 0) continue;

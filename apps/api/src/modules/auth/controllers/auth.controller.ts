@@ -1,5 +1,6 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiNoContentResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from '../services/auth.service';
 import { LoginDto } from '../dto/login.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
@@ -14,6 +15,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 60_000, limit: 5 } }) // 5 tentatives/min par IP
   @ApiOperation({ summary: 'Connexion via phone ou username' })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);

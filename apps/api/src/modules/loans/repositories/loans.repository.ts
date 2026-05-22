@@ -11,12 +11,12 @@ export class LoansRepository {
     return client.loanAccount.create({ data });
   }
 
-  findById(id: string) {
+  findById(id: string, opts: { withDetails?: boolean } = {}) {
     return this.prisma.loanAccount.findUnique({
       where: { id },
       include: {
-        monthlyAccruals: { orderBy: { month: 'asc' } },
-        repayments: { orderBy: { recordedAt: 'asc' } },
+        monthlyAccruals: opts.withDetails ? { orderBy: { month: 'asc' } } : false,
+        repayments: opts.withDetails ? { orderBy: { recordedAt: 'asc' } } : false,
         membership: { include: { profile: true } },
       },
     });

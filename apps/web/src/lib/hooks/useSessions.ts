@@ -73,7 +73,7 @@ export function useRecordEntry(sessionId: string) {
         )?.membership;
 
         const tempEntry: SessionEntry = {
-          id: `__temp_${Date.now()}`,
+          id: `__temp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
           sessionId,
           membershipId: payload.membershipId,
           type: payload.type,

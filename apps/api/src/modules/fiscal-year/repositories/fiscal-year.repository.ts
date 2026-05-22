@@ -11,8 +11,8 @@ export class FiscalYearRepository {
   }
 
   findAll() {
+    // Pas d'include config sur la liste — chargé uniquement dans findById()
     return this.prisma.fiscalYear.findMany({
-      include: { config: true },
       orderBy: { startDate: 'desc' },
     });
   }

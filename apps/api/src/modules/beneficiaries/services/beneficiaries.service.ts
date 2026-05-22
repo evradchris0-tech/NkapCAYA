@@ -33,6 +33,11 @@ export class BeneficiariesService {
     if (slot.status === BeneficiaryStatus.DELIVERED) {
       throw new ConflictException(`Slot is already ${slot.status} and cannot be reassigned`);
     }
+
+    const session = await this.prisma.monthlySession.findUnique({ where: { id: slot.sessionId } });
+    if (!session || session.status !== SessionStatus.OPEN) {
+      throw new ConflictException('La session doit être OPEN pour désigner un bénéficiaire');
+    }
     // Only UNASSIGNED and ASSIGNED are allowed for reassignment
 
     // Vérifier unicité (sessionId, membershipId) - exclure le slot actuel if already assigned
@@ -64,7 +69,7 @@ export class BeneficiariesService {
   }
 
   /** Marquer un slot ASSIGNED → DELIVERED (avec montant optionnel) */
-  async markDelivered(slotId: string, _actorId: string, dto?: MarkDeliveredDto) {
+  async markDelivered(slotId: string, actorId: string, dto?: MarkDeliveredDto) {
     const slot = await this.beneficiariesRepository.findSlotById(slotId);
     if (!slot) throw new NotFoundException(`Slot ${slotId} not found`);
 
@@ -72,7 +77,13 @@ export class BeneficiariesService {
       throw new ConflictException(`Slot is ${slot.status}, expected ASSIGNED`);
     }
 
-    const updateData: Parameters<typeof this.beneficiariesRepository.updateSlot>[1] = {
+    // Interdire la livraison sur une session DRAFT (pas encore ouverte)
+    const session = await this.prisma.monthlySession.findUnique({ where: { id: slot.sessionId } });
+    if (session?.status === 'DRAFT') {
+      throw new ConflictException('Impossible de livrer le pot sur une session DRAFT');
+    }
+
+    const updateData: Record<string, unknown> = {
       status: BeneficiaryStatus.DELIVERED,
       deliveredAt: new Date(),
     };
@@ -91,6 +102,11 @@ export class BeneficiariesService {
 
     if (slot.status === BeneficiaryStatus.UNASSIGNED) {
       throw new BadRequestException('Cannot set host on an unassigned slot');
+    }
+
+    const session = await this.prisma.monthlySession.findUnique({ where: { id: slot.sessionId } });
+    if (!session || session.status !== SessionStatus.OPEN) {
+      throw new ConflictException('La session doit être OPEN pour modifier l\'hôte');
     }
 
     await this.beneficiariesRepository.clearHostForSession(slot.sessionId, slotId);

@@ -116,14 +116,19 @@ export class FiscalYearService {
       }));
       await tx.beneficiarySlot.createMany({ data: slots });
 
-      // 5. Créer un SavingsLedger et RescueFundPosition par membre actif
-      for (const membership of activeMemberships) {
-        await this.fiscalYearRepository.createSavingsLedger({ membershipId: membership.id }, tx);
-        await this.fiscalYearRepository.createRescueFundPosition(
-          { membershipId: membership.id, ledgerId: ledger.id },
-          tx,
-        );
-      }
+      // 5. Créer SavingsLedger et RescueFundPosition en batch (createMany = 2 requêtes vs N×2)
+      await tx.savingsLedger.createMany({
+        data: activeMemberships.map((m) => ({ membershipId: m.id })),
+      });
+      await tx.rescueFundPosition.createMany({
+        data: activeMemberships.map((m) => ({
+          membershipId: m.id,
+          ledgerId: ledger.id,
+          paidAmount: '0',
+          balance: '0',
+          refillDebt: '0',
+        })),
+      });
 
       // 6. Activer l'exercice
       return this.fiscalYearRepository.updateStatus(
@@ -153,7 +158,7 @@ export class FiscalYearService {
     );
   }
 
-  async openCassation(id: string, _actorId: string) {
+  async openCassation(id: string, actorId: string) {
     const fy = await this.fiscalYearRepository.findById(id);
     if (!fy) throw new NotFoundException(`Exercice fiscal introuvable : ${id}`);
     if (fy.status !== FiscalYearStatus.ACTIVE) {
@@ -161,7 +166,21 @@ export class FiscalYearService {
         `L'exercice doit être ACTIVE pour ouvrir la cassation (actuel : ${fy.status})`,
       );
     }
-    return this.fiscalYearRepository.updateStatus(id, FiscalYearStatus.CASSATION);
+
+    // Vérifier que toutes les sessions sont clôturées
+    const openSessions = await this.prisma.monthlySession.count({
+      where: { fiscalYearId: id, status: { in: ['OPEN', 'REVIEWING'] as any } },
+    });
+    if (openSessions > 0) {
+      throw new ConflictException(
+        `${openSessions} session(s) encore ouverte(s). Clôturez-les avant d'ouvrir la cassation.`,
+      );
+    }
+
+    return this.fiscalYearRepository.updateStatus(id, FiscalYearStatus.CASSATION, {
+      openedAt: new Date(),
+      openedById: actorId,
+    });
   }
 
   async addMember(fiscalYearId: string, dto: AddMemberDto, _actorId: string) {

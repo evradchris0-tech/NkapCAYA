@@ -650,10 +650,10 @@ export default function SessionDetailPage({ params }: Props) {
                     Recettes
                   </td>
                 </tr>
+                {/* SECOURS exclu des recettes : c'est un versement sortant de la caisse de secours */}
                 {[
                   { label: TRANSACTION_TYPE_LABELS[TransactionType.COTISATION], value: session.totalCotisation },
                   { label: TRANSACTION_TYPE_LABELS[TransactionType.EPARGNE], value: session.totalEpargne },
-                  { label: TRANSACTION_TYPE_LABELS[TransactionType.SECOURS], value: session.totalSecours },
                   { label: TRANSACTION_TYPE_LABELS[TransactionType.PROJET], value: session.totalProjet },
                   { label: TRANSACTION_TYPE_LABELS[TransactionType.POT], value: session.totalPot },
                   { label: TRANSACTION_TYPE_LABELS[TransactionType.RBT_PRINCIPAL], value: session.totalRbtPrincipal },
@@ -670,12 +670,21 @@ export default function SessionDetailPage({ params }: Props) {
                       </td>
                     </tr>
                   ))}
-                <tr className="border-t border-emerald-100 bg-emerald-50/60">
-                  <td className="px-6 py-2.5 text-sm font-bold text-emerald-800">Total Recettes</td>
-                  <td className="px-6 py-2.5 text-right tabular-nums font-bold text-emerald-800">
-                    {derived.totalGeneral.toLocaleString('fr-FR')}
-                  </td>
-                </tr>
+                {(() => {
+                  const totalRecettes = [
+                    session.totalCotisation, session.totalEpargne, session.totalProjet,
+                    session.totalPot, session.totalRbtPrincipal, session.totalRbtInterest,
+                    session.totalInscription, session.totalAutres,
+                  ].reduce((s, v) => s + parseFloat(v || '0'), 0);
+                  return (
+                    <tr className="border-t border-emerald-100 bg-emerald-50/60">
+                      <td className="px-6 py-2.5 text-sm font-bold text-emerald-800">Total Recettes</td>
+                      <td className="px-6 py-2.5 text-right tabular-nums font-bold text-emerald-800">
+                        {totalRecettes.toLocaleString('fr-FR')}
+                      </td>
+                    </tr>
+                  );
+                })()}
 
                 {/* DÉPENSES */}
                 <tr className="bg-rose-50/40">
@@ -705,11 +714,28 @@ export default function SessionDetailPage({ params }: Props) {
                     <td colSpan={2} className="px-6 py-2.5 text-xs text-gray-400 pl-10 italic">Aucune tontine versée pour cette session</td>
                   </tr>
                 )}
+                {/* Secours versés depuis la caisse de secours */}
+                {parseFloat(session.totalSecours || '0') > 0 && (
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-2.5 text-gray-600 pl-10">
+                      {TRANSACTION_TYPE_LABELS[TransactionType.SECOURS]} (caisse de secours)
+                    </td>
+                    <td className="px-6 py-2.5 text-right tabular-nums font-medium text-rose-700">
+                      {parseFloat(session.totalSecours).toLocaleString('fr-FR')}
+                    </td>
+                  </tr>
+                )}
                 {(() => {
+                  const secoursTotal = parseFloat(session.totalSecours || '0');
                   const totalDepenses = beneficiarySlots
                     .filter((s) => s.status === 'DELIVERED')
-                    .reduce((sum, s) => sum + parseFloat(s.amountDelivered || '0'), 0);
-                  const solde = derived.totalGeneral - totalDepenses;
+                    .reduce((sum, s) => sum + parseFloat(s.amountDelivered || '0'), 0) + secoursTotal;
+                  const totalRecettes = [
+                    session.totalCotisation, session.totalEpargne, session.totalProjet,
+                    session.totalPot, session.totalRbtPrincipal, session.totalRbtInterest,
+                    session.totalInscription, session.totalAutres,
+                  ].reduce((s, v) => s + parseFloat(v || '0'), 0);
+                  const solde = totalRecettes - totalDepenses;
                   return (
                     <>
                       <tr className="border-t border-rose-100 bg-rose-50/60">
@@ -833,7 +859,13 @@ export default function SessionDetailPage({ params }: Props) {
             </Button>
             <Button
               onClick={() => {
-                const amount = deliveryAmount ? parseFloat(deliveryAmount) : undefined;
+                const amount = parseFloat(deliveryAmount);
+                if (!deliveryAmount || isNaN(amount) || amount <= 0) {
+                  import('react-hot-toast').then(({ default: toast }) =>
+                    toast.error('Saisir un montant avant de confirmer la remise')
+                  );
+                  return;
+                }
                 markDelivered.mutate({ slotId: deliverySlotId!, amount });
                 setDeliverySlotId(null);
               }}
@@ -876,12 +908,16 @@ export default function SessionDetailPage({ params }: Props) {
               onClick={() => {
                 if (!editEntry) return;
                 const amount = parseFloat(editAmount);
-                if (!isNaN(amount) && amount > 0) {
-                  updateEntry.mutate(
-                    { entryId: editEntry.id, payload: { amount, notes: editNotes || undefined } },
-                    { onSuccess: () => setEditEntry(null) },
+                if (isNaN(amount) || amount <= 0) {
+                  import('react-hot-toast').then(({ default: toast }) =>
+                    toast.error('Le montant doit être supérieur à 0')
                   );
+                  return;
                 }
+                updateEntry.mutate(
+                  { entryId: editEntry.id, payload: { amount, notes: editNotes || undefined } },
+                  { onSuccess: () => setEditEntry(null) },
+                );
               }}
             >
               Enregistrer

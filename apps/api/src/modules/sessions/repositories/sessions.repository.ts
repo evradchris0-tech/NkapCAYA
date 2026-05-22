@@ -42,7 +42,7 @@ export class SessionsRepository {
   updateStatus(
     id: string,
     status: SessionStatus,
-    extra?: Partial<{ openedAt: Date; openedById: string; closedAt: Date; closedById: string }>,
+    extra?: Partial<{ openedAt: Date; openedById: string; closedAt: Date; closedById: string; reopenReason: string }>,
     tx?: Prisma.TransactionClient,
   ) {
     const client = tx ?? this.prisma;

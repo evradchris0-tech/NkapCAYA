@@ -82,17 +82,11 @@ export function useApplyRepayment(loanId: string) {
       const previous = queryClient.getQueryData<LoanAccount>([...LOANS_KEY, loanId]);
       queryClient.setQueryData<LoanAccount>([...LOANS_KEY, loanId], (old) => {
         if (!old) return old;
-        const newBalance = Math.max(0, parseFloat(old.outstandingBalance) - payload.amount);
+        // On ne connaît pas la décomposition principal/intérêt côté client.
+        // Mise à jour optimiste prudente : seulement totalRepaid + status probable.
+        // outstandingBalance sera corrigé par l'invalidation onSettled.
         const newRepaid = parseFloat(old.totalRepaid) + payload.amount;
-        const newStatus: LoanStatus = newBalance <= 0
-          ? LoanStatus.CLOSED
-          : LoanStatus.PARTIALLY_REPAID;
-        return {
-          ...old,
-          outstandingBalance: String(newBalance),
-          totalRepaid: String(newRepaid),
-          status: newStatus,
-        };
+        return { ...old, totalRepaid: String(newRepaid) };
       });
       return { previous };
     },

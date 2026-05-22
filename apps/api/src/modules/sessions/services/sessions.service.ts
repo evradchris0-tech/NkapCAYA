@@ -6,7 +6,9 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
 import { Prisma, SessionStatus, TransactionType, SavingsEntryType } from '@prisma/client';
+import Decimal from 'decimal.js';
 import { SessionsRepository } from '../repositories/sessions.repository';
+import { LoansService } from '../../loans/services/loans.service';
 import { RecordEntryDto } from '../dto/record-entry.dto';
 import { UpdateEntryDto } from '../dto/update-entry.dto';
 import * as dayjs from 'dayjs';
@@ -45,6 +47,7 @@ export class SessionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sessionsRepository: SessionsRepository,
+    private readonly loansService: LoansService,
   ) {}
 
   async getSession(sessionId: string) {
@@ -91,10 +94,17 @@ export class SessionsService {
       }
     }
 
-    return this.sessionsRepository.updateStatus(sessionId, SessionStatus.OPEN, {
+    const updated = await this.sessionsRepository.updateStatus(sessionId, SessionStatus.OPEN, {
       openedAt: new Date(),
       openedById: actorId,
     });
+
+    // Calculer les accruals d'intérêt pour tous les prêts actifs de l'exercice.
+    // Fire-and-forget : si ça échoue (ex: aucun prêt actif), la session reste ouverte.
+    this.loansService.computeAccrualsForSession(session.fiscalYearId, sessionId)
+      .catch((err) => console.error(`[openSession] accrual error session ${sessionId}:`, err?.message));
+
+    return updated;
   }
 
   /** CLOSED → OPEN (M-03 : reopen par SUPER_ADMIN uniquement) */
@@ -112,7 +122,9 @@ export class SessionsService {
       throw new BadRequestException('A reason must be provided to reopen a closed session');
     }
 
-    return this.sessionsRepository.updateStatus(sessionId, SessionStatus.OPEN, {});
+    return this.sessionsRepository.updateStatus(sessionId, SessionStatus.OPEN, {
+      reopenReason: reason.trim(),
+    });
   }
 
   /** Enregistrer une transaction dans une session ouverte */
@@ -145,6 +157,14 @@ export class SessionsService {
             `Type ${dto.type} is not allowed for out-of-session entry. Only ${allowedTypes.join(', ')} are permitted.`,
           );
         }
+      }
+
+      // RBT_* via recordEntry nécessitent un loanId — sinon utiliser /loans/:id/repayments
+      const repaymentTypes: TransactionType[] = [TransactionType.RBT_PRINCIPAL, TransactionType.RBT_INTEREST];
+      if (repaymentTypes.includes(dto.type) && !dto.loanId) {
+        throw new BadRequestException(
+          `${dto.type} requiert un loanId. Utilisez l'endpoint POST /loans/:id/repayments pour enregistrer un remboursement.`,
+        );
       }
 
       // Vérifier que le membership appartient au fiscal year
@@ -207,7 +227,6 @@ export class SessionsService {
 
       // Si type SECOURS → update RescueFundPosition et RescueFundLedger
       if (dto.type === TransactionType.SECOURS) {
-        const Decimal = (await import('decimal.js')).default;
         const position = await tx.rescueFundPosition.findUnique({
           where: { membershipId: dto.membershipId }
         });
@@ -244,13 +263,18 @@ export class SessionsService {
   async updateEntry(sessionId: string, entryId: string, dto: UpdateEntryDto) {
     return this.prisma.$transaction(async (tx) => {
       const entry = await tx.sessionEntry.findUnique({ where: { id: entryId } });
-      if (!entry || entry.sessionId !== sessionId) {
-        throw new NotFoundException(`Transaction ${entryId} introuvable dans la session ${sessionId}`);
+      if (!entry) {
+        throw new NotFoundException(`Transaction ${entryId} introuvable`);
+      }
+      // Pour les entrées hors-session (sessionId = null), on autorise si le sessionId
+      // passé correspond à l'exercice. Pour les entrées normales, vérifier la session.
+      if (entry.sessionId !== null && entry.sessionId !== sessionId) {
+        throw new NotFoundException(`Transaction ${entryId} n'appartient pas à la session ${sessionId}`);
       }
 
       const session = await tx.monthlySession.findUnique({ where: { id: sessionId } });
       if (!session) throw new NotFoundException(`Session ${sessionId} introuvable`);
-      if (session.status === SessionStatus.CLOSED) {
+      if (session.status === SessionStatus.CLOSED && !entry.isOutOfSession) {
         throw new ConflictException('Impossible de modifier une transaction dans une session clôturée');
       }
 
@@ -274,17 +298,36 @@ export class SessionsService {
             where: { sessionEntryId: entryId },
           });
           if (savingsEntry) {
-            const ledger = await tx.savingsLedger.findUnique({ where: { id: savingsEntry.ledgerId } });
-            if (ledger) {
+            // Mettre à jour le montant de l'entrée modifiée
+            const updatedEntry = await tx.savingsEntry.update({
+              where: { id: savingsEntry.id },
+              data: {
+                amount: { increment: diff },
+                balanceAfter: { increment: diff },
+              },
+            });
+
+            // Recalculer toutes les entrées postérieures pour maintenir la cohérence
+            // de la chaîne balanceAfter (ordre chronologique)
+            const laterEntries = await tx.savingsEntry.findMany({
+              where: {
+                ledgerId: savingsEntry.ledgerId,
+                createdAt: { gt: updatedEntry.createdAt },
+              },
+              orderBy: { createdAt: 'asc' },
+            });
+            for (const later of laterEntries) {
               await tx.savingsEntry.update({
-                where: { id: savingsEntry.id },
-                data: { amount: { increment: diff }, balanceAfter: { increment: diff } },
-              });
-              await tx.savingsLedger.update({
-                where: { id: ledger.id },
-                data: { balance: { increment: diff }, principalBalance: { increment: diff } },
+                where: { id: later.id },
+                data: { balanceAfter: { increment: diff } },
               });
             }
+
+            // Mettre à jour le ledger
+            await tx.savingsLedger.update({
+              where: { id: savingsEntry.ledgerId },
+              data: { balance: { increment: diff }, principalBalance: { increment: diff } },
+            });
           }
         }
 
@@ -293,7 +336,6 @@ export class SessionsService {
             where: { membershipId: entry.membershipId },
           });
           if (position) {
-            const Decimal = (await import('decimal.js')).default;
             const newRefillDebt = Decimal.max(
               new Decimal(0),
               new Decimal(position.refillDebt.toString()).minus(diff),
@@ -328,13 +370,16 @@ export class SessionsService {
   async deleteEntry(sessionId: string, entryId: string) {
     return this.prisma.$transaction(async (tx) => {
       const entry = await tx.sessionEntry.findUnique({ where: { id: entryId } });
-      if (!entry || entry.sessionId !== sessionId) {
-        throw new NotFoundException(`Transaction ${entryId} introuvable dans la session ${sessionId}`);
+      if (!entry) {
+        throw new NotFoundException(`Transaction ${entryId} introuvable`);
+      }
+      if (entry.sessionId !== null && entry.sessionId !== sessionId) {
+        throw new NotFoundException(`Transaction ${entryId} n'appartient pas à la session ${sessionId}`);
       }
 
       const session = await tx.monthlySession.findUnique({ where: { id: sessionId } });
       if (!session) throw new NotFoundException(`Session ${sessionId} introuvable`);
-      if (session.status === SessionStatus.CLOSED) {
+      if (session.status === SessionStatus.CLOSED && !entry.isOutOfSession) {
         throw new ConflictException('Impossible de supprimer une transaction dans une session clôturée');
       }
 
@@ -401,11 +446,8 @@ export class SessionsService {
       );
     }
 
-    return this.sessionsRepository.updateStatus(
-      sessionId,
-      SessionStatus.REVIEWING,
-      { closedAt: new Date(), closedById: actorId },
-    );
+    // closedAt/closedById sont réservés à validateAndClose — pas prématurément ici
+    return this.sessionsRepository.updateStatus(sessionId, SessionStatus.REVIEWING);
   }
 
   /** REVIEWING → CLOSED + distribution des intérêts (atomique) */
@@ -518,8 +560,6 @@ export class SessionsService {
     actorId: string,
     tx?: Prisma.TransactionClient,
   ) {
-    const Decimal = (await import('decimal.js')).default;
-
     const run = async (tx: Prisma.TransactionClient) => {
       const config = session.fiscalYear.config;
       const method = config?.interestPoolMethod ?? 'THEORETICAL';
@@ -579,43 +619,56 @@ export class SessionsService {
         },
       });
 
-      // 4. Allouer à chaque ledger membre
+      // 4. Calculer les allocations membres et préparer les batch inserts
+      const savingsEntriesToCreate: {
+        ledgerId: string; sessionId: string; month: number;
+        amount: string; type: SavingsEntryType; balanceAfter: string;
+      }[] = [];
+      const interestAllocationsToCreate: {
+        snapshotId: string; membershipId: string;
+        savingsBalance: string; allocationAmount: string;
+      }[] = [];
+      // Les updates de ledger restent séquentiels (increment individuel)
+      const ledgerUpdates: { id: string; newBalance: string; increment: number }[] = [];
+
       for (const ledger of ledgers) {
         const balance = new Decimal(ledger.balance.toString());
         const allocation = balance.div(totalSavingsBase).mul(totalInterestPool).toDecimalPlaces(2);
-
         if (allocation.isZero()) continue;
 
         const newBalance = balance.plus(allocation);
-
-        await tx.savingsEntry.create({
-          data: {
-            ledgerId: ledger.id,
-            sessionId: session.id,
-            month: session.sessionNumber,
-            amount: allocation.toFixed(2),
-            type: SavingsEntryType.INTEREST_CREDIT,
-            balanceAfter: newBalance.toFixed(2),
-          },
+        savingsEntriesToCreate.push({
+          ledgerId: ledger.id,
+          sessionId: session.id,
+          month: session.sessionNumber,
+          amount: allocation.toFixed(2),
+          type: SavingsEntryType.INTEREST_CREDIT,
+          balanceAfter: newBalance.toFixed(2),
         });
+        interestAllocationsToCreate.push({
+          snapshotId: snapshot.id,
+          membershipId: ledger.membershipId,
+          savingsBalance: balance.toFixed(2),
+          allocationAmount: allocation.toFixed(2),
+        });
+        ledgerUpdates.push({
+          id: ledger.id,
+          newBalance: newBalance.toFixed(2),
+          increment: Number(allocation.toFixed(2)),
+        });
+      }
 
+      // Batch inserts : 2 requêtes au lieu de N×3
+      if (savingsEntriesToCreate.length > 0) {
+        await tx.savingsEntry.createMany({ data: savingsEntriesToCreate });
+        await tx.interestAllocation.createMany({ data: interestAllocationsToCreate });
+      }
+
+      // Updates ledger séquentiels (pas de updateMany sur increment individuel)
+      for (const u of ledgerUpdates) {
         await tx.savingsLedger.update({
-          where: { id: ledger.id },
-          data: {
-            balance: newBalance.toFixed(2),
-            totalInterestReceived: {
-              increment: Number(allocation.toFixed(2)),
-            },
-          },
-        });
-
-        await tx.interestAllocation.create({
-          data: {
-            snapshotId: snapshot.id,
-            membershipId: ledger.membershipId,
-            savingsBalance: balance.toFixed(2),
-            allocationAmount: allocation.toFixed(2),
-          },
+          where: { id: u.id },
+          data: { balance: u.newBalance, totalInterestReceived: { increment: u.increment } },
         });
       }
 
@@ -630,9 +683,7 @@ export class SessionsService {
           where: { id: participant.id },
           data: {
             currentBalance: balance.plus(allocation).toFixed(2),
-            totalInterestReceived: {
-              increment: Number(allocation.toFixed(2)),
-            },
+            totalInterestReceived: { increment: Number(allocation.toFixed(2)) },
           },
         });
       }

@@ -19,9 +19,9 @@ export class RecordEntryDto {
   @IsEnum(TransactionType)
   type: TransactionType;
 
-  @ApiProperty({ description: 'Amount in XAF', minimum: 0 })
+  @ApiProperty({ description: 'Amount in XAF', minimum: 1 })
   @IsNumber()
-  @Min(0)
+  @Min(1)
   amount: number;
 
   @ApiPropertyOptional({ description: 'Loan ID (required for RBT_PRINCIPAL / RBT_INTEREST)' })

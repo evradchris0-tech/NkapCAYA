@@ -58,12 +58,14 @@ export class CassationService {
       const config = fiscalYear.config;
       const method = config?.interestPoolMethod ?? 'THEORETICAL';
 
-      // ── Étape C-06 : Créer l'exercice (N+1) immédiatement pour le repo des prêts
+      // ── Étape C-06 : Créer ou réutiliser l'exercice (N+1) pour le repo des prêts
       const nextStartYear = dayjs(fiscalYear.startDate).add(1, 'year');
       const nextEndYear = dayjs(fiscalYear.endDate).add(1, 'year');
       const nextLabel = `${nextStartYear.year()}-${nextEndYear.year()}`;
-      
-      const nextFiscalYear = await tx.fiscalYear.create({
+
+      // Upsert : si l'admin a déjà créé l'exercice N+1 manuellement, on le réutilise.
+      const existingNext = await tx.fiscalYear.findUnique({ where: { label: nextLabel } });
+      const nextFiscalYear = existingNext ?? await tx.fiscalYear.create({
         data: {
           label: nextLabel,
           startDate: nextStartYear.toDate(),
@@ -71,8 +73,8 @@ export class CassationService {
           cassationDate: dayjs(fiscalYear.cassationDate).add(1, 'year').toDate(),
           loanDueDate: dayjs(fiscalYear.loanDueDate).add(1, 'year').toDate(),
           status: FiscalYearStatus.PENDING,
-          openedById: actorId, // Set to the admin running cassation
-        }
+          openedById: actorId,
+        },
       });
 
       // ── Étape 2 : totalInterestPool ──────────────────────────────────────────
@@ -120,6 +122,15 @@ export class CassationService {
         tx,
       );
 
+      // Calculer les allocations et accumuler les totaux
+      const redistributionData: {
+        cassationId: string;
+        membershipId: string;
+        savingsAmount: string;
+        interestAmount: string;
+        totalReturned: string;
+      }[] = [];
+
       for (const ledger of ledgers) {
         const savingsBalance = new Decimal(ledger.balance.toString());
 
@@ -131,28 +142,26 @@ export class CassationService {
             .toDecimalPlaces(2);
         }
 
-        const totalReturned = savingsBalance.plus(interestAllocation);
-
         totalSavingsReturned = totalSavingsReturned.plus(savingsBalance);
         totalInterestReturned = totalInterestReturned.plus(interestAllocation);
 
-        await this.cassationRepository.createRedistribution(
-          {
-            cassationId: cassation.id,
-            membershipId: ledger.membershipId,
-            savingsAmount: savingsBalance.toFixed(2),
-            interestAmount: interestAllocation.toFixed(2),
-            totalReturned: totalReturned.toFixed(2),
-          },
-          tx,
-        );
-
-        // Vider le ledger (solde distribué)
-        await tx.savingsLedger.update({
-          where: { id: ledger.id },
-          data: { balance: '0' },
+        redistributionData.push({
+          cassationId: cassation.id,
+          membershipId: ledger.membershipId,
+          savingsAmount: savingsBalance.toFixed(2),
+          interestAmount: interestAllocation.toFixed(2),
+          totalReturned: savingsBalance.plus(interestAllocation).toFixed(2),
         });
       }
+
+      // Insérer toutes les redistributions en une seule requête
+      await tx.cassationRedistribution.createMany({ data: redistributionData });
+
+      // Remettre tous les ledgers à zéro en batch
+      await tx.savingsLedger.updateMany({
+        where: { membership: { fiscalYearId } },
+        data: { balance: '0', principalBalance: '0', totalInterestReceived: '0' },
+      });
 
       // ── Étape 5 : Carryover des prêts non remboursés (LOAN-02 : ×1.04) ──────
       const openLoans = await tx.loanAccount.findMany({
@@ -162,27 +171,26 @@ export class CassationService {
         },
       });
 
-      for (const loan of openLoans) {
-        const carryover = new Decimal(loan.outstandingBalance.toString())
-          .mul('1.04')
-          .toDecimalPlaces(2);
-
-
-
-        await tx.carryoverLoanRecord.create({
-          data: {
-            originalLoanId: loan.id,
-            newFiscalYearId: nextFiscalYear.id, // (C-05) : porté sur le nouvel exercice
-            carryoverAmount: carryover.toFixed(2),
-            approvedById: actorId,
-          },
-        });
-      }
+      // Insérer tous les carryovers en une seule requête
+      await tx.carryoverLoanRecord.createMany({
+        data: openLoans.map((loan) => ({
+          originalLoanId: loan.id,
+          newFiscalYearId: nextFiscalYear.id,
+          carryoverAmount: new Decimal(loan.outstandingBalance.toString())
+            .mul('1.04')
+            .toDecimalPlaces(2)
+            .toFixed(2),
+          approvedById: actorId,
+        })),
+      });
 
       // ── Étape 6 : Parts institutionnelles (PoolParticipants) ─────────────────
+      let totalPoolDistributed = new Decimal(0);
       for (const participant of poolParticipants) {
         const balance = new Decimal(participant.currentBalance.toString());
         const totalInterest = new Decimal(participant.totalInterestReceived.toString());
+
+        totalPoolDistributed = totalPoolDistributed.plus(balance);
 
         await this.cassationRepository.createPoolParticipantShare(
           {
@@ -202,7 +210,10 @@ export class CassationService {
         });
       }
 
-      const totalDistributed = totalSavingsReturned.plus(totalInterestReturned);
+      // totalDistributed = membres + institutions (bilan comptable complet)
+      const totalDistributed = totalSavingsReturned
+        .plus(totalInterestReturned)
+        .plus(totalPoolDistributed);
 
       // ── Étape 7 : Mettre à jour le CassationRecord avec les totaux ───────────
       const finalRecord = await tx.cassationRecord.update({
@@ -215,10 +226,16 @@ export class CassationService {
         },
       });
 
-      // ── Étape 8 : FiscalYear → CLOSED ────────────────────────────────────────
+      // ── Étape 8 : Fermer les sessions non encore clôturées (DRAFT/REVIEWING) ──
+      await tx.monthlySession.updateMany({
+        where: { fiscalYearId, status: { not: 'CLOSED' } },
+        data: { status: 'CLOSED', closedAt: new Date(), closedById: actorId },
+      });
+
+      // ── Étape 9 : FiscalYear → CLOSED ────────────────────────────────────────
       await tx.fiscalYear.update({
         where: { id: fiscalYearId },
-        data: { status: FiscalYearStatus.CLOSED },
+        data: { status: FiscalYearStatus.CLOSED, closedAt: new Date(), closedById: actorId },
       });
 
       return finalRecord;

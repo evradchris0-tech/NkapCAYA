@@ -14,19 +14,28 @@ export const apiClient = axios.create({
   timeout: 15_000,
 });
 
-// ── Request interceptor: attach JWT ───────────────────────────────────────────
-apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem(ACCESS_TOKEN_KEY);
-      if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
-    return config;
+// Client avec timeout long pour les opérations lourdes (import CAYABASE, exports volumineux)
+export const longTimeoutClient = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
   },
-  (error) => Promise.reject(error)
-);
+  timeout: 180_000,
+});
+
+// ── Request interceptor: attach JWT (partagé entre les deux clients) ─────────
+const attachJwt = (config: InternalAxiosRequestConfig) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+  return config;
+};
+
+apiClient.interceptors.request.use(attachJwt, (error) => Promise.reject(error));
+longTimeoutClient.interceptors.request.use(attachJwt, (error) => Promise.reject(error));
 
 // ── Response interceptor: silent refresh on 401 ──────────────────────────────
 let isRefreshing = false;

@@ -213,15 +213,21 @@ export default function DashboardPage() {
   );
 
   // ── Données graphes supplémentaires ────────────────────────────────────
-  const savingsChartData = useMemo(() => (sessions ?? []).map((s) => ({
+  // Sessions triées par numéro pour l'axe X chronologique
+  const sortedSessions = useMemo(
+    () => [...(sessions ?? [])].sort((a, b) => a.sessionNumber - b.sessionNumber),
+    [sessions],
+  );
+
+  const savingsChartData = useMemo(() => sortedSessions.map((s) => ({
     label: `S${s.sessionNumber}`,
     Épargne: Math.round(parseFloat(s.totalEpargne || '0')),
-  })), [sessions]);
+  })), [sortedSessions]);
 
-  const cotisationsChartData = useMemo(() => (sessions ?? []).map((s) => ({
+  const cotisationsChartData = useMemo(() => sortedSessions.map((s) => ({
     label: `S${s.sessionNumber}`,
     Cotisations: Math.round(parseFloat(s.totalCotisation || '0')),
-  })), [sessions]);
+  })), [sortedSessions]);
 
   // Session ouverte en cours
   const openSession = sessions?.find((s) => s.status === 'OPEN');

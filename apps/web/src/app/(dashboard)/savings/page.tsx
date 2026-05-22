@@ -184,7 +184,11 @@ function MemberDetail({ membershipId, displayName }: MemberDetailProps) {
 
   // Agréger par mois pour le graphe
   const byMonth: Record<number, { versement: number; interets: number; solde: number }> = {};
-  (ledger.entries ?? []).forEach((e) => {
+  // Tri chronologique pour garantir que balanceAfter reflète le bon solde de fin de mois
+  const sortedEntries = [...(ledger.entries ?? [])].sort((a, b) =>
+    a.month !== b.month ? a.month - b.month : a.createdAt.localeCompare(b.createdAt),
+  );
+  sortedEntries.forEach((e) => {
     if (!byMonth[e.month]) byMonth[e.month] = { versement: 0, interets: 0, solde: 0 };
     if (e.type === 'DEPOSIT')         byMonth[e.month].versement += parseFloat(e.amount);
     if (e.type === 'INTEREST_CREDIT') byMonth[e.month].interets  += parseFloat(e.amount);
@@ -295,7 +299,7 @@ function MemberDetail({ membershipId, displayName }: MemberDetailProps) {
       )}
 
       {/* Historique des mouvements */}
-      {ledger.entries && ledger.entries.length > 0 ? (
+      {sortedEntries.length > 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
             <h2 className="text-base font-semibold text-gray-800">Historique des mouvements</h2>
@@ -310,7 +314,7 @@ function MemberDetail({ membershipId, displayName }: MemberDetailProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {ledger.entries.map((entry) => (
+              {sortedEntries.map((entry) => (
                 <tr key={entry.id} className="hover:bg-gray-50">
                   <td className="px-6 py-3 text-gray-700">M{entry.month}</td>
                   <td className="px-6 py-3">

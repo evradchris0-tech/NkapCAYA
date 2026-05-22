@@ -98,7 +98,7 @@ function CredentialsModal({
         <div className="flex flex-col gap-2">
           <CopyRow label="Code membre" value={result.profile.memberCode} />
           <CopyRow label="Identifiant (username)" value={username} />
-          <CopyRow label="Mot de passe temporaire" value={result.temporaryPassword} />
+          <CopyRow label="Mot de passe temporaire" value={`Caya@${result.profile.memberCode}`} />
         </div>
 
         <p className="text-[11px] text-gray-400 text-center">

@@ -16,7 +16,6 @@ import { PaginatedResult, paginate } from '@common/interfaces/paginated-result.i
 
 export interface CreateMemberResult {
   profile: MemberProfileWithUser;
-  temporaryPassword: string;
 }
 
 @Injectable()
@@ -104,7 +103,6 @@ export class MembersService {
 
     return {
       profile: profile as MemberProfileWithUser,
-      temporaryPassword,
     };
   }
 
@@ -169,16 +167,16 @@ export class MembersService {
 
   async deactivate(id: string): Promise<void> {
     const profile = await this.findById(id);
-    await this.prisma.$transaction([
-      this.prisma.user.update({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
         where: { id: profile.user.id },
         data: { isActive: false, deletedAt: new Date() },
-      }),
-      this.prisma.memberProfile.update({
+      });
+      await tx.memberProfile.update({
         where: { id: profile.id },
         data: { deletedAt: new Date() },
-      })
-    ]);
+      });
+    });
   }
 
   async getMemberships(id: string) {
@@ -226,16 +224,16 @@ export class MembersService {
        include: { user: true }
     });
     if (!profile) throw new NotFoundException('Membre introuvable');
-    await this.prisma.$transaction([
-      this.prisma.user.update({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
         where: { id: profile.user.id },
         data: { isActive: true, deletedAt: null },
-      }),
-      this.prisma.memberProfile.update({
+      });
+      await tx.memberProfile.update({
         where: { id: profile.id },
         data: { deletedAt: null },
-      })
-    ]);
+      });
+    });
   }
 
   async resetPassword(id: string): Promise<void> {
@@ -267,15 +265,16 @@ export class MembersService {
   // ── Helpers privés ────────────────────────────────────────────────────────
 
   private async generateUniqueMemberCode(): Promise<string> {
-    const count = await this.prisma.memberProfile.count();
+    // Compter uniquement les profils actifs pour éviter les faux gaps dus aux soft-deletes
+    const count = await this.prisma.memberProfile.count({ where: { deletedAt: null } });
     let next = count + 1;
-    let code: string;
-    let safety = 0;
-    do {
-      code = `CAYA${String(next).padStart(3, '0')}`;
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const code = `CAYA${String(next).padStart(3, '0')}`;
+      const exists = await this.membersRepository.memberCodeExists(code);
+      if (!exists) return code;
       next++;
-      if (++safety > 50) throw new Error('Impossible de générer un memberCode unique');
-    } while (await this.membersRepository.memberCodeExists(code));
-    return code;
+    }
+    // Fallback UUID-based si 200 tentatives échouent (très improbable)
+    return `CAYA${Date.now().toString(36).toUpperCase().slice(-5)}`;
   }
 }

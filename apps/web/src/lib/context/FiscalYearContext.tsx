@@ -45,6 +45,14 @@ export function FiscalYearProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Nettoyer un ID de FY obsolète (exercice supprimé entre deux sessions)
+  useEffect(() => {
+    if (!fiscalYears || !selectedFyId) return;
+    if (!fiscalYears.find((fy) => fy.id === selectedFyId)) {
+      setSelectedFyId(''); // ID invalide → reset silencieux
+    }
+  }, [fiscalYears, selectedFyId, setSelectedFyId]);
+
   // Auto-select ACTIVE > CASSATION > premier — uniquement si aucune valeur stockée
   useEffect(() => {
     if (!selectedFyId && fiscalYears && fiscalYears.length > 0) {
@@ -58,7 +66,8 @@ export function FiscalYearProvider({ children }: { children: ReactNode }) {
 
   const selectedFy = fiscalYears?.find((fy) => fy.id === selectedFyId);
   const activeFy = fiscalYears?.find((fy) => fy.status === 'ACTIVE');
-  const isReadOnly = selectedFy?.status !== 'ACTIVE';
+  // CASSATION : encore modifiable (remboursements de fin d'exercice possibles)
+  const isReadOnly = !selectedFy || !['ACTIVE', 'CASSATION'].includes(selectedFy.status);
 
   return (
     <FiscalYearContext.Provider

@@ -184,7 +184,6 @@ export interface EmergencyContact {
 
 export interface CreateMemberResult {
   profile: Member;
-  temporaryPassword: string;
 }
 
 // ─────────────────────────────────────────────────────────

@@ -94,6 +94,7 @@ export class LoansService {
 
   /** PENDING → ACTIVE (approve + disburse) */
   async approveLoan(loanId: string, actorId: string) {
+    // Sans withDetails : on n'a besoin que du status, pas des accruals/remboursements
     const loan = await this.loansRepository.findById(loanId);
     if (!loan) throw new NotFoundException(`Loan ${loanId} not found`);
 
@@ -112,7 +113,8 @@ export class LoansService {
   }
 
   async getLoan(loanId: string) {
-    const loan = await this.loansRepository.findById(loanId);
+    // Détail complet : inclure accruals + remboursements
+    const loan = await this.loansRepository.findById(loanId, { withDetails: true });
     if (!loan) throw new NotFoundException(`Loan ${loanId} not found`);
     return loan;
   }
@@ -130,8 +132,10 @@ export class LoansService {
     sessionId: string,
     tx?: Prisma.TransactionClient,
   ) {
-    const client: Prisma.TransactionClient = tx ?? (this.prisma as unknown as Prisma.TransactionClient);
-    const loan = await client.loanAccount.findUnique({ where: { id: loanId } });
+    // Utiliser directement this.prisma ou la transaction fournie — pas de cast dangereux
+    const loan = tx
+      ? await tx.loanAccount.findUnique({ where: { id: loanId } })
+      : await this.prisma.loanAccount.findUnique({ where: { id: loanId } });
     if (!loan) throw new NotFoundException(`Loan ${loanId} not found`);
 
     const activeStatuses: LoanStatus[] = [LoanStatus.ACTIVE, LoanStatus.PARTIALLY_REPAID];
@@ -142,10 +146,12 @@ export class LoansService {
     const interestAccrued = balance.mul(rate).toDecimalPlaces(2);
     const balanceWithInterest = balance.plus(interestAccrued);
 
-    const session = await client.monthlySession.findUnique({ where: { id: sessionId } });
+    const db = tx ?? this.prisma;
+
+    const session = await db.monthlySession.findUnique({ where: { id: sessionId } });
     if (!session) throw new NotFoundException(`Session ${sessionId} not found`);
 
-    const accrual = await client.monthlyLoanAccrual.create({
+    const accrual = await db.monthlyLoanAccrual.create({
       data: {
         loanId,
         sessionId,
@@ -158,7 +164,7 @@ export class LoansService {
       },
     });
 
-    await client.loanAccount.update({
+    await db.loanAccount.update({
       where: { id: loanId },
       data: { totalInterestAccrued: { increment: Number(interestAccrued.toFixed(2)) } },
     });
@@ -205,7 +211,14 @@ export class LoansService {
       const interestPart = Decimal.min(totalAmount, interestDue);
       const principalPart = totalAmount.minus(interestPart);
       const outstandingBalance = new Decimal(loan.outstandingBalance.toString());
-      const newBalance = outstandingBalance.minus(principalPart).toDecimalPlaces(2);
+
+      // LOAN-04 : si le paiement ne couvre pas tous les intérêts, le shortfall est
+      // capitalisé (ajouté au solde restant dû).
+      const interestShortfall = interestDue.minus(interestPart);
+      const newBalance = outstandingBalance
+        .minus(principalPart)
+        .plus(interestShortfall)
+        .toDecimalPlaces(2);
       const balanceAfter = newBalance.isNegative() ? new Decimal(0) : newBalance;
       const newTotalRepaid = new Decimal(loan.totalRepaid.toString()).plus(totalAmount);
 
@@ -240,7 +253,7 @@ export class LoansService {
       const repayment = await this.loansRepository.createRepayment(
         {
           loanId,
-          sessionId: dto.sessionId ?? '',
+          sessionId: dto.sessionId ?? null,
           amount: totalAmount.toFixed(2),
           principalPart: principalPart.toFixed(2),
           interestPart: interestPart.toFixed(2),
@@ -271,15 +284,14 @@ export class LoansService {
       }
 
       const createAtomicEntry = async (type: TransactionType, shortType: string, val: Decimal) => {
-        if (val.lessThanOrEqualTo(0)) return;
-        
-        // C-04 : Génération atomique de la référence avec TransactionSequence
+        if (val.lessThanOrEqualTo(0)) return null;
+
         const seq = await tx.transactionSequence.upsert({
           where: { fiscalYearId_sessionNumber_txType: { fiscalYearId, sessionNumber, txType: type } },
           create: { fiscalYearId, sessionNumber, txType: type, lastSequence: 1 },
-          update: { lastSequence: { increment: 1 } }
+          update: { lastSequence: { increment: 1 } },
         });
-        
+
         const ref = `CAYA-${refYear}-${refMonth}-${shortType}-${String(seq.lastSequence).padStart(4, '0')}`;
 
         const entry = await tx.sessionEntry.create({
@@ -287,31 +299,38 @@ export class LoansService {
             reference: ref,
             sessionId: dto.sessionId || null,
             membershipId: loan.membershipId,
-            type: type,
+            type,
             amount: val.toFixed(2),
             loanId: loan.id,
-            isOutOfSession: isOutOfSession,
+            isOutOfSession,
             recordedById: actorId,
-          }
-        });
-
-        // Mise à jour de la foreign key LoanRepayment.sessionEntryId (sur le dernier entry, généralement RBT_PRINCIPAL)
-        await tx.loanRepayment.update({
-          where: { id: repayment.id },
-          data: { sessionEntryId: entry.id }
+          },
         });
 
         if (session) {
           const field = type === TransactionType.RBT_INTEREST ? 'totalRbtInterest' : 'totalRbtPrincipal';
           await tx.monthlySession.update({
             where: { id: session.id },
-            data: { [field]: { increment: Number(val.toFixed(2)) } }
+            data: { [field]: { increment: Number(val.toFixed(2)) } },
           });
         }
+
+        return entry;
       };
 
-      await createAtomicEntry(TransactionType.RBT_INTEREST, 'RBTI', interestPart);
-      await createAtomicEntry(TransactionType.RBT_PRINCIPAL, 'RBTP', principalPart);
+      // Créer les deux entrées et lier chacune au bon champ du remboursement
+      const interestEntry  = await createAtomicEntry(TransactionType.RBT_INTEREST, 'RBTI', interestPart);
+      const principalEntry = await createAtomicEntry(TransactionType.RBT_PRINCIPAL, 'RBTP', principalPart);
+
+      await tx.loanRepayment.update({
+        where: { id: repayment.id },
+        data: {
+          // sessionEntryId pointe sur l'entrée principale (principal si existante, sinon intérêt)
+          sessionEntryId:   principalEntry?.id ?? interestEntry?.id ?? null,
+          principalEntryId: principalEntry?.id ?? null,
+          interestEntryId:  interestEntry?.id  ?? null,
+        },
+      });
 
       return repayment;
     });
