@@ -109,7 +109,7 @@ describe('MembersService', () => {
 
       expect(result.profile).toBeDefined();
       expect(result.profile.firstName).toBe('Jean-Pierre');
-      expect(result.temporaryPassword).toMatch(/^Caya@CAYA/);
+      // temporaryPassword n'est plus retourné dans la réponse (Phase 0 — sécurité)
       expect(prisma.$transaction).toHaveBeenCalled();
     });
   });
@@ -215,16 +215,24 @@ describe('MembersService', () => {
 
   // ── T07 — deactivate ──────────────────────────────────────────────────────
 
-  describe('T07 — deactivate désactive le compte User', () => {
-    it('should set user.isActive = false', async () => {
+  describe('T07 — deactivate désactive le compte User (transaction atomique)', () => {
+    it('should set user.isActive = false via $transaction callback', async () => {
       repo.findById.mockResolvedValue(mockProfile as unknown as MemberProfileWithUser);
-      (prisma.user.update as jest.Mock).mockResolvedValue({});
+      const mockUserUpdate = jest.fn().mockResolvedValue({});
+      const mockProfileUpdate = jest.fn().mockResolvedValue({});
+      (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) =>
+        fn({ user: { update: mockUserUpdate }, memberProfile: { update: mockProfileUpdate } }),
+      );
 
       await service.deactivate('profile-uuid-1');
 
-      expect(prisma.user.update).toHaveBeenCalledWith({
+      expect(mockUserUpdate).toHaveBeenCalledWith({
         where: { id: 'u_test0001' },
         data: { isActive: false, deletedAt: expect.any(Date) },
+      });
+      expect(mockProfileUpdate).toHaveBeenCalledWith({
+        where: { id: 'profile-uuid-1' },
+        data: { deletedAt: expect.any(Date) },
       });
     });
   });
@@ -245,16 +253,28 @@ describe('MembersService', () => {
 
   // ── T09 — reactivate ──────────────────────────────────────────────────────
 
-  describe('T09 — reactivate réactive le compte User', () => {
-    it('should set user.isActive = true', async () => {
-      repo.findById.mockResolvedValue(mockProfile as unknown as MemberProfileWithUser);
-      (prisma.user.update as jest.Mock).mockResolvedValue({});
+  describe('T09 — reactivate réactive le compte User (transaction atomique)', () => {
+    it('should set user.isActive = true via $transaction callback', async () => {
+      // reactivate utilise findUnique directement (sans repo.findById)
+      (prisma.memberProfile.findUnique as jest.Mock).mockResolvedValue({
+        ...mockProfile,
+        user: { id: 'u_test0001' },
+      });
+      const mockUserUpdate = jest.fn().mockResolvedValue({});
+      const mockProfileUpdate = jest.fn().mockResolvedValue({});
+      (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) =>
+        fn({ user: { update: mockUserUpdate }, memberProfile: { update: mockProfileUpdate } }),
+      );
 
       await service.reactivate('profile-uuid-1');
 
-      expect(prisma.user.update).toHaveBeenCalledWith({
+      expect(mockUserUpdate).toHaveBeenCalledWith({
         where: { id: 'u_test0001' },
         data: { isActive: true, deletedAt: null },
+      });
+      expect(mockProfileUpdate).toHaveBeenCalledWith({
+        where: { id: 'profile-uuid-1' },
+        data: { deletedAt: null },
       });
     });
   });

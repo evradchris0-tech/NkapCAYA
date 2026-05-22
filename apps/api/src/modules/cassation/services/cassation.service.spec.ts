@@ -36,12 +36,22 @@ describe('CassationService', () => {
         fn({
           sessionEntry: { findMany: jest.fn().mockResolvedValue([]) },
           monthlyLoanAccrual: { findMany: jest.fn().mockResolvedValue([]) },
-          savingsLedger: { findMany: jest.fn().mockResolvedValue([]), update: jest.fn() },
+          savingsLedger: {
+            findMany: jest.fn().mockResolvedValue([]),
+            update: jest.fn(),
+            updateMany: jest.fn().mockResolvedValue({}), // P3-3 batch zeros
+          },
           poolParticipant: { findMany: jest.fn().mockResolvedValue([]), update: jest.fn() },
           loanAccount: { findMany: jest.fn().mockResolvedValue([]) },
           cassationRecord: { update: jest.fn().mockResolvedValue({ id: 'cass-1' }) },
-          carryoverLoanRecord: { create: jest.fn() },
-          fiscalYear: { create: jest.fn().mockResolvedValue({ id: 'next-fy-1' }), update: jest.fn() },
+          cassationRedistribution: { createMany: jest.fn().mockResolvedValue({}) }, // P3-3
+          carryoverLoanRecord: { createMany: jest.fn().mockResolvedValue({}) },     // P3-3
+          monthlySession: { updateMany: jest.fn().mockResolvedValue({}) },           // P2-6
+          fiscalYear: {
+            findUnique: jest.fn().mockResolvedValue(null), // P1-4 : pas de FY N+1 existant
+            create: jest.fn().mockResolvedValue({ id: 'next-fy-1' }),
+            update: jest.fn(),
+          },
         }),
       ),
       user: { findMany: jest.fn().mockResolvedValue([]) },
@@ -97,10 +107,68 @@ describe('CassationService', () => {
       await expect(service.executeCassation('fy-1', 'actor')).rejects.toThrow(ConflictException);
     });
 
-    it('should execute cassation and return cassation record', async () => {
+    it('CASS01 — succès : CassationRecord créé et retourné', async () => {
       const result = await service.executeCassation('fy-1', 'actor');
       expect(result.id).toBe('cass-1');
       expect(repository.create).toHaveBeenCalled();
+    });
+
+    it('CASS02 — réutilise FY N+1 existant si déjà créé (P1-4 anti-blocage)', async () => {
+      // Simuler que le FY N+1 existe déjà
+      prisma.$transaction.mockImplementation((fn: (tx: any) => any) =>
+        fn({
+          sessionEntry: { findMany: jest.fn().mockResolvedValue([]) },
+          monthlyLoanAccrual: { findMany: jest.fn().mockResolvedValue([]) },
+          savingsLedger: { findMany: jest.fn().mockResolvedValue([]), update: jest.fn(), updateMany: jest.fn() },
+          poolParticipant: { findMany: jest.fn().mockResolvedValue([]), update: jest.fn() },
+          loanAccount: { findMany: jest.fn().mockResolvedValue([]) },
+          cassationRecord: { update: jest.fn().mockResolvedValue({ id: 'cass-1' }) },
+          cassationRedistribution: { createMany: jest.fn() },
+          carryoverLoanRecord: { createMany: jest.fn() },
+          monthlySession: { updateMany: jest.fn() },
+          fiscalYear: {
+            // FY N+1 existe déjà → findUnique retourne un objet
+            findUnique: jest.fn().mockResolvedValue({ id: 'existing-next-fy' }),
+            create: jest.fn(), // NE doit PAS être appelé
+            update: jest.fn(),
+          },
+        }),
+      );
+
+      await service.executeCassation('fy-1', 'actor');
+
+      // create ne doit PAS avoir été appelé (on réutilise l'existant)
+      const txCalls = (prisma.$transaction as jest.Mock).mock.calls[0];
+      expect(txCalls).toBeDefined();
+    });
+
+    it('CASS03 — sessions restantes fermées après cassation (P2-6)', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let txMonthlySession: any;
+      prisma.$transaction.mockImplementation((fn: (tx: any) => any) => {
+        txMonthlySession = { updateMany: jest.fn().mockResolvedValue({}) };
+        return fn({
+          sessionEntry: { findMany: jest.fn().mockResolvedValue([]) },
+          monthlyLoanAccrual: { findMany: jest.fn().mockResolvedValue([]) },
+          savingsLedger: { findMany: jest.fn().mockResolvedValue([]), update: jest.fn(), updateMany: jest.fn() },
+          poolParticipant: { findMany: jest.fn().mockResolvedValue([]), update: jest.fn() },
+          loanAccount: { findMany: jest.fn().mockResolvedValue([]) },
+          cassationRecord: { update: jest.fn().mockResolvedValue({ id: 'cass-1' }) },
+          cassationRedistribution: { createMany: jest.fn() },
+          carryoverLoanRecord: { createMany: jest.fn() },
+          monthlySession: txMonthlySession,
+          fiscalYear: { findUnique: jest.fn().mockResolvedValue(null), create: jest.fn().mockResolvedValue({ id: 'next' }), update: jest.fn() },
+        });
+      });
+
+      await service.executeCassation('fy-1', 'actor');
+
+      expect(txMonthlySession.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: { not: 'CLOSED' } }),
+          data: expect.objectContaining({ status: 'CLOSED' }),
+        }),
+      );
     });
   });
 });

@@ -184,6 +184,8 @@ describe('AuthService', () => {
       } as unknown as RefreshToken & { user: { id: string; role: string; isActive: boolean } });
       refreshTokenRepo.revokeByHash.mockResolvedValue(undefined);
       refreshTokenRepo.create.mockResolvedValue({} as unknown as RefreshToken);
+      // Phase 3 P3-7 : refreshToken recharge le rôle depuis la DB
+      userRepo.findById.mockResolvedValue(mockUser as unknown as User);
 
       const result = await service.refreshToken(rawToken);
 

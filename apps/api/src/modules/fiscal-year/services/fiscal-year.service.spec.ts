@@ -32,14 +32,19 @@ describe('FiscalYearService', () => {
   let service: FiscalYearService;
   let repository: jest.Mocked<FiscalYearRepository>;
   let configService: jest.Mocked<TontineConfigService>;
-  let prisma: { $transaction: jest.Mock };
+  let prisma: { $transaction: jest.Mock; monthlySession?: { count: jest.Mock } };
 
   beforeEach(async () => {
     prisma = {
+      // openCassation() vérifie que les sessions sont clôturées
+      monthlySession: { count: jest.fn().mockResolvedValue(0) },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       $transaction: jest.fn().mockImplementation((fn: (tx: any) => any) =>
         fn({
           beneficiarySlot: { createMany: jest.fn().mockResolvedValue({}) },
+          // activate() utilise createMany en batch (Phase 3 P3-2)
+          savingsLedger: { createMany: jest.fn().mockResolvedValue({}) },
+          rescueFundPosition: { createMany: jest.fn().mockResolvedValue({}) },
         }),
       ),
     };
@@ -147,11 +152,23 @@ describe('FiscalYearService', () => {
   });
 
   describe('openCassation()', () => {
-    it('should transition ACTIVE → CASSATION', async () => {
+    it('should transition ACTIVE → CASSATION avec audit trail', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository.findById.mockResolvedValue(activeFY as any);
       await service.openCassation('fy-1', 'actor-id');
-      expect(repository.updateStatus).toHaveBeenCalledWith('fy-1', FiscalYearStatus.CASSATION);
+      expect(repository.updateStatus).toHaveBeenCalledWith(
+        'fy-1',
+        FiscalYearStatus.CASSATION,
+        expect.objectContaining({ openedById: 'actor-id', openedAt: expect.any(Date) }),
+      );
+    });
+
+    it('should throw ConflictException if open sessions exist', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      repository.findById.mockResolvedValue(activeFY as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (prisma as any).monthlySession.count.mockResolvedValue(2); // 2 sessions ouvertes
+      await expect(service.openCassation('fy-1', 'actor-id')).rejects.toThrow(ConflictException);
     });
 
     it('should throw ConflictException if not ACTIVE', async () => {

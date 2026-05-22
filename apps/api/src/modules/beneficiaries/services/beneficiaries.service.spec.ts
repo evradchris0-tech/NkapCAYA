@@ -19,13 +19,20 @@ const makeSlot = (override = {}) => ({
 describe('BeneficiariesService', () => {
   let service: BeneficiariesService;
   let repository: jest.Mocked<BeneficiariesRepository>;
-  let prisma: { beneficiarySlot: { findUnique: jest.Mock; findFirst?: jest.Mock } };
+  let prisma: {
+    beneficiarySlot: { findUnique: jest.Mock; findFirst?: jest.Mock };
+    monthlySession?: { findUnique: jest.Mock };
+  };
 
   beforeEach(async () => {
     prisma = {
       beneficiarySlot: {
         findUnique: jest.fn().mockResolvedValue(null),
         findFirst: jest.fn().mockResolvedValue(null),
+      },
+      // assignSlot/setHost/markDelivered vérifient le statut session (Phase 3 P3-4)
+      monthlySession: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'sess-1', status: 'OPEN', fiscalYearId: 'fy-1' }),
       },
     };
 

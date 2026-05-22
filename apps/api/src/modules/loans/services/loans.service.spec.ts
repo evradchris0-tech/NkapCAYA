@@ -246,15 +246,66 @@ describe('LoansService', () => {
       expect(txMonthlySession.update).not.toHaveBeenCalled();
       expect(loansRepository.createRepayment).toHaveBeenCalled();
     });
-  });
+
+    it('R07 — LOAN-04 : paiement < intérêts → shortfall capitalisé dans outstandingBalance', async () => {
+      // Balance 80000, intérêts dus 3200 (80000×4%), paiement 1000 (shortfall = 2200)
+      txLoanAccount.findUnique.mockResolvedValue(
+        makeLoan({ status: LoanStatus.ACTIVE, outstandingBalance: '80000', totalRepaid: '0', monthlyRate: '0.04' }),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      loansRepository.findLatestAccrual.mockResolvedValue({ id: 'acc-1', interestAccrued: '3200' } as any);
+
+      await service.applyRepayment('loan-1', { amount: 1000, sessionId: 'session-id' }, 'actor');
+
+      // principalPart=0, shortfall=2200, newBalance=80000-0+2200=82200
+      expect(loansRepository.updateBalance).toHaveBeenCalledWith(
+        'loan-1',
+        expect.objectContaining({ outstandingBalance: '82200.00', status: LoanStatus.PARTIALLY_REPAID }),
+        expect.anything(),
+      );
+    });
+
+    it('R08 — LOAN-04 : paiement couvre exactement les intérêts → shortfall=0, balance réduite du principal', async () => {
+      // Balance 50000, intérêts 2000 (50000×4%), paiement 7000 → principalPart=5000
+      txLoanAccount.findUnique.mockResolvedValue(
+        makeLoan({ status: LoanStatus.ACTIVE, outstandingBalance: '50000', totalRepaid: '0', monthlyRate: '0.04' }),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      loansRepository.findLatestAccrual.mockResolvedValue({ id: 'acc-1', interestAccrued: '2000' } as any);
+
+      await service.applyRepayment('loan-1', { amount: 7000, sessionId: 'session-id' }, 'actor');
+
+      // interestPart=2000, principalPart=5000, shortfall=0, newBalance=45000
+      expect(loansRepository.updateBalance).toHaveBeenCalledWith(
+        'loan-1',
+        expect.objectContaining({ outstandingBalance: '45000.00' }),
+        expect.anything(),
+      );
+      expect(loansRepository.createRepayment).toHaveBeenCalledWith(
+        expect.objectContaining({ interestPart: '2000.00', principalPart: '5000.00' }),
+        expect.anything(),
+      );
+    });
+  }); // end describe applyRepayment
 
   // ── computeMonthlyAccrual() ──────────────────────────────────────────────────
 
   describe('computeMonthlyAccrual()', () => {
-    it('should compute and persist monthly accrual for an active loan', async () => {
+    it('M01 — calcule et persiste l\'accrual mensuel pour un prêt ACTIVE', async () => {
       const result = await service.computeMonthlyAccrual('loan-1', 'session-id');
       expect(result).toBeDefined();
       expect(result?.id).toBe('accrual-1');
+    });
+
+    it('M02 — retourne null pour un prêt CLOSED (pas d\'accrual)', async () => {
+      prisma.loanAccount.findUnique.mockResolvedValue(makeLoan({ status: LoanStatus.CLOSED }));
+      const result = await service.computeMonthlyAccrual('loan-1', 'session-id');
+      expect(result).toBeNull();
+    });
+
+    it('M03 — NotFoundException si prêt absent', async () => {
+      prisma.loanAccount.findUnique.mockResolvedValue(null);
+      await expect(service.computeMonthlyAccrual('x', 'session-id')).rejects.toThrow(NotFoundException);
     });
   });
 });
