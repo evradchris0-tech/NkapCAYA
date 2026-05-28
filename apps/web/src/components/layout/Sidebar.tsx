@@ -40,13 +40,13 @@ const navItems: NavItem[] = [
     ],
   },
   { label: 'Configuration',    href: '/config',        icon: Settings },
-  { label: 'Audit',            href: '/audit',         icon: Activity },
+  { label: 'Audit',            href: '/audit-log',     icon: Activity },
   { label: 'Guide',            href: '/guide',         icon: BookOpen },
 ];
 
 const LINK_BASE = 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 border-l-2 pl-[10px]';
-const LINK_ACTIVE = 'bg-blue-600/15 text-blue-400 font-medium border-blue-400';
-const LINK_INACTIVE = 'text-gray-400 hover:text-white hover:bg-white/5 border-transparent';
+const LINK_ACTIVE = 'bg-primary-50 text-primary-900 font-semibold border-primary-900 shadow-sm';
+const LINK_INACTIVE = 'text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-transparent';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -66,26 +66,24 @@ export default function Sidebar() {
         />
       )}
 
-      {/* Sidebar container */}
       <aside 
         className={clsx(
-          "fixed inset-y-0 left-0 z-[70] w-64 text-gray-200 flex flex-col h-full transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 shrink-0",
+          "fixed inset-y-0 left-0 z-[70] w-64 bg-white border-r border-slate-200 text-slate-600 flex flex-col h-full transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 shrink-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 60%, #1e3a5f 100%)' }}
       >
         {/* Logo & Close Button (Mobile) */}
-        <div className="px-4 py-4 border-b border-gray-800 flex items-center justify-between">
+        <div className="px-5 py-5 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Logo size="sm" onDark />
+            <Logo size="sm" />
             <div>
-              <h1 className="text-sm font-bold tracking-tight text-white leading-tight">CAYA</h1>
-              <p className="text-[10px] text-gray-500 leading-tight">Gestion tontine</p>
+              <h1 className="text-base font-bold tracking-tight text-primary-900 leading-tight font-heading">CAYA</h1>
+              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider leading-tight mt-0.5">Gestion tontine</p>
             </div>
           </div>
           <button 
             onClick={close}
-            className="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+            className="md:hidden p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
           >
             <CloseIcon className="h-5 w-5" />
           </button>
@@ -94,6 +92,14 @@ export default function Sidebar() {
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
+            if (item.label === 'Audit') {
+              const canAccessAudit =
+                user?.role === BureauRole.SUPER_ADMIN ||
+                user?.role === BureauRole.PRESIDENT ||
+                user?.role === BureauRole.SECRETAIRE_GENERAL;
+              if (!canAccessAudit) return null;
+            }
+
             const Icon = item.icon;
 
             if (item.children) {
@@ -134,11 +140,11 @@ export default function Sidebar() {
                             className={clsx(
                               'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all duration-150',
                               childActive
-                                ? 'text-blue-400 font-medium bg-blue-600/10'
-                                : 'text-gray-500 hover:text-white hover:bg-white/5'
+                                ? 'text-primary-900 font-medium bg-slate-50'
+                                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                             )}
                           >
-                            <span className={clsx('w-1.5 h-1.5 rounded-full shrink-0', childActive ? 'bg-blue-400' : 'bg-gray-600')} />
+                            <span className={clsx('w-1.5 h-1.5 rounded-full shrink-0', childActive ? 'bg-primary-900' : 'bg-slate-300')} />
                             {child.label}
                           </Link>
                         );
@@ -163,7 +169,7 @@ export default function Sidebar() {
             );
           })}
 
-          <div className="pt-2 mt-2 border-t border-gray-800">
+          <div className="pt-2 mt-2 border-t border-slate-100">
             <Link
               href="/profile"
               onClick={() => { if(window.innerWidth < 768) close(); }}
@@ -175,21 +181,21 @@ export default function Sidebar() {
           </div>
         </nav>
 
-        <div className="px-4 py-3 border-t border-gray-800">
+        <div className="px-5 py-4 border-t border-slate-100 bg-slate-50/50">
           {user ? (
             <Link href="/profile" onClick={() => { if(window.innerWidth < 768) close(); }} className="flex items-center gap-3 group">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600/20 text-blue-300 font-semibold text-xs shrink-0 ring-1 ring-blue-500/30 group-hover:ring-blue-400/60 transition-all">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 text-slate-700 font-semibold text-xs shrink-0 ring-1 ring-slate-300 group-hover:bg-primary-900 group-hover:text-white transition-all">
                 {user.username.slice(0, 2).toUpperCase()}
               </span>
               <div className="min-w-0">
-                <p className="text-sm font-medium text-white truncate group-hover:text-blue-300 transition-colors">
+                <p className="text-sm font-semibold text-slate-900 truncate group-hover:text-primary-700 transition-colors">
                   {user.username}
                 </p>
-                <p className="text-xs text-gray-500 truncate">{roleLabel}</p>
+                <p className="text-xs text-slate-500 truncate">{roleLabel}</p>
               </div>
             </Link>
           ) : (
-            <p className="text-xs text-gray-600">v0.1.0</p>
+            <p className="text-xs text-slate-400 font-medium">v1.0.0</p>
           )}
         </div>
       </aside>

@@ -26,8 +26,26 @@ export class CassationService {
 
   async findByFiscalYear(fiscalYearId: string) {
     const record = await this.cassationRepository.findByFiscalYear(fiscalYearId);
-    if (!record) throw new NotFoundException(`No cassation record for fiscal year ${fiscalYearId}`);
-    return record;
+    return record || null;
+  }
+
+  /**
+   * Récupère tous les prêts non remboursés (actifs ou partiellement remboursés)
+   * pour affichage avant la cassation (revue des reports / carryovers).
+   */
+  async getActiveLoansBeforeCassation(fiscalYearId: string) {
+    return this.prisma.loanAccount.findMany({
+      where: {
+        fiscalYearId,
+        status: { in: [LoanStatus.ACTIVE, LoanStatus.PARTIALLY_REPAID] },
+      },
+      include: {
+        membership: {
+          include: { profile: true },
+        },
+      },
+      orderBy: { outstandingBalance: 'desc' },
+    });
   }
 
   /**

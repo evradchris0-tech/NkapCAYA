@@ -11,4 +11,9 @@ export const cassationApi = {
     apiClient
       .post<CassationRecord>(`/fiscal-years/${fiscalYearId}/cassation/execute`, {})
       .then((r) => r.data),
+
+  getActiveLoans: (fiscalYearId: string) =>
+    apiClient
+      .get<any[]>(`/fiscal-years/${fiscalYearId}/cassation/active-loans`)
+      .then((r) => r.data),
 };

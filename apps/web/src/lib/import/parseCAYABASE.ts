@@ -86,6 +86,7 @@ export interface ImportFiscalYearDto {
 export interface ParseResult {
   data: ImportFiscalYearDto;
   warnings: string[];
+  criticalErrors: string[];
 }
 
 /* ── Helpers ── */
@@ -170,7 +171,7 @@ function str(v: ExcelJS.CellValue): string {
 /** Is this a member-name cell (not a header/total row)? */
 function isNameCell(val: ExcelJS.CellValue): boolean {
   const s = str(val);
-  return s.length > 2 && !/^(n°?|noms?|total|recap|colonne)/i.test(s) && !/^\d+$/.test(s);
+  return s.length > 2 && !/^(n°?|noms?|total|sous-total|recap|colonne)/i.test(s) && !/^\d+$/.test(s);
 }
 
 /**
@@ -239,6 +240,7 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
   await wb.xlsx.load(buffer);
 
   const warnings: string[] = [];
+  const criticalErrors: string[] = [];
 
   // 1. Classify sheets
   const sessionSheets: Array<{ sheetName: string; month: number; year: number; ws: ExcelJS.Worksheet }> = [];
@@ -322,7 +324,16 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
 
   const members = Array.from(memberSet.values());
   if (members.length === 0) {
-    throw new Error('Aucun membre détecté dans le fichier.');
+    criticalErrors.push('Aucun membre détecté dans le fichier.');
+  }
+
+  // Vérification de la qualité des noms
+  let suspectNamesCount = 0;
+  for (const m of members) {
+    if (/\d/.test(m)) suspectNamesCount++;
+  }
+  if (suspectNamesCount > 0) {
+    criticalErrors.push(`${suspectNamesCount} membre(s) ont un nom contenant des chiffres.`);
   }
 
   // 4. Parse ep+int sheet
@@ -577,6 +588,29 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
     sessions.push({ sessionNumber, entries });
   }
 
+  // Vérification globale des montants négatifs
+  let negativeAmountsCount = 0;
+  for (const s of savings) {
+    if (s.totalDeposit < 0 || s.totalInterest < 0 || Object.values(s.deposits).some(v => v < 0)) negativeAmountsCount++;
+  }
+  for (const l of loans) {
+    if (l.totalInterest < 0 || l.totalRepaid < 0 || l.outstanding < 0 || Object.values(l.disbursements).some(v => v < 0)) negativeAmountsCount++;
+  }
+  for (const r of repayments) {
+    if (Object.values(r.repayments).some(v => v < 0)) negativeAmountsCount++;
+  }
+  for (const sess of sessions) {
+    for (const e of sess.entries) {
+      if (e.inscription < 0 || e.tontine < 0 || e.pot < 0 || e.remPret < 0 || e.epargne < 0 || e.pret < 0 || e.secours < 0 || e.projet < 0 || e.autres < 0) {
+        negativeAmountsCount++;
+      }
+    }
+  }
+
+  if (negativeAmountsCount > 0) {
+    criticalErrors.push(`${negativeAmountsCount} montants négatifs ont été détectés, ce qui corrompra la comptabilité.`);
+  }
+
   return {
     data: {
       label,
@@ -591,6 +625,7 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
       sessions,
     },
     warnings,
+    criticalErrors,
   };
 }
 

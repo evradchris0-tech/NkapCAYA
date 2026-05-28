@@ -46,12 +46,27 @@ export class ReportsService {
     return this.reportsRepository.getFullFiscalYearData(fiscalYearId);
   }
 
-  async generateMemberReport(_memberId: string, _fiscalYearId?: string, _format?: string) {
-    throw new Error('Not implemented');
+  /**
+   * Rapport individuel d'un membre.
+   * Retourne épargne, prêts, caisse de secours, slots bénéficiaires
+   * et l'historique de tous ses memberships.
+   *
+   * @param memberId      ID du profil membre (MemberProfile.id)
+   * @param fiscalYearId  Exercice cible (optionnel — par défaut : le plus récent)
+   */
+  async generateMemberReport(memberId: string, fiscalYearId?: string, _format?: string) {
+    return this.reportsRepository.getMemberReportData(memberId, fiscalYearId);
   }
 
-  async generateSessionReport(_sessionId: string, _format?: string) {
-    throw new Error('Not implemented');
+  /**
+   * Rapport complet d'une session mensuelle.
+   * Retourne les transactions, les totaux par type, les membres absents,
+   * les bénéficiaires et le taux de cotisation.
+   *
+   * @param sessionId  ID de la session mensuelle (MonthlySession.id)
+   */
+  async generateSessionReport(sessionId: string, _format?: string) {
+    return this.reportsRepository.getSessionReportData(sessionId);
   }
 
   /* ──────────────────────────────── IMPORT ──────────────────────────────── */

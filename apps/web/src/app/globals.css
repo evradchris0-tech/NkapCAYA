@@ -34,11 +34,22 @@ html {
   outline: none;
 }
 
-/* ── Cacher la scrollbar (gardez le scroll) ── */
+/* ── Style subtil pour les scrollbars (accessibilité) ── */
 * {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 *::-webkit-scrollbar {
-  display: none; /* Chrome/Safari/Edge */
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
 }

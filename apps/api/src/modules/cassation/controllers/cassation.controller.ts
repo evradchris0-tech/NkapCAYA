@@ -26,6 +26,12 @@ export class CassationController {
     return this.cassationService.findByFiscalYear(fyId);
   }
 
+  @Get('active-loans')
+  @ApiOperation({ summary: 'Lister les prêts non remboursés avant cassation (carry-over)' })
+  getActiveLoans(@Param('fyId') fyId: string) {
+    return this.cassationService.getActiveLoansBeforeCassation(fyId);
+  }
+
   @Post('execute')
   @Roles(BureauRole.SUPER_ADMIN, BureauRole.TRESORIER)
   @ApiOperation({ summary: 'Lancer la cassation (CASSATION → CLOSED + redistributions)' })

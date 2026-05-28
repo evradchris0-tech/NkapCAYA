@@ -96,6 +96,30 @@ describe('CassationService', () => {
     });
   });
 
+  describe('getActiveLoansBeforeCassation()', () => {
+    it('should return active and partially repaid loans', async () => {
+      const mockLoans = [
+        { id: 'loan-1', status: 'ACTIVE' },
+        { id: 'loan-2', status: 'PARTIALLY_REPAID' },
+      ];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (prisma as any).loanAccount = {
+        findMany: jest.fn().mockResolvedValue(mockLoans),
+      };
+
+      const result = await service.getActiveLoansBeforeCassation('fy-1');
+      expect(result).toHaveLength(2);
+      expect((prisma as any).loanAccount.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            fiscalYearId: 'fy-1',
+            status: { in: ['ACTIVE', 'PARTIALLY_REPAID'] },
+          },
+        }),
+      );
+    });
+  });
+
   describe('executeCassation()', () => {
     it('should throw NotFoundException if fiscal year not found', async () => {
       prisma.fiscalYear.findUnique.mockResolvedValue(null);

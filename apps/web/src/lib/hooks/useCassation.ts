@@ -18,6 +18,14 @@ export function useCassation(fiscalYearId: string) {
   });
 }
 
+export function useActiveLoansBeforeCassation(fiscalYearId: string) {
+  return useQuery({
+    queryKey: [...CASS_KEY, fiscalYearId, 'active-loans'],
+    queryFn: () => cassationApi.getActiveLoans(fiscalYearId),
+    enabled: Boolean(fiscalYearId),
+  });
+}
+
 export function useExecuteCassation(fiscalYearId: string) {
   const queryClient = useQueryClient();
   return useMutation({

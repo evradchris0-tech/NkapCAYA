@@ -12,7 +12,7 @@ import { BUREAU_ROLE_LABELS, BureauRole } from '@/types/domain.types';
 
 const DISMISSED_NOTIFS_KEY = 'caya_dismissed_notifs';
 
-const FY_SECRET = 'CAYA';
+const FY_SECRET = process.env.NEXT_PUBLIC_FY_SECRET || 'CAYA';
 
 function avatarColor(initials: string): string {
   const colors = [
@@ -257,7 +257,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="h-14 md:h-16 shrink-0 border-b border-indigo-100 flex items-center justify-between px-4 md:px-6 shadow-sm gap-3 sticky top-0 z-40 bg-white/80 backdrop-blur-md" style={{ background: 'linear-gradient(90deg, #ffffff 0%, #f5f3ff 50%, #eff6ff 100%)' }}>
+      <header className="h-14 md:h-16 shrink-0 border-b border-slate-200 flex items-center justify-between px-4 md:px-6 shadow-sm gap-3 sticky top-0 z-40 bg-white/80 backdrop-blur-md">
         
         {/* Hamburger Mobile */}
         <button 

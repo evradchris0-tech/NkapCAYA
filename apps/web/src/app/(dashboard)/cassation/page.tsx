@@ -4,9 +4,9 @@ import { useState } from 'react';
 import PageHeader from '@components/layout/PageHeader';
 import Button from '@components/ui/Button';
 import ChartCard from '@components/ui/ChartCard';
-import { useCassation, useExecuteCassation } from '@lib/hooks/useCassation';
+import { useCassation, useExecuteCassation, useActiveLoansBeforeCassation } from '@lib/hooks/useCassation';
 import { exportCassationToPdf } from '@lib/export/exportPdf';
-import { FileText } from 'lucide-react';
+import { FileText, AlertTriangle } from 'lucide-react';
 import { useFiscalYears } from '@lib/hooks/useFiscalYear';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
 import { BureauRole } from '@/types/domain.types';
@@ -19,6 +19,7 @@ export default function CassationPage() {
   const { data: fiscalYears } = useFiscalYears();
   const cassationFy = fiscalYears?.find((f) => f.status === 'CASSATION') ?? fiscalYears?.find((f) => f.status === 'CLOSED');
   const { data: record, isLoading, isError } = useCassation(cassationFy?.id ?? '');
+  const { data: activeLoans } = useActiveLoansBeforeCassation(cassationFy?.id ?? '');
   const executeCassation = useExecuteCassation(cassationFy?.id ?? '');
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [execError, setExecError] = useState<string | null>(null);
@@ -68,12 +69,43 @@ export default function CassationPage() {
 
       {/* Confirmation dialog */}
       {confirmOpen && (
-        <div className="bg-amber-50 border border-amber-300 rounded-xl p-5 max-w-xl">
+        <div className="bg-amber-50 border border-amber-300 rounded-xl p-5 max-w-2xl">
           <h3 className="font-semibold text-amber-800 mb-2">Confirmer la cassation</h3>
           <p className="text-sm text-amber-700 mb-4">
             Cette action est <strong>irréversible</strong> : elle calculera les redistributions, clôturera
             l&apos;exercice et enverra des notifications aux membres. Êtes-vous certain ?
           </p>
+
+          {activeLoans && activeLoans.length > 0 && (
+            <div className="mb-5 rounded-lg border border-amber-200 bg-white overflow-hidden">
+              <div className="bg-amber-100/50 px-4 py-2 border-b border-amber-200 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <h4 className="text-sm font-semibold text-amber-800">
+                  Attention : {activeLoans.length} prêt(s) en cours
+                </h4>
+              </div>
+              <div className="p-3">
+                <p className="text-xs text-amber-700 mb-3">
+                  Ces prêts n&apos;ont pas été entièrement remboursés. Ils seront reconduits sur l&apos;exercice suivant avec <strong>un coefficient de majoration (×1.04)</strong>.
+                </p>
+                <div className="max-h-40 overflow-y-auto pr-1 space-y-2">
+                  {activeLoans.map((loan) => (
+                    <div key={loan.id} className="flex justify-between text-sm bg-gray-50 px-3 py-2 rounded border border-gray-100">
+                      <span className="font-medium text-gray-700">
+                        {loan.membership?.profile
+                          ? `${loan.membership.profile.lastName} ${loan.membership.profile.firstName}`
+                          : loan.membershipId}
+                      </span>
+                      <span className="text-amber-700 font-mono font-semibold">
+                        {parseFloat(loan.outstandingBalance).toLocaleString('fr-FR')} XAF
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {execError && (
             <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg mb-3">{execError}</p>
           )}

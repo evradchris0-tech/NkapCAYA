@@ -413,6 +413,8 @@ describe('SessionsService', () => {
       };
       txSavingsEntry = {
         findFirst: jest.fn().mockResolvedValue(null),
+        findMany: jest.fn().mockResolvedValue([]),   // entrées postérieures pour recalcul
+        update: jest.fn().mockResolvedValue({}),
         delete: jest.fn().mockResolvedValue({}),
       };
       txRescueFundPosition = {

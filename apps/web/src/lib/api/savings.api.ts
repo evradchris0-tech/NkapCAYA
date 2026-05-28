@@ -7,8 +7,9 @@ export const savingsApi = {
       .get<SavingsLedger>(`/savings/${membershipId}`)
       .then((r) => r.data),
 
-  getFiscalYearBalances: (fiscalYearId: string) =>
-    apiClient
-      .get<SavingsLedger[]>(`/fiscal-years/${fiscalYearId}/savings`)
-      .then((r) => r.data),
+  getFiscalYearBalances(fiscalYearId: string) {
+    return apiClient
+      .get<SavingsLedger[]>(`/savings/fiscal-years/${fiscalYearId}`)
+      .then((res) => res.data);
+  },
 };

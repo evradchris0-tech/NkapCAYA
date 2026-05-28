@@ -20,6 +20,12 @@ export class SavingsController {
     return this.savingsService.getBalance(membershipId);
   }
 
+  @Get('fiscal-years/:fiscalYearId')
+  @ApiOperation({ summary: 'Lister toutes les épargnes d\'un exercice fiscal' })
+  getFiscalYearBalances(@Param('fiscalYearId') fiscalYearId: string) {
+    return this.savingsService.getFiscalYearBalances(fiscalYearId);
+  }
+
   @Post('distribute/:sessionId')
   @Roles(BureauRole.SUPER_ADMIN, BureauRole.PRESIDENT)
   @ApiOperation({ summary: 'Distribuer les intérêts d\'une session (PRESIDENT)' })

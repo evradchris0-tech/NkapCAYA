@@ -400,11 +400,26 @@ export class SessionsService {
           where: { sessionEntryId: entryId },
         });
         if (savingsEntry) {
+          // Recalculer le balanceAfter de toutes les entrées postérieures (la chaîne est cassée sinon)
+          const laterEntries = await tx.savingsEntry.findMany({
+            where: {
+              ledgerId: savingsEntry.ledgerId,
+              createdAt: { gt: savingsEntry.createdAt },
+            },
+            orderBy: { createdAt: 'asc' },
+          });
+          for (const later of laterEntries) {
+            await tx.savingsEntry.update({
+              where: { id: later.id },
+              data: { balanceAfter: { decrement: amount } },
+            });
+          }
+
+          await tx.savingsEntry.delete({ where: { id: savingsEntry.id } });
           await tx.savingsLedger.update({
             where: { id: savingsEntry.ledgerId },
             data: { balance: { decrement: amount }, principalBalance: { decrement: amount } },
           });
-          await tx.savingsEntry.delete({ where: { id: savingsEntry.id } });
         }
       }
 

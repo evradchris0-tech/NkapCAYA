@@ -62,20 +62,17 @@ interface KpiCardProps {
 
 function KpiCard({ icon: Icon, iconBg, iconColor, borderColor, label, value, isLoading, description }: KpiCardProps) {
   return (
-    <div className={`bg-white rounded-xl border shadow-card hover:shadow-card-hover transition-shadow p-5 ${borderColor}`}>
+    <div className="bg-white rounded-xl border border-slate-200 shadow-card hover:shadow-card-hover transition-shadow p-5">
       <div className="flex items-center justify-between mb-3">
-        <div className={`p-2 rounded-lg shrink-0 ${iconBg}`}>
-          <Icon className={`h-4 w-4 ${iconColor}`} strokeWidth={2} />
-        </div>
+        <Icon className={`h-5 w-5 ${iconColor}`} strokeWidth={1.5} />
         <span title={description} className="cursor-help">
-          <Info className="h-3.5 w-3.5 text-gray-300 hover:text-gray-500 transition-colors" />
+          <Info className="h-4 w-4 text-slate-300 hover:text-slate-500 transition-colors" />
         </span>
       </div>
-      <div className="text-2xl font-bold text-gray-900 tabular-nums">
+      <div className="text-2xl font-bold text-slate-900 tabular-nums font-heading tracking-tight">
         {isLoading ? <Skeleton className="h-7 w-20" /> : value}
       </div>
-      <p className="text-xs font-medium text-gray-500 mt-0.5">{label}</p>
-      <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">{description}</p>
+      <p className="text-xs font-medium text-slate-500 mt-1">{label}</p>
     </div>
   );
 }
@@ -264,6 +261,25 @@ export default function DashboardPage() {
     { name: 'Nouveaux',        value: newCount,       color: COLORS.emerald },
     { name: 'Ré-inscriptions', value: returningCount, color: COLORS.blue },
   ].filter((d) => d.value > 0);
+
+  // ── Données donut prêts ────────────────────────────────────────────────
+  const loansByStatusData = useMemo(() => {
+    const active = fyLoans?.filter((l) => l.status === 'ACTIVE').length ?? 0;
+    const partially = fyLoans?.filter((l) => l.status === 'PARTIALLY_REPAID').length ?? 0;
+    const closed = fyLoans?.filter((l) => l.status === 'CLOSED').length ?? 0;
+    return [
+      { name: 'Actifs', value: active, color: COLORS.amber },
+      { name: 'Partiels', value: partially, color: COLORS.violet },
+      { name: 'Remboursés', value: closed, color: COLORS.emerald },
+    ].filter((d) => d.value > 0);
+  }, [fyLoans]);
+
+  // ── Données évolution Secours vs Épargne ────────────────────────────────
+  const secoursVsEpargneChartData = useMemo(() => sortedSessions.map((s) => ({
+    label: `S${s.sessionNumber}`,
+    'Épargne': Math.round(parseFloat(s.totalEpargne || '0')),
+    'Secours': Math.round(parseFloat(s.totalSecours || '0')),
+  })), [sortedSessions]);
 
   // ── Suggestions ────────────────────────────────────────────────────────
   const suggestions = buildSuggestions(sessions, totalMembers, enrolledCount);
@@ -591,29 +607,78 @@ export default function DashboardPage() {
             )}
           </ChartCard>
 
-          {/* Ligne : Évolution des cotisations */}
+          {/* Ligne : Évolution des cotisations vs Secours */}
           <ChartCard
-            title="Évolution des cotisations"
+            title="Évolution Épargne vs Secours"
             subtitle={selectedFy.label}
           >
             {loadingSessions ? (
               <div className="h-56 flex items-center justify-center">
                 <Skeleton className="h-40 w-full" />
               </div>
-            ) : cotisationsChartData.every((d) => d.Cotisations === 0) ? (
+            ) : secoursVsEpargneChartData.every((d) => d.Épargne === 0 && d.Secours === 0) ? (
               <div className="h-56 flex items-center justify-center text-gray-300 text-sm">
-                Aucune cotisation enregistrée
+                Aucune donnée
               </div>
             ) : (
               <div className="h-56 px-2 pb-3">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={cotisationsChartData} margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
+                  <LineChart data={secoursVsEpargneChartData} margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tickFormatter={formatAmount} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={52} />
                     <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#e2e8f0' }} />
-                    <Line type="monotone" dataKey="Cotisations" stroke={COLORS.blue} strokeWidth={2.5} dot={{ fill: COLORS.blue, r: 3 }} />
+                    <Legend iconType="circle" iconSize={8} formatter={(v) => <span className="text-xs text-gray-600">{v}</span>} />
+                    <Line type="monotone" dataKey="Épargne" stroke={COLORS.emerald} strokeWidth={2.5} dot={{ fill: COLORS.emerald, r: 3 }} />
+                    <Line type="monotone" dataKey="Secours" stroke={COLORS.violet} strokeWidth={2.5} dot={{ fill: COLORS.violet, r: 3 }} />
                   </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </ChartCard>
+
+          {/* Donut : Répartition des prêts */}
+          <ChartCard
+            title="Répartition des prêts"
+            subtitle={`${fyLoans?.length ?? 0} prêt(s) accordé(s)`}
+          >
+            {loadingSessions ? (
+              <div className="h-56 flex items-center justify-center">
+                <Skeleton className="h-40 w-40 rounded-full" />
+              </div>
+            ) : loansByStatusData.length === 0 ? (
+              <div className="h-56 flex items-center justify-center text-gray-300 text-sm">
+                Aucun prêt
+              </div>
+            ) : (
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={loansByStatusData}
+                      cx="50%"
+                      cy="45%"
+                      innerRadius={54}
+                      outerRadius={76}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {loansByStatusData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} strokeWidth={0} />
+                      ))}
+                    </Pie>
+                    <Legend
+                      iconType="circle"
+                      iconSize={8}
+                      formatter={(value: string, entry: { payload?: { value?: number } }) => (
+                        <span className="text-xs text-gray-600">{value} ({entry.payload?.value ?? 0})</span>
+                      )}
+                    />
+                    <Tooltip
+                      formatter={(value: number, name: string) => [`${value} prêt(s)`, name]}
+                      contentStyle={{ borderRadius: 8, fontSize: 13 }}
+                    />
+                  </PieChart>
                 </ResponsiveContainer>
               </div>
             )}
@@ -622,20 +687,18 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Suggestions IA ── */}
+      {/* ── Alertes Opérationnelles ── */}
       {selectedFy && suggestions.length > 0 && (
-        <div className="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-5 animate-slide-up">
-          <h2 className="text-sm font-semibold text-violet-800 mb-3 flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-violet-500" />
-            Suggestions
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 animate-slide-up">
+          <h2 className="text-sm font-semibold text-amber-800 mb-3 flex items-center gap-2 font-heading">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            Alertes Opérationnelles
           </h2>
           <ul className="space-y-2.5">
             {suggestions.map(({ id, icon: Icon, text }) => (
               <li key={id} className="flex items-start gap-2.5">
-                <div className="p-1 bg-violet-100 rounded-md shrink-0 mt-0.5">
-                  <Icon className="h-3.5 w-3.5 text-violet-600" strokeWidth={2} />
-                </div>
-                <p className="text-sm text-violet-900 leading-snug">{text}</p>
+                <Icon className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" strokeWidth={2} />
+                <p className="text-sm text-amber-900 leading-snug">{text}</p>
               </li>
             ))}
           </ul>
@@ -644,8 +707,8 @@ export default function DashboardPage() {
 
       {/* ── Résumé exercice actif ── */}
       {selectedFy && (
-        <div className="rounded-xl border border-teal-100 shadow-card p-5 animate-slide-up" style={{ background: 'linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)' }}>
-          <h2 className="text-sm font-semibold text-teal-800 mb-4">
+        <div className="rounded-xl border border-slate-200 bg-white shadow-card p-5 animate-slide-up">
+          <h2 className="text-sm font-semibold text-slate-900 mb-4 font-heading">
             Exercice actif — {selectedFy.label}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
@@ -670,12 +733,10 @@ export default function DashboardPage() {
 
           {/* Top 5 épargnants */}
           {top5Savers.length > 0 && (
-            <div className="bg-white rounded-xl border border-emerald-100 shadow-card overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-emerald-100 flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #f0fdf4 0%, #dcfce7 100%)' }}>
-                <div className="p-1.5 bg-emerald-100 rounded-lg">
-                  <Medal className="h-4 w-4 text-emerald-600" strokeWidth={2} />
-                </div>
-                <h2 className="text-sm font-semibold text-emerald-800">Top 5 — Épargne</h2>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-card overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+                <Medal className="h-4 w-4 text-emerald-600" strokeWidth={2} />
+                <h2 className="text-sm font-semibold text-slate-900 font-heading">Top 5 — Épargne</h2>
                 <Link href="/savings" className="ml-auto text-xs text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-1">
                   Voir tout <ArrowRight className="h-3 w-3" />
                 </Link>
@@ -712,12 +773,10 @@ export default function DashboardPage() {
 
           {/* Top 5 emprunteurs */}
           {top5Loans.length > 0 && (
-            <div className="bg-white rounded-xl border border-orange-100 shadow-card overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-orange-100 flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #fff7ed 0%, #fed7aa 100%)' }}>
-                <div className="p-1.5 bg-orange-100 rounded-lg">
-                  <TrendingUp className="h-4 w-4 text-orange-500" strokeWidth={2} />
-                </div>
-                <h2 className="text-sm font-semibold text-orange-800">Top 5 — Prêts en cours</h2>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-card overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-orange-500" strokeWidth={2} />
+                <h2 className="text-sm font-semibold text-slate-900 font-heading">Top 5 — Prêts en cours</h2>
                 <Link href="/loans" className="ml-auto text-xs text-orange-600 hover:text-orange-800 font-medium flex items-center gap-1">
                   Voir tout <ArrowRight className="h-3 w-3" />
                 </Link>
@@ -762,9 +821,9 @@ export default function DashboardPage() {
 
       {/* ── Sessions récentes ── */}
       {selectedFy && (
-        <div className="rounded-xl border border-blue-100 shadow-card overflow-hidden animate-slide-up" style={{ background: 'linear-gradient(135deg, #ffffff 0%, #eff6ff 100%)' }}>
-          <div className="px-6 py-4 border-b border-blue-100 flex items-center justify-between" style={{ background: 'linear-gradient(90deg, #eff6ff 0%, #dbeafe 100%)' }}>
-            <h2 className="text-sm font-semibold text-blue-800">Sessions récentes</h2>
+        <div className="rounded-xl border border-slate-200 shadow-card overflow-hidden bg-white animate-slide-up">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-slate-900 font-heading">Sessions récentes</h2>
             <Link
               href="/sessions"
               className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
