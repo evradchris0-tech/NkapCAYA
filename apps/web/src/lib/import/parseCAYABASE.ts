@@ -70,6 +70,21 @@ export interface ImportRescueFundRow {
   contributions: Record<number, number>;
 }
 
+/** Type de poste comptable spécial (non-membre) du modèle CAYABASE */
+export type SpecialAccountKind = 'RESCUE_FUND' | 'BUREAU' | 'AUTRES_FETE';
+
+/**
+ * Ligne "spéciale" de la feuille ep+int : un poste comptable, PAS un membre.
+ * Modèle CAYABASE : "SECOURS / CAYA", "BUREAU", "AUTRES / FETE".
+ */
+export interface ImportSpecialAccountRow {
+  label: string; // libellé d'origine, ex. "SECOURS / CAYA"
+  kind: SpecialAccountKind;
+  deposits: Record<number, number>;
+  totalDeposit: number;
+  totalInterest: number;
+}
+
 export interface ImportFiscalYearDto {
   label: string;
   startDate: string;
@@ -81,6 +96,7 @@ export interface ImportFiscalYearDto {
   interests: ImportInterestRow[];
   rescueFund: ImportRescueFundRow[];
   sessions: ImportSessionData[];
+  specialAccounts: ImportSpecialAccountRow[];
 }
 
 export interface ParseResult {
@@ -172,6 +188,62 @@ function str(v: ExcelJS.CellValue): string {
 function isNameCell(val: ExcelJS.CellValue): boolean {
   const s = str(val);
   return s.length > 2 && !/^(n°?|noms?|total|sous-total|recap|colonne)/i.test(s) && !/^\d+$/.test(s);
+}
+
+/**
+ * Classe une ligne de la feuille ep+int comme poste comptable spécial (non-membre).
+ * Modèle CAYABASE : "SECOURS / CAYA", "BUREAU", "AUTRES / FETE".
+ * Retourne le type de pool correspondant, ou null si c'est un vrai membre.
+ */
+export function classifySpecialAccount(name: string): SpecialAccountKind | null {
+  const n = normStr(name); // minuscule, sans accents, trim
+  if (/(^|[^a-z])bureau([^a-z]|$)/.test(n)) return 'BUREAU';
+  if (n.includes('secours') || n.includes('caya') || n.includes('caisse') || n.includes('reserve')) {
+    return 'RESCUE_FUND';
+  }
+  if (n.includes('fete') || n.includes('autres') || n.includes('divers')) return 'AUTRES_FETE';
+  return null;
+}
+
+/**
+ * Marqueur de fin de la liste des membres dans une feuille de session :
+ * au-delà commence le cashbook / récapitulatif (RECETTES, DEPENSES, SOLDE…).
+ */
+function isSessionTerminator(name: string): boolean {
+  const n = normStr(name);
+  return /^(total|totaux|libelles?|recettes?|depenses?|solde|beneficiaires?|recapitulatif|recap)\b/.test(n);
+}
+
+/** Libellés de poste du cashbook (RECETTES/DEPENSES) — ce ne sont pas des membres. */
+const CASHBOOK_LABELS = new Set([
+  'inscrip', 'inscription', 'inscriptions', 'secours', 'tontine', 'cotisation', 'pot',
+  'remb & int', 'remb et int', 'rem & int', 'epargne', 'pret', 'projet', 'pret projet',
+  'autres', 'recettes', 'depenses', 'solde', 'solde en caisse', 'nap', 'n a p',
+  'eparg_int', 'eparg int', 'dette_int', 'dette int', 's_tot', 's tot', 'retenus',
+  'entree', 'sortie', 'sec',
+]);
+
+function isCashbookLabel(name: string): boolean {
+  return CASHBOOK_LABELS.has(normStr(name));
+}
+
+/** Distance de Levenshtein (utilisée pour repérer les noms quasi-dupliqués). */
+function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  let curr = new Array<number>(n + 1);
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+    }
+    [prev, curr] = [curr, prev];
+  }
+  return prev[n];
 }
 
 /**
@@ -303,19 +375,24 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
       if (rowNumber <= 1) return;
       const nameVal = str(row.getCell(nameCol).value);
       if (nameVal && isNameCell(row.getCell(nameCol).value)) {
+        if (classifySpecialAccount(nameVal)) return; // poste comptable, pas un membre
         const norm = nameVal.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
         if (!memberSet.has(norm)) memberSet.set(norm, nameVal);
       }
     });
   }
 
-  // Also collect from session sheets
+  // Also collect from session sheets (stop at the cashbook/r\u00e9cap section)
   for (const ss of sessionSheets) {
     const nameCol = findNameColumn(ss.ws);
+    let ended = false;
     ss.ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-      if (rowNumber <= 1) return;
+      if (rowNumber <= 1 || ended) return;
       const nameVal = str(row.getCell(nameCol).value);
+      if (isSessionTerminator(nameVal)) { ended = true; return; }
       if (nameVal && isNameCell(row.getCell(nameCol).value)) {
+        if (classifySpecialAccount(nameVal)) return; // poste comptable, pas un membre
+        if (isCashbookLabel(nameVal)) return; // libell\u00e9 de cashbook, pas un membre
         const norm = nameVal.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
         if (!memberSet.has(norm)) memberSet.set(norm, nameVal);
       }
@@ -338,6 +415,8 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
 
   // 4. Parse ep+int sheet
   const savings: ImportSavingsRow[] = [];
+  // Postes comptables spéciaux (SECOURS / CAYA, BUREAU, AUTRES / FETE) — pas des membres
+  const specialAccountsMap = new Map<SpecialAccountKind, ImportSpecialAccountRow>();
   const epIntSheet = summarySheets.get('ep+int');
   if (epIntSheet) {
     const nameCol = findNameColumn(epIntSheet);
@@ -380,6 +459,25 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
         ? num(row.getCell(recapInteretCol).value)
         : 0;
 
+      // Poste comptable spécial → on l'agrège à part (jamais un membre)
+      const special = classifySpecialAccount(nameVal);
+      if (special) {
+        const acc = specialAccountsMap.get(special) ?? {
+          label: nameVal,
+          kind: special,
+          deposits: {} as Record<number, number>,
+          totalDeposit: 0,
+          totalInterest: 0,
+        };
+        for (const [m, v] of Object.entries(deposits)) {
+          acc.deposits[Number(m)] = (acc.deposits[Number(m)] ?? 0) + v;
+        }
+        acc.totalDeposit += totalDeposit;
+        acc.totalInterest += totalInterest;
+        specialAccountsMap.set(special, acc);
+        return;
+      }
+
       const interests: Record<number, number> = {};
       if (totalInterest > 0) interests[12] = totalInterest;
 
@@ -410,6 +508,7 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
       if (rowNumber <= 1) return;
       const nameVal = str(row.getCell(nameCol).value);
       if (!nameVal || !isNameCell(row.getCell(nameCol).value)) return;
+      if (classifySpecialAccount(nameVal)) return; // poste comptable, pas un membre
 
       const disbursements: Record<number, number> = {};
       for (const [col, sessMonth] of monthCols) {
@@ -445,6 +544,7 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
       if (rowNumber <= 1) return;
       const nameVal = str(row.getCell(nameCol).value);
       if (!nameVal || !isNameCell(row.getCell(nameCol).value)) return;
+      if (classifySpecialAccount(nameVal)) return; // poste comptable, pas un membre
 
       const reps: Record<number, number> = {};
       for (const [col, sessMonth] of monthCols) {
@@ -472,6 +572,7 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
       if (rowNumber <= 1) return;
       const nameVal = str(row.getCell(nameCol).value);
       if (!nameVal || !isNameCell(row.getCell(nameCol).value)) return;
+      if (classifySpecialAccount(nameVal)) return; // poste comptable, pas un membre
 
       const ints: Record<number, number> = {};
       for (const [col, sessMonth] of monthCols) {
@@ -522,6 +623,7 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
       if (rowNumber <= 1) return;
       const nameVal = str(row.getCell(nameCol).value);
       if (!nameVal || !isNameCell(row.getCell(nameCol).value)) return;
+      if (classifySpecialAccount(nameVal)) return; // poste comptable, pas un membre
 
       const contributions: Record<number, number> = {};
       for (const [col, sessMonth] of monthCols) {
@@ -566,10 +668,14 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
     });
 
     const entries: ImportSessionEntryRow[] = [];
+    let ended = false;
     ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-      if (rowNumber <= 1) return;
+      if (rowNumber <= 1 || ended) return;
       const nameVal = str(row.getCell(nameCol).value);
+      if (isSessionTerminator(nameVal)) { ended = true; return; }
       if (!nameVal || !isNameCell(row.getCell(nameCol).value)) return;
+      if (classifySpecialAccount(nameVal)) return; // poste comptable, pas un membre
+      if (isCashbookLabel(nameVal)) return; // libellé de cashbook, pas un membre
 
       entries.push({
         memberName: nameVal,
@@ -611,6 +717,43 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
     criticalErrors.push(`${negativeAmountsCount} montants négatifs ont été détectés, ce qui corrompra la comptabilité.`);
   }
 
+  const specialAccounts = Array.from(specialAccountsMap.values());
+
+  // Avertissement : comptes spéciaux détectés (traités comme postes de pool, pas comme membres)
+  if (specialAccounts.length > 0) {
+    warnings.push(
+      `Lignes spéciales détectées (postes comptables, exclues des membres) : ${specialAccounts
+        .map((a) => a.label)
+        .join(', ')}.`,
+    );
+  }
+
+  // Avertissement : aucune session → historique des réunions vide
+  if (sessions.length === 0) {
+    warnings.push(
+      'Aucune session mensuelle détectée : seuls les soldes annuels (épargne, prêts, secours) seront importés. ' +
+        'Le détail des réunions mois par mois sera vide.',
+    );
+  }
+
+  // Avertissement : noms quasi-dupliqués (probables doublons / fautes de frappe)
+  const dupPairs: string[] = [];
+  for (let i = 0; i < members.length; i++) {
+    for (let j = i + 1; j < members.length; j++) {
+      const a = normStr(members[i]);
+      const b = normStr(members[j]);
+      if (a.length >= 6 && b.length >= 6 && Math.abs(a.length - b.length) <= 2 && levenshtein(a, b) <= 2) {
+        dupPairs.push(`"${members[i]}" ≈ "${members[j]}"`);
+      }
+    }
+  }
+  if (dupPairs.length > 0) {
+    warnings.push(
+      `Noms très proches (vérifiez s'il s'agit de doublons) : ${dupPairs.slice(0, 8).join(' ; ')}` +
+        (dupPairs.length > 8 ? ` … (+${dupPairs.length - 8})` : ''),
+    );
+  }
+
   return {
     data: {
       label,
@@ -623,6 +766,7 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
       interests,
       rescueFund,
       sessions,
+      specialAccounts,
     },
     warnings,
     criticalErrors,

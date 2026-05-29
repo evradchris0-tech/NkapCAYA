@@ -85,6 +85,7 @@ enum BeneficiaryStatus {
 enum PoolParticipantType {
   RESCUE_FUND
   BUREAU
+  AUTRES_FETE
 }
 
 enum SavingsEntryType {

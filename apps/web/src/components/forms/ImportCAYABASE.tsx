@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Landmark,
   ShieldCheck,
+  Briefcase,
   X,
   ArrowRight,
   Loader2,
@@ -195,6 +196,12 @@ export default function ImportCAYABASE() {
         icon: <ShieldCheck className="h-5 w-5 text-rose-500" />,
         color: 'bg-rose-50 border-rose-100',
       },
+      {
+        label: 'Comptes spéciaux',
+        value: (d.specialAccounts ?? []).length,
+        icon: <Briefcase className="h-5 w-5 text-slate-500" />,
+        color: 'bg-slate-50 border-slate-100',
+      },
     ];
 
     const startFmt = new Date(d.startDate).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
@@ -243,7 +250,7 @@ export default function ImportCAYABASE() {
         </div>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {stats.map((s) => (
             <StatCard key={s.label} item={s} />
           ))}

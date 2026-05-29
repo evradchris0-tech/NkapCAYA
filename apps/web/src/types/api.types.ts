@@ -19,7 +19,7 @@ import type {
 export type FiscalYearStatus = 'PENDING' | 'ACTIVE' | 'CASSATION' | 'CLOSED' | 'ARCHIVED';
 export type EnrollmentType = 'NEW' | 'RETURNING' | 'MID_YEAR';
 export type BeneficiaryStatus = 'UNASSIGNED' | 'ASSIGNED' | 'DELIVERED';
-export type PoolParticipantType = 'RESCUE_FUND' | 'BUREAU';
+export type PoolParticipantType = 'RESCUE_FUND' | 'BUREAU' | 'AUTRES_FETE';
 export type SavingsEntryType = 'DEPOSIT' | 'INTEREST_CREDIT';
 export type InterestPoolMethod = 'THEORETICAL' | 'ACTUAL';
 export type RescueEventType =

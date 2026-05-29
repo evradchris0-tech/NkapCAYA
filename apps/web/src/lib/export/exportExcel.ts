@@ -8,6 +8,7 @@ import type {
   ExportSession,
   ExportSavingsLedger,
   ExportLoanAccount,
+  PoolParticipantType,
 } from '@/types/api.types';
 
 // ── Styling helpers ──────────────────────────────────────────────────────────
@@ -217,7 +218,7 @@ function buildSheetEpargneInterets(
   for (let i = 0; i < 12; i++) {
     if (i === 0) {
       headers.push(`EP ${monthLabels[i].toUpperCase()}`);
-      headers.push(`EP+INT ${monthLabels[i].toUpperCase()}`);
+      headers.push(`EP ${monthLabels[i].toUpperCase()}+INT`);
     } else {
       headers.push(`EP ${monthLabels[i].toUpperCase()}`);
       headers.push(`CUMUL${i}`);
@@ -291,7 +292,36 @@ function buildSheetEpargneInterets(
   const tRow = ws.addRow(totalRow);
   styleTotalRow(tRow);
 
+  // Lignes spéciales (postes comptables) — modèle CAYABASE : SECOURS / CAYA,
+  // BUREAU, AUTRES / FETE. Placées après le total pour ne pas gonfler les
+  // totaux d'épargne des membres. Le montant ep+int est lu depuis initialBalance.
+  const specialRows: { type: PoolParticipantType; label: string }[] = [
+    { type: 'RESCUE_FUND', label: 'SECOURS / CAYA' },
+    { type: 'BUREAU', label: 'BUREAU' },
+    { type: 'AUTRES_FETE', label: 'AUTRES / FETE' },
+  ];
+  const specialStart = ws.rowCount + 1;
+  let specialIdx = memberIds.length;
+  for (const sp of specialRows) {
+    const pool = data.poolParticipants.find((p) => p.type === sp.type);
+    if (!pool) continue;
+    const amount = num(pool.initialBalance);
+    specialIdx++;
+    const row: (string | number)[] = [specialIdx, sp.label];
+    let cumul = 0;
+    for (let m = 1; m <= 12; m++) {
+      const dep = m === 1 ? amount : 0;
+      cumul += dep;
+      if (m === 1) row.push(dep, cumul);
+      else row.push(dep, cumul, cumul);
+    }
+    row.push(amount, 0, amount); // EP TOTALE, INTERETS, N A P
+    row.push('', specialIdx, sp.label, amount, 0, amount); // bloc récap
+    ws.addRow(row);
+  }
+
   styleDataRows(ws, 2, dataRows);
+  if (ws.rowCount >= specialStart) styleDataRows(ws, specialStart, ws.rowCount);
   autoWidth(ws, 10);
 }
 

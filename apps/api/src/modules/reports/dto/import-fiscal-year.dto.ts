@@ -6,6 +6,7 @@ import {
   IsOptional,
   ValidateNested,
   IsObject,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -134,6 +135,27 @@ export class ImportRescueFundRow {
   contributions: Record<number, number>;
 }
 
+/* ── Comptes spéciaux (postes comptables, pas des membres) ── */
+
+export class ImportSpecialAccountRow {
+  @ApiProperty({ example: 'SECOURS / CAYA' }) @IsString()
+  label: string;
+
+  @ApiProperty({ enum: ['RESCUE_FUND', 'BUREAU', 'AUTRES_FETE'] })
+  @IsIn(['RESCUE_FUND', 'BUREAU', 'AUTRES_FETE'])
+  kind: 'RESCUE_FUND' | 'BUREAU' | 'AUTRES_FETE';
+
+  @ApiProperty({ description: 'month → deposit amount' })
+  @IsObject()
+  deposits: Record<number, number>;
+
+  @ApiProperty() @IsNumber()
+  totalDeposit: number;
+
+  @ApiProperty() @IsNumber()
+  totalInterest: number;
+}
+
 /* ── Top-level payload ── */
 
 export class ImportFiscalYearDto {
@@ -189,4 +211,11 @@ export class ImportFiscalYearDto {
   @ValidateNested({ each: true })
   @Type(() => ImportSessionData)
   sessions: ImportSessionData[];
+
+  @ApiPropertyOptional({ type: [ImportSpecialAccountRow] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ImportSpecialAccountRow)
+  specialAccounts?: ImportSpecialAccountRow[];
 }

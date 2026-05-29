@@ -2,6 +2,12 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
 import { ReportsRepository } from '../repositories/reports.repository';
 import { ImportFiscalYearDto } from '../dto/import-fiscal-year.dto';
+import {
+  classifySpecialAccount,
+  reconstructLoanTimeline,
+  SPECIAL_POOL_LABELS,
+  type SpecialAccountKind,
+} from './import.helpers';
 import * as bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 
@@ -76,6 +82,21 @@ export class ReportsService {
     const existing = await this.prisma.fiscalYear.findUnique({ where: { label: dto.label } });
     if (existing) throw new BadRequestException(`Un exercice avec le label "${dto.label}" existe déjà.`);
 
+    // Garde-fou : ne jamais importer les postes comptables spéciaux comme membres
+    // (SECOURS / CAYA, BUREAU, AUTRES / FETE). Le parseur les exclut déjà ;
+    // on re-filtre ici au cas où un client enverrait une charge utile ancienne.
+    const memberNames = dto.members.filter((nm) => !classifySpecialAccount(nm));
+
+    // Montants des comptes spéciaux (feuille ep+int), regroupés par type de pool.
+    const specialAmounts: Record<SpecialAccountKind, number> = {
+      RESCUE_FUND: 0,
+      BUREAU: 0,
+      AUTRES_FETE: 0,
+    };
+    for (const sa of dto.specialAccounts ?? []) {
+      specialAmounts[sa.kind] = (specialAmounts[sa.kind] ?? 0) + num(sa.totalDeposit);
+    }
+
     // Read current tontine config (for snapshot)
     const tontineConfig = await this.prisma.tontineConfig.findUnique({ where: { id: 'caya' } });
     if (!tontineConfig) throw new BadRequestException('Configuration tontine introuvable.');
@@ -102,7 +123,7 @@ export class ReportsService {
     const membersToCreate: string[] = [];
     const resolvedMembers = new Map<string, { profileId: string; userId: string }>();
 
-    for (const name of dto.members) {
+    for (const name of memberNames) {
       const key = norm(name);
       const found = profileByNorm.get(key);
       if (found) {
@@ -222,7 +243,7 @@ export class ReportsService {
         const shareUnit = Number(tontineConfig.shareUnitAmount);
         const membershipMap = new Map<string, string>(); // normName → membershipId
 
-        for (const name of dto.members) {
+        for (const name of memberNames) {
           const key = norm(name);
           const resolved = resolvedMembers.get(key);
           if (!resolved) continue;
@@ -345,7 +366,7 @@ export class ReportsService {
 
         // 2g. Create RescueFundLedger + Positions
         const rescueData = dto.rescueFund;
-        const memberCount = dto.members.length;
+        const memberCount = memberNames.length;
         let rescueTotalBalance = 0;
 
         const rescueLedgerId = randomUUID();
@@ -532,54 +553,45 @@ export class ReportsService {
             },
           });
 
-          // 2j. Create MonthlyLoanAccrual from interest sheet
+          // 2j + 2k. Reconstitue l'évolution mensuelle du prêt (accruals + remboursements)
+          // avec des soldes courants cohérents, au lieu des anciens placeholders à 0.
           const intRow = dto.interests.find((i) => norm(i.memberName) === norm(loanRow.memberName));
-          if (intRow) {
-            for (const [monthStr, interest] of Object.entries(intRow.interests)) {
-              const m = Number(monthStr);
-              const intAmt = num(interest);
-              const sessionId = sessionMap.get(m);
-              if (!sessionId || intAmt <= 0) continue;
-
-              await tx.monthlyLoanAccrual.create({
-                data: {
-                  id: randomUUID(),
-                  loanId,
-                  sessionId,
-                  month: m,
-                  balanceAtMonthStart: 0, // approximate: not fully computable from import
-                  interestAccrued: intAmt,
-                  balanceWithInterest: 0,
-                  repaymentReceived: 0,
-                  balanceAtMonthEnd: 0,
-                },
-              });
-            }
-          }
-
-          // 2k. Create LoanRepayment from repayments sheet
           const repRow = dto.repayments.find((r) => norm(r.memberName) === norm(loanRow.memberName));
-          if (repRow) {
-            for (const [monthStr, amount] of Object.entries(repRow.repayments)) {
-              const m = Number(monthStr);
-              const amt = num(amount);
-              const sessionId = sessionMap.get(m);
-              if (!sessionId || amt <= 0) continue;
 
-              // Split using interest data
-              const monthInterest = intRow ? num(intRow.interests[m]) : 0;
-              const interestPart = Math.min(monthInterest, amt);
-              const principalPart = amt - interestPart;
+          const timeline = reconstructLoanTimeline({
+            disbursements: loanRow.disbursements ?? {},
+            interests: intRow?.interests ?? {},
+            repayments: repRow?.repayments ?? {},
+          });
 
+          for (const t of timeline) {
+            const sessionId = sessionMap.get(t.month);
+            if (!sessionId) continue;
+
+            await tx.monthlyLoanAccrual.create({
+              data: {
+                id: randomUUID(),
+                loanId,
+                sessionId,
+                month: t.month,
+                balanceAtMonthStart: t.balanceAtMonthStart,
+                interestAccrued: t.interestAccrued,
+                balanceWithInterest: t.balanceWithInterest,
+                repaymentReceived: t.repaymentReceived,
+                balanceAtMonthEnd: t.balanceAtMonthEnd,
+              },
+            });
+
+            if (t.repaymentReceived > 0) {
               await tx.loanRepayment.create({
                 data: {
                   id: randomUUID(),
                   loanId,
                   sessionId,
-                  amount: amt,
-                  principalPart,
-                  interestPart,
-                  balanceAfter: 0, // not fully computable
+                  amount: t.repaymentReceived,
+                  principalPart: t.principalPart,
+                  interestPart: t.interestPart,
+                  balanceAfter: t.balanceAtMonthEnd,
                 },
               });
             }
@@ -606,15 +618,17 @@ export class ReportsService {
           });
         }
 
-        // 2m. Create PoolParticipants
+        // 2m. Create PoolParticipants (incl. comptes spéciaux du modèle CAYABASE)
+        // initialBalance = épargne du poste (ligne ep+int : SECOURS/CAYA, BUREAU, AUTRES/FETE).
+        // currentBalance = solde "vivant" (secours cumulé des membres pour RESCUE_FUND).
         await tx.poolParticipant.createMany({
           data: [
             {
               id: randomUUID(),
               fiscalYearId: fyId,
               type: 'RESCUE_FUND',
-              label: 'Caisse de secours',
-              initialBalance: 0,
+              label: SPECIAL_POOL_LABELS.RESCUE_FUND,
+              initialBalance: specialAmounts.RESCUE_FUND,
               currentBalance: rescueTotalBalance,
               totalInterestReceived: 0,
             },
@@ -622,9 +636,18 @@ export class ReportsService {
               id: randomUUID(),
               fiscalYearId: fyId,
               type: 'BUREAU',
-              label: 'Bureau',
-              initialBalance: 0,
-              currentBalance: 0,
+              label: SPECIAL_POOL_LABELS.BUREAU,
+              initialBalance: specialAmounts.BUREAU,
+              currentBalance: specialAmounts.BUREAU,
+              totalInterestReceived: 0,
+            },
+            {
+              id: randomUUID(),
+              fiscalYearId: fyId,
+              type: 'AUTRES_FETE',
+              label: SPECIAL_POOL_LABELS.AUTRES_FETE,
+              initialBalance: specialAmounts.AUTRES_FETE,
+              currentBalance: specialAmounts.AUTRES_FETE,
               totalInterestReceived: 0,
             },
           ],
@@ -633,7 +656,7 @@ export class ReportsService {
         return {
           fiscalYearId: fyId,
           membersCreated: membersToCreate.length,
-          membersMatched: dto.members.length - membersToCreate.length,
+          membersMatched: memberNames.length - membersToCreate.length,
           sessionsCreated: 12,
         };
       },
