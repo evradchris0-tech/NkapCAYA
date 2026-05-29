@@ -1,9 +1,5 @@
 name: DB Migrate — Hostinger (prod, manuel)
 
-# Applique les migrations Prisma en attente sur la base de PRODUCTION,
-# via un tunnel SSH (CI:3307 -> serveur 127.0.0.1:3306). Déclenchement MANUEL.
-# Réutilise les secrets : SSH_HOST, SSH_PORT, SSH_USER, SSH_PRIVATE_KEY, DATABASE_URL.
-
 on:
   workflow_dispatch:
     inputs:
@@ -24,19 +20,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
 
       - name: Migrate prod via SSH tunnel
         env:
@@ -55,13 +42,13 @@ jobs:
           export DATABASE_URL=$(echo "$DATABASE_URL" | sed 's/:3306/:3307/')
 
           echo "=== Migrations en attente (avant) ==="
-          pnpm exec prisma migrate status --schema=database/schema.prisma || true
+          npx --yes prisma@5.22.0 migrate status --schema=database/schema.prisma || true
 
           echo "=== Application des migrations ==="
-          pnpm exec prisma migrate deploy --schema=database/schema.prisma
+          npx --yes prisma@5.22.0 migrate deploy --schema=database/schema.prisma
 
           echo "=== Statut final ==="
-          pnpm exec prisma migrate status --schema=database/schema.prisma || true
+          npx --yes prisma@5.22.0 migrate status --schema=database/schema.prisma || true
 
           kill $(lsof -t -i:3307) 2>/dev/null || true
           rm -f /tmp/deploy_key
