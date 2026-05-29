@@ -1,6 +1,8 @@
 import {
   classifySpecialAccount,
   reconstructLoanTimeline,
+  computeLastRecordedMonth,
+  sessionStatusForOngoing,
   SPECIAL_POOL_LABELS,
   SPECIAL_SHEET_LABELS,
 } from './import.helpers';
@@ -115,6 +117,71 @@ describe('import.helpers', () => {
         repayments: {},
       });
       expect(t.map((x) => x.month)).toEqual([1]);
+    });
+  });
+
+  describe('computeLastRecordedMonth()', () => {
+    it('IH13 — aucune donnée → 0', () => {
+      expect(computeLastRecordedMonth({})).toBe(0);
+      expect(computeLastRecordedMonth({ savings: [], loans: [], sessions: [] })).toBe(0);
+    });
+
+    it('IH14 — prend le mois max parmi épargne/prêts/secours', () => {
+      expect(
+        computeLastRecordedMonth({
+          savings: [{ deposits: { 1: 1000, 3: 2000 } }],
+          loans: [{ disbursements: { 5: 50000 } }],
+          rescueFund: [{ contributions: { 2: 500 } }],
+        }),
+      ).toBe(5);
+    });
+
+    it('IH15 — une séance avec des entrées compte', () => {
+      expect(
+        computeLastRecordedMonth({
+          savings: [{ deposits: { 1: 1000 } }],
+          sessions: [
+            { sessionNumber: 4, entries: [{}, {}] },
+            { sessionNumber: 6, entries: [] }, // vide → ne compte pas
+          ],
+        }),
+      ).toBe(4);
+    });
+
+    it('IH16 — ignore les valeurs nulles et les mois hors 1..12', () => {
+      expect(
+        computeLastRecordedMonth({
+          savings: [{ deposits: { 2: 0, 13: 9999, 0: 5000 } }],
+        }),
+      ).toBe(0);
+    });
+  });
+
+  describe('sessionStatusForOngoing()', () => {
+    it('IH17 — dernier saisi = 3 : passé CLOSED, +1 OPEN, suite DRAFT', () => {
+      expect(sessionStatusForOngoing(1, 3)).toBe('CLOSED');
+      expect(sessionStatusForOngoing(3, 3)).toBe('CLOSED');
+      expect(sessionStatusForOngoing(4, 3)).toBe('OPEN');
+      expect(sessionStatusForOngoing(5, 3)).toBe('DRAFT');
+    });
+
+    it('IH18 — aucune donnée (0) : mois 1 OPEN, reste DRAFT', () => {
+      expect(sessionStatusForOngoing(1, 0)).toBe('OPEN');
+      expect(sessionStatusForOngoing(2, 0)).toBe('DRAFT');
+    });
+
+    it('IH19 — tout saisi (12) : aucune session OPEN', () => {
+      expect(sessionStatusForOngoing(12, 12)).toBe('CLOSED');
+      const statuses = Array.from({ length: 12 }, (_, i) => sessionStatusForOngoing(i + 1, 12));
+      expect(statuses).not.toContain('OPEN');
+      expect(statuses.every((s) => s === 'CLOSED')).toBe(true);
+    });
+
+    it('IH20 — un seul mois OPEN au maximum', () => {
+      const open = Array.from({ length: 12 }, (_, i) => sessionStatusForOngoing(i + 1, 7)).filter(
+        (s) => s === 'OPEN',
+      );
+      expect(open).toHaveLength(1);
     });
   });
 });

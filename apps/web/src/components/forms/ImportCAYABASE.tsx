@@ -58,6 +58,8 @@ export default function ImportCAYABASE() {
   const [importLabel, setImportLabel] = useState('');
   const [showMemberList, setShowMemberList] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [keepOpen, setKeepOpen] = useState(false);
+  const [doneInfo, setDoneInfo] = useState<{ status: 'ACTIVE' | 'CLOSED'; openMonth: number | null } | null>(null);
 
   /* ── Parsing ── */
   const processFile = useCallback(async (file: File) => {
@@ -72,6 +74,8 @@ export default function ImportCAYABASE() {
       const result = await parseCAYABASE(buffer);
       setParsed(result);
       setImportLabel(result.data.label);
+      // Suggestion : si l'exercice n'est pas terminé (fin dans le futur), proposer "en cours".
+      setKeepOpen(new Date(result.data.endDate).getTime() > Date.now());
       setStep('preview');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erreur lors de la lecture du fichier Excel.';
@@ -108,13 +112,18 @@ export default function ImportCAYABASE() {
     }
     setStep('importing');
     try {
-      const payload = { ...parsed.data, label: importLabel.trim() };
+      const payload = { ...parsed.data, label: importLabel.trim(), keepOpen };
       const result = await reportsApi.importFiscalYear(payload);
+      setDoneInfo({ status: result.status, openMonth: result.openMonth });
       setStep('done');
       queryClient.invalidateQueries({ queryKey: ['fiscal-years'] });
+      const modeMsg =
+        result.status === 'ACTIVE'
+          ? `▶️ Exercice EN COURS${result.openMonth ? ` — reprise à la session #${result.openMonth}` : ''}`
+          : '📦 Exercice archivé (clôturé)';
       toast.success(
-        `✅ Exercice "${importLabel}" importé ! ${result.membersMatched} membres trouvés, ${result.membersCreated} nouveaux créés.`,
-        { duration: 7000 },
+        `✅ "${importLabel}" importé ! ${result.membersMatched} membres trouvés, ${result.membersCreated} créés. ${modeMsg}`,
+        { duration: 8000 },
       );
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string | string[] }; status?: number } };
@@ -134,6 +143,8 @@ export default function ImportCAYABASE() {
     setImportLabel('');
     setErrorMsg(null);
     setShowMemberList(false);
+    setKeepOpen(false);
+    setDoneInfo(null);
   };
 
   /* ──────────────────────────────── RENDER ──────────────────────── */
@@ -148,8 +159,11 @@ export default function ImportCAYABASE() {
         <div>
           <h3 className="text-xl font-bold text-emerald-900">Import réussi !</h3>
           <p className="text-sm text-emerald-700 mt-1">
-            L&apos;exercice <strong>&quot;{importLabel}&quot;</strong> est maintenant disponible dans l&apos;application avec le statut{' '}
-            <span className="font-semibold">Clôturé</span>.
+            L&apos;exercice <strong>&quot;{importLabel}&quot;</strong> est disponible avec le statut{' '}
+            <span className="font-semibold">{doneInfo?.status === 'ACTIVE' ? 'Actif (en cours)' : 'Clôturé'}</span>.
+            {doneInfo?.status === 'ACTIVE' && doneInfo.openMonth ? (
+              <> La saisie reprend à la <strong>session #{doneInfo.openMonth}</strong>.</>
+            ) : null}
           </p>
         </div>
         <button
@@ -247,6 +261,35 @@ export default function ImportCAYABASE() {
                        disabled:opacity-60"
           />
           <p className="text-xs text-indigo-400 mt-1">Détecté automatiquement depuis le fichier. Modifiable si besoin.</p>
+        </div>
+
+        {/* Type d'import : archivé vs en cours */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Type d&apos;import</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setKeepOpen(false)}
+              disabled={step === 'importing'}
+              className={`text-left rounded-xl border p-3 transition-all disabled:opacity-60 ${!keepOpen ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+            >
+              <p className="text-sm font-semibold text-gray-800">📦 Exercice terminé</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Archivé en statut <strong>Clôturé</strong>. Pour conserver l&apos;historique d&apos;un exercice bouclé.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setKeepOpen(true)}
+              disabled={step === 'importing'}
+              className={`text-left rounded-xl border p-3 transition-all disabled:opacity-60 ${keepOpen ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+            >
+              <p className="text-sm font-semibold text-gray-800">▶️ Exercice en cours</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Statut <strong>Actif</strong>. Reprend la saisie au mois suivant le dernier saisi.
+              </p>
+            </button>
+          </div>
         </div>
 
         {/* Stats grid */}
