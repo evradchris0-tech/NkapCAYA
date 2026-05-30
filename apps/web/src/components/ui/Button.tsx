@@ -2,7 +2,7 @@ import { ButtonHTMLAttributes } from 'react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+type ButtonVariant = 'primary' | 'accent' | 'secondary' | 'outline' | 'danger' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -13,16 +13,18 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-blue-600 hover:bg-blue-700 text-white',
-  secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-800',
-  danger: 'bg-red-600 hover:bg-red-700 text-white',
-  ghost: 'bg-transparent hover:bg-gray-100 text-gray-700',
+  primary: 'bg-primary-700 hover:bg-primary-800 text-white shadow-sm',
+  accent: 'bg-accent-500 hover:bg-accent-600 text-primary-900 shadow-sm',
+  secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-800',
+  outline: 'border border-primary-200 text-primary-700 hover:bg-primary-50',
+  danger: 'bg-red-600 hover:bg-red-700 text-white shadow-sm',
+  ghost: 'bg-transparent hover:bg-slate-100 text-slate-700',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'text-xs px-3 py-1.5 rounded-md',
-  md: 'text-sm px-4 py-2 rounded-lg',
-  lg: 'text-base px-5 py-2.5 rounded-lg',
+  sm: 'text-xs px-3 py-1.5 rounded-md gap-1.5',
+  md: 'text-sm px-4 py-2 rounded-lg gap-2',
+  lg: 'text-base px-5 py-2.5 rounded-lg gap-2',
 };
 
 export default function Button({
@@ -41,16 +43,16 @@ export default function Button({
       disabled={disabled || isLoading}
       className={twMerge(
         clsx(
-          'inline-flex items-center justify-center font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed',
+          'inline-flex items-center justify-center font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed',
           fullWidth && 'w-full',
           variantStyles[variant],
           sizeStyles[size],
-          className
-        )
+          className,
+        ),
       )}
     >
       {isLoading ? (
-        <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
       ) : null}
       {children}
     </button>

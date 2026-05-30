@@ -28,7 +28,11 @@ export default function RootLayout({
 
   return (
     <html lang="fr">
-      <body className="font-sans bg-slate-50 text-slate-900">
+      <head>
+        <title>NkapZen — Gestion de tontine</title>
+        <meta name="description" content="NkapZen — plateforme de gestion de tontine (épargne, prêts, caisse de secours)." />
+      </head>
+      <body className="font-sans bg-surface-secondary text-slate-800">
         <QueryClientProvider client={queryClient}>
           <Toaster
             position="bottom-right"

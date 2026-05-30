@@ -161,7 +161,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={`${selectId}-btn`}
-            className="text-sm font-medium text-gray-700 select-none"
+            className="text-sm font-medium text-slate-700 select-none"
           >
             {label}
           </label>
@@ -207,14 +207,14 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
               'transition-all duration-150 shadow-sm outline-none',
               'focus:ring-2 focus:ring-offset-0 focus:border-transparent',
               isOpen
-                ? 'border-blue-400 ring-2 ring-blue-100 text-blue-700'
+                ? 'border-primary-400 ring-2 ring-primary-100 text-primary-700'
                 : error
                 ? 'border-red-300 bg-red-50/20 focus:ring-red-400'
-                : 'border-gray-200 text-gray-900 hover:border-gray-300 hover:shadow focus:border-blue-300 focus:ring-blue-100',
-              disabled && 'bg-gray-50 text-gray-400 cursor-not-allowed opacity-60 pointer-events-none',
+                : 'border-slate-200 text-slate-900 hover:border-slate-300 hover:shadow focus:border-primary-300 focus:ring-primary-100',
+              disabled && 'bg-slate-50 text-slate-400 cursor-not-allowed opacity-60 pointer-events-none',
             )}
           >
-            <span className={clsx('flex-1 truncate', isPlaceholder && 'text-gray-400')}>
+            <span className={clsx('flex-1 truncate', isPlaceholder && 'text-slate-400')}>
               {selectedOption?.label ?? ''}
             </span>
             {error ? (
@@ -222,7 +222,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ) : (
               <ChevronDown
                 className={clsx(
-                  'h-4 w-4 text-gray-400 shrink-0 transition-transform duration-150',
+                  'h-4 w-4 text-slate-400 shrink-0 transition-transform duration-150',
                   isOpen && 'rotate-180',
                 )}
                 aria-hidden
@@ -234,7 +234,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           {isOpen && (
             <div
               id={`${selectId}-list`}
-              className="absolute left-0 top-full mt-1.5 w-full min-w-[10rem] bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden py-1 max-h-64 overflow-y-auto"
+              className="absolute left-0 top-full mt-1.5 w-full min-w-[10rem] bg-white rounded-xl border border-slate-200 shadow-lg z-50 overflow-hidden py-1 max-h-64 overflow-y-auto"
             >
               <ul role="listbox" aria-label={label}>
                 {options.map((opt) => {
@@ -249,10 +249,10 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         className={clsx(
                           'w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors text-sm',
                           isSelected
-                            ? 'bg-blue-50 text-blue-700'
+                            ? 'bg-primary-50 text-primary-700'
                             : isEmpty
-                            ? 'text-gray-400 hover:bg-gray-50'
-                            : 'text-gray-700 hover:bg-gray-50',
+                            ? 'text-slate-400 hover:bg-slate-50'
+                            : 'text-slate-700 hover:bg-slate-50',
                           opt.disabled && 'opacity-40 cursor-not-allowed',
                         )}
                       >
@@ -260,15 +260,15 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                           className={clsx(
                             'w-2 h-2 rounded-full shrink-0',
                             isSelected
-                              ? 'bg-blue-500'
-                              : 'bg-transparent border border-gray-300',
+                              ? 'bg-primary-500'
+                              : 'bg-transparent border border-slate-300',
                           )}
                         />
                         <span className={clsx('flex-1 truncate', isEmpty && 'italic')}>
                           {opt.label}
                         </span>
                         {isSelected && !isEmpty && (
-                          <Check className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                          <Check className="h-3.5 w-3.5 text-primary-500 shrink-0" />
                         )}
                       </button>
                     </li>
@@ -286,7 +286,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           </p>
         )}
         {helperText && !error && (
-          <p className="text-xs text-gray-400">{helperText}</p>
+          <p className="text-xs text-slate-400">{helperText}</p>
         )}
       </div>
     );

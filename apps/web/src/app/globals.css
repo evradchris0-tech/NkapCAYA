@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Base : fond neutre clair + texte marine foncé ── */
+@layer base {
+  body {
+    @apply bg-surface-secondary text-slate-800 antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply text-primary-900;
+  }
+}
+
 /* ── Transitions fluides sur tous les éléments interactifs ── */
 a,
 button,
@@ -13,9 +23,9 @@ textarea {
   transition-duration: 150ms;
 }
 
-/* ── Focus visible accessible (clavier) ── */
+/* ── Focus visible accessible (clavier) — marine ── */
 :focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #2a4575;
   outline-offset: 2px;
 }
 

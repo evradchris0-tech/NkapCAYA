@@ -44,43 +44,42 @@ export default function LoginPage() {
     <main className="min-h-screen flex">
       {/* ── Panneau gauche — branding ── */}
       <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden flex-col justify-between p-12"
-        style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 50%, #3b82f6 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #0a1326 0%, #162848 55%, #2a4575 100%)' }}
       >
-        {/* Cercles décoratifs */}
+        {/* Cercles décoratifs — halo doré discret */}
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full opacity-10"
           style={{ background: 'radial-gradient(circle, #ffffff 0%, transparent 70%)' }} />
-        <div className="absolute -bottom-32 -left-16 w-80 h-80 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #93c5fd 0%, transparent 70%)' }} />
+        <div className="absolute -bottom-32 -left-16 w-80 h-80 rounded-full opacity-20"
+          style={{ background: 'radial-gradient(circle, #c6902a 0%, transparent 70%)' }} />
 
         {/* Centre */}
         <div className="relative z-10">
           {/* Logo large */}
           <div className="mb-8">
-            <Logo size="2xl" className="rounded-2xl shadow-2xl shadow-blue-900/40" />
+            <Logo size="2xl" className="rounded-2xl shadow-2xl shadow-primary-900/40" />
           </div>
-          <h2 className="text-3xl font-bold text-white leading-snug mb-8">
-            CAYA
-          </h2>
+          <h2 className="text-3xl font-bold text-white leading-snug mb-2">NkapZen</h2>
+          <p className="text-accent-300 text-sm font-medium mb-8">Gestion de tontine — épargne, prêts &amp; secours</p>
           <ul className="space-y-3">
             {FEATURES.map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-center gap-3">
                 <div className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
                   <Icon className="h-3.5 w-3.5 text-white" strokeWidth={2} />
                 </div>
-                <span className="text-blue-100 text-sm">{text}</span>
+                <span className="text-primary-100 text-sm">{text}</span>
               </li>
             ))}
           </ul>
         </div>
 
         {/* Bas */}
-        <p className="relative z-10 text-blue-300 text-xs">
-          © {new Date().getFullYear()} CAYA — Tous droits réservés
+        <p className="relative z-10 text-primary-300 text-xs">
+          © {new Date().getFullYear()} NkapZen — Tous droits réservés
         </p>
       </div>
 
       {/* ── Panneau droit — formulaire ── */}
-      <div className="flex-1 flex items-center justify-center bg-gray-50 p-6">
+      <div className="flex-1 flex items-center justify-center bg-slate-50 p-6">
         <div className="w-full max-w-sm animate-fade-in">
           {/* Logo — visible sur tous les écrans */}
           <div className="flex justify-center mb-8">
@@ -89,7 +88,7 @@ export default function LoginPage() {
 
           {/* En-tête */}
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-gray-900">Connexion</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Connexion</h1>
           </div>
 
           {/* Message d'erreur global */}
@@ -103,7 +102,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit(login)} className="space-y-4" noValidate>
             {/* Identifiant */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 Identifiant
               </label>
               <input
@@ -113,8 +112,8 @@ export default function LoginPage() {
                 autoFocus
                 placeholder="Username ou numéro de téléphone"
                 className={`w-full border rounded-xl px-4 py-2.5 text-sm bg-white transition-colors
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                  ${errors.identifier ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
+                  focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                  ${errors.identifier ? 'border-red-300 bg-red-50' : 'border-slate-300'}`}
               />
               {errors.identifier && (
                 <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
@@ -126,7 +125,7 @@ export default function LoginPage() {
 
             {/* Mot de passe */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 Mot de passe
               </label>
               <div className="relative">
@@ -136,13 +135,13 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   placeholder="••••••••"
                   className={`w-full border rounded-xl px-4 py-2.5 pr-10 text-sm bg-white transition-colors
-                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                    ${errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
+                    focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                    ${errors.password ? 'border-red-300 bg-red-50' : 'border-slate-300'}`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                   tabIndex={-1}
                   aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                 >
@@ -163,7 +162,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold
+              className="w-full bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold
                 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 mt-2
                 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
             >
@@ -182,7 +181,7 @@ export default function LoginPage() {
           </form>
 
           {/* Aide */}
-          <p className="mt-8 text-center text-xs text-gray-400">
+          <p className="mt-8 text-center text-xs text-slate-400">
             Problème de connexion ? Contactez votre administrateur.
           </p>
         </div>

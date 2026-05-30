@@ -83,6 +83,17 @@ async function main(): Promise<void> {
   console.log(`  ✔ RescueEventAmounts (${rescueAmounts.length})`);
 
   // ════════════════════════════════════════════════════════════════════════
+  // DONNÉES DE DÉMO — créées UNIQUEMENT si SEED_DEMO=true.
+  // En production, le seed s'arrête ici : admin + config + barèmes, 0 exercice.
+  // ════════════════════════════════════════════════════════════════════════
+  if (process.env.SEED_DEMO !== 'true') {
+    console.log('  ⏭  Données de démo ignorées (SEED_DEMO ≠ true).');
+    console.log('\n✅ Seed essentiel terminé : admin + configuration, aucun exercice.');
+    console.log('   (Pour peupler des données de démo en dev : SEED_DEMO=true pnpm db:seed)\n');
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
   // MEMBRE DE TEST — accès complet à toutes les features
   // Identifiants : marie.nkeng / Membre@2026!
   // ════════════════════════════════════════════════════════════════════════
