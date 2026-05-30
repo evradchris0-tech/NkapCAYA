@@ -1,9 +1,18 @@
-import { Controller, Get, HttpCode, HttpStatus, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  ServiceUnavailableException,
+  VERSION_NEUTRAL,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PrismaService } from '@database/prisma.service';
 
+// version: VERSION_NEUTRAL → la route reste sur /health (pas de /v1) ;
+// le préfixe global "api" est déjà exclu pour /health (cf. main.ts).
 @ApiTags('Health')
-@Controller('health')
+@Controller({ path: 'health', version: VERSION_NEUTRAL })
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
