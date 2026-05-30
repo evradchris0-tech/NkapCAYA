@@ -13,7 +13,7 @@ export default function MemberEditPage({ params }: MemberEditPageProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-24 text-gray-400 text-sm">
+      <div className="flex items-center justify-center py-24 text-slate-400 text-sm">
         Chargement…
       </div>
     );
@@ -38,7 +38,7 @@ export default function MemberEditPage({ params }: MemberEditPageProps) {
           { label: 'Modifier' },
         ]}
       />
-      <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-2xl">
+      <div className="bg-white rounded-xl border border-slate-200 p-6 max-w-2xl">
         <MemberForm
           memberId={member.id}
           defaultValues={{

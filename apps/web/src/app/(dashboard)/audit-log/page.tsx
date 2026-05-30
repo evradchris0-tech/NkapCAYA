@@ -26,8 +26,8 @@ export default function AuditLogPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
         <ShieldAlert className="h-12 w-12 text-red-500 mb-4" />
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Accès refusé</h2>
-        <p className="text-gray-500 max-w-md">
+        <h2 className="text-xl font-bold text-slate-900 mb-2">Accès refusé</h2>
+        <p className="text-slate-500 max-w-md">
           Cette page est réservée aux administrateurs. Vous n'avez pas les droits nécessaires
           pour consulter le journal d'audit.
         </p>
@@ -82,9 +82,9 @@ export default function AuditLogPage() {
         }
       />
 
-      <div className="bg-white p-4 rounded-xl shadow-card border border-gray-100 flex items-center gap-4">
+      <div className="bg-white p-4 rounded-xl shadow-card border border-slate-100 flex items-center gap-4">
         <div className="flex-1 max-w-sm relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             type="text"
             placeholder="Filtrer par type d'entité (ex: FiscalYear, Session)..."
@@ -93,15 +93,15 @@ export default function AuditLogPage() {
               setEntityType(e.target.value);
               setPage(1);
             }}
-            className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 border-b border-gray-100 text-gray-600">
+            <thead className="bg-slate-50 border-b border-slate-100 text-slate-600">
               <tr>
                 <th className="px-4 py-3 font-medium">Date & Heure</th>
                 <th className="px-4 py-3 font-medium">Utilisateur</th>
@@ -110,44 +110,44 @@ export default function AuditLogPage() {
                 <th className="px-4 py-3 font-medium">Raison</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
                     Chargement des logs...
                   </td>
                 </tr>
               ) : data?.data?.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
                     Aucun journal d'audit trouvé.
                   </td>
                 </tr>
               ) : (
                 data?.data?.map((log: AuditLogDto) => (
-                  <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-gray-700 tabular-nums">
+                  <tr key={log.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 text-slate-700 tabular-nums">
                       {new Date(log.createdAt).toLocaleString('fr-FR', {
                         day: '2-digit', month: '2-digit', year: 'numeric',
                         hour: '2-digit', minute: '2-digit', second: '2-digit'
                       })}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{log.actor?.username || log.actorId}</div>
-                      <div className="text-xs text-gray-500">{log.actor?.role}</div>
+                      <div className="font-medium text-slate-900">{log.actor?.username || log.actorId}</div>
+                      <div className="text-xs text-slate-500">{log.actor?.role}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                      <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-primary-50 text-primary-700">
                         {log.action}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-800">{log.entityType}</div>
-                      <div className="text-xs text-gray-400 font-mono" title={log.entityId}>
+                      <div className="font-medium text-slate-800">{log.entityType}</div>
+                      <div className="text-xs text-slate-400 font-mono" title={log.entityId}>
                         {log.entityId.slice(0, 8)}...
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 truncate max-w-xs" title={log.reason || ''}>
+                    <td className="px-4 py-3 text-slate-600 truncate max-w-xs" title={log.reason || ''}>
                       {log.reason || '—'}
                     </td>
                   </tr>
@@ -157,7 +157,7 @@ export default function AuditLogPage() {
           </table>
         </div>
         {data && data.totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between bg-gray-50">
+          <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50">
             <Button
               size="sm"
               variant="secondary"
@@ -166,7 +166,7 @@ export default function AuditLogPage() {
             >
               Précédent
             </Button>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-slate-600">
               Page {page} sur {data.totalPages}
             </span>
             <Button

@@ -20,11 +20,11 @@ interface AuditEvent {
 }
 
 const CAT_COLORS: Record<string, string> = {
-  'Exercice': 'bg-violet-100 text-violet-700',
-  'Session':  'bg-blue-100 text-blue-700',
+  'Exercice': 'bg-primary-100 text-primary-700',
+  'Session':  'bg-primary-100 text-primary-700',
   'Clôture':  'bg-amber-100 text-amber-700',
   'Validation': 'bg-emerald-100 text-emerald-700',
-  'Cassation': 'bg-rose-100 text-rose-700',
+  'Cassation': 'bg-red-100 text-red-700',
 };
 
 export default function AuditPage() {
@@ -110,11 +110,11 @@ export default function AuditPage() {
             <option key={fy.id} value={fy.id}>{fy.label} — {fy.status}</option>
           ))}
         </Select>
-        <span className="text-xs text-gray-400">{events.length} événement{events.length > 1 ? 's' : ''}</span>
+        <span className="text-xs text-slate-400">{events.length} événement{events.length > 1 ? 's' : ''}</span>
       </div>
 
       {/* Timeline */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-card overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-card overflow-hidden">
         {isLoading ? (
           <div className="p-6 space-y-4">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -128,15 +128,15 @@ export default function AuditPage() {
             ))}
           </div>
         ) : events.length === 0 ? (
-          <div className="p-12 text-center text-gray-400 text-sm">
+          <div className="p-12 text-center text-slate-400 text-sm">
             Aucun événement enregistré pour cet exercice.
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-slate-100">
             {events.map((event, i) => {
               const Icon = event.icon;
               return (
-                <div key={event.id} className="flex items-start gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
+                <div key={event.id} className="flex items-start gap-4 px-6 py-4 hover:bg-slate-50 transition-colors">
                   {/* Icône */}
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${event.color}`}>
                     <Icon className="h-4 w-4" strokeWidth={2} />
@@ -144,18 +144,18 @@ export default function AuditPage() {
 
                   {/* Contenu */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{event.action}</p>
+                    <p className="text-sm font-medium text-slate-900">{event.action}</p>
                     {event.detail && (
-                      <p className="text-xs text-gray-400 mt-0.5">{event.detail}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{event.detail}</p>
                     )}
                   </div>
 
                   {/* Date + badge */}
                   <div className="text-right shrink-0">
-                    <p className="text-xs font-medium text-gray-600">
+                    <p className="text-xs font-medium text-slate-600">
                       {event.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">
+                    <p className="text-[10px] text-slate-400 mt-0.5">
                       {event.date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                     <span className={`inline-block mt-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${event.color}`}>

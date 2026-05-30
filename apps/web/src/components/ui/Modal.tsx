@@ -52,11 +52,11 @@ export default function Modal({
           onClick={(e) => e.stopPropagation()}
         >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-100">
-          <h2 className="text-sm sm:text-base font-semibold text-gray-900 leading-tight">{title}</h2>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100">
+          <h2 className="text-sm sm:text-base font-semibold text-slate-900 leading-tight">{title}</h2>
           <button
             onClick={onClose}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"
             aria-label="Fermer"
           >
             <X className="h-5 w-5" />
@@ -68,7 +68,7 @@ export default function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row justify-end gap-2 sm:gap-2.5 rounded-b-2xl">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-end gap-2 sm:gap-2.5 rounded-b-2xl">
             {footer}
           </div>
         )}

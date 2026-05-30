@@ -25,16 +25,16 @@ const STATUS_LABELS: Record<LoanStatus, string> = {
 
 const STATUS_COLORS: Record<LoanStatus, string> = {
   PENDING: 'bg-yellow-100 text-yellow-700',
-  ACTIVE: 'bg-green-100 text-green-700',
-  PARTIALLY_REPAID: 'bg-blue-100 text-blue-700',
-  CLOSED: 'bg-gray-100 text-gray-500',
+  ACTIVE: 'bg-emerald-100 text-emerald-700',
+  PARTIALLY_REPAID: 'bg-primary-100 text-primary-700',
+  CLOSED: 'bg-slate-100 text-slate-500',
 };
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col sm:flex-row sm:gap-4">
-      <span className="text-sm text-gray-500 sm:w-44 shrink-0">{label}</span>
-      <span className="text-sm text-gray-900 font-medium">{value ?? '—'}</span>
+      <span className="text-sm text-slate-500 sm:w-44 shrink-0">{label}</span>
+      <span className="text-sm text-slate-900 font-medium">{value ?? '—'}</span>
     </div>
   );
 }
@@ -61,7 +61,7 @@ export default function LoanDetailPage({ params }: Props) {
     }
   };
 
-  if (isLoading) return <div className="flex items-center justify-center py-24 text-gray-400 text-sm">Chargement…</div>;
+  if (isLoading) return <div className="flex items-center justify-center py-24 text-slate-400 text-sm">Chargement…</div>;
   if (isError || !loan) return <div className="flex items-center justify-center py-24 text-red-500 text-sm">Prêt introuvable.</div>;
 
   const pct = parseFloat(loan.principalAmount) > 0
@@ -100,40 +100,40 @@ export default function LoanDetailPage({ params }: Props) {
           { label: 'Intérêts cumulés', value: `${parseFloat(loan.totalInterestAccrued).toLocaleString('fr-FR')} XAF` },
           { label: 'Remboursé', value: `${parseFloat(loan.totalRepaid).toLocaleString('fr-FR')} XAF (${pct} %)` },
         ].map(({ label, value }) => (
-          <div key={label} className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-xs text-gray-500 mb-1">{label}</p>
-            <p className="font-semibold text-gray-900 tabular-nums">{value}</p>
+          <div key={label} className="bg-white rounded-xl border border-slate-200 p-4">
+            <p className="text-xs text-slate-500 mb-1">{label}</p>
+            <p className="font-semibold text-slate-900 tabular-nums">{value}</p>
           </div>
         ))}
       </div>
 
       {/* Barre de progression remboursement */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-700">Progression du remboursement</span>
-          <span className="text-sm font-bold tabular-nums" style={{ color: pctNum >= 100 ? '#10b981' : pctNum >= 50 ? '#3b82f6' : '#f59e0b' }}>
+          <span className="text-sm font-medium text-slate-700">Progression du remboursement</span>
+          <span className="text-sm font-bold tabular-nums" style={{ color: pctNum >= 100 ? '#10b981' : pctNum >= 50 ? '#1d325b' : '#c6902a' }}>
             {pct} %
           </span>
         </div>
-        <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+        <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
           <div
             className="h-3 rounded-full transition-all duration-700"
             style={{
               width: `${Math.min(pctNum, 100)}%`,
-              background: pctNum >= 100 ? '#10b981' : pctNum >= 50 ? '#3b82f6' : '#f59e0b',
+              background: pctNum >= 100 ? '#10b981' : pctNum >= 50 ? '#1d325b' : '#c6902a',
             }}
           />
         </div>
-        <div className="flex justify-between text-xs text-gray-400 mt-1.5">
+        <div className="flex justify-between text-xs text-slate-400 mt-1.5">
           <span>{parseFloat(loan.totalRepaid).toLocaleString('fr-FR')} XAF remboursé</span>
           <span>{parseFloat(loan.outstandingBalance).toLocaleString('fr-FR')} XAF restant</span>
         </div>
       </div>
 
       {/* Infos générales */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-3">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-base font-semibold text-gray-800">Informations</h2>
+          <h2 className="text-base font-semibold text-slate-800">Informations</h2>
           <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[loan.status]}`}>
             {STATUS_LABELS[loan.status]}
           </span>
@@ -149,8 +149,8 @@ export default function LoanDetailPage({ params }: Props) {
 
       {/* Remboursement */}
       {isTresorier && (loan.status === 'ACTIVE' || loan.status === 'PARTIALLY_REPAID') && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-base font-semibold text-gray-800 mb-4">Enregistrer un remboursement</h2>
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="text-base font-semibold text-slate-800 mb-4">Enregistrer un remboursement</h2>
           <form onSubmit={handleRepay} className="flex items-end gap-3 max-w-sm">
             <Input
               label="Montant (XAF)"
@@ -169,28 +169,28 @@ export default function LoanDetailPage({ params }: Props) {
 
       {/* Historique remboursements */}
       {loan.repayments && loan.repayments.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-            <h2 className="text-base font-semibold text-gray-800">Historique des remboursements</h2>
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h2 className="text-base font-semibold text-slate-800">Historique des remboursements</h2>
           </div>
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Date</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Total</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Principal</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Intérêts</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Solde après</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Date</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">Total</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">Principal</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">Intérêts</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">Solde après</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {loan.repayments.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-3 text-gray-600">{new Date(r.recordedAt).toLocaleDateString('fr-FR')}</td>
+                <tr key={r.id} className="hover:bg-slate-50">
+                  <td className="px-6 py-3 text-slate-600">{new Date(r.recordedAt).toLocaleDateString('fr-FR')}</td>
                   <td className="px-6 py-3 text-right tabular-nums font-medium">{parseFloat(r.amount).toLocaleString('fr-FR')} XAF</td>
-                  <td className="px-6 py-3 text-right tabular-nums text-gray-600">{parseFloat(r.principalPart).toLocaleString('fr-FR')}</td>
-                  <td className="px-6 py-3 text-right tabular-nums text-gray-600">{parseFloat(r.interestPart).toLocaleString('fr-FR')}</td>
-                  <td className="px-6 py-3 text-right tabular-nums text-gray-500">{parseFloat(r.balanceAfter).toLocaleString('fr-FR')}</td>
+                  <td className="px-6 py-3 text-right tabular-nums text-slate-600">{parseFloat(r.principalPart).toLocaleString('fr-FR')}</td>
+                  <td className="px-6 py-3 text-right tabular-nums text-slate-600">{parseFloat(r.interestPart).toLocaleString('fr-FR')}</td>
+                  <td className="px-6 py-3 text-right tabular-nums text-slate-500">{parseFloat(r.balanceAfter).toLocaleString('fr-FR')}</td>
                 </tr>
               ))}
             </tbody>
@@ -209,16 +209,16 @@ export default function LoanDetailPage({ params }: Props) {
                 <AreaChart data={accrualChartData} margin={{ top: 4, right: 8, bottom: 0, left: 4 }}>
                   <defs>
                     <linearGradient id="balGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.18} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                      <stop offset="5%"  stopColor="#1d325b" stopOpacity={0.18} />
+                      <stop offset="95%" stopColor="#1d325b" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                   <YAxis tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={42} />
                   <Tooltip formatter={(v: number, n: string) => [`${v.toLocaleString('fr-FR')} XAF`, n]} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
-                  <Area type="monotone" dataKey="Solde restant" stroke="#3b82f6" strokeWidth={2} fill="url(#balGrad)" dot={false} />
-                  <Area type="monotone" dataKey="Intérêts"      stroke="#f59e0b" strokeWidth={1.5} fill="none" strokeDasharray="4 2" dot={false} />
+                  <Area type="monotone" dataKey="Solde restant" stroke="#1d325b" strokeWidth={2} fill="url(#balGrad)" dot={false} />
+                  <Area type="monotone" dataKey="Intérêts"      stroke="#c6902a" strokeWidth={1.5} fill="none" strokeDasharray="4 2" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -234,9 +234,9 @@ export default function LoanDetailPage({ params }: Props) {
                     <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={42} />
                     <Tooltip formatter={(v: number, n: string) => [`${v.toLocaleString('fr-FR')} XAF`, n]} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
-                    <Legend iconType="circle" iconSize={7} formatter={(v) => <span className="text-xs text-gray-600">{v}</span>} />
-                    <Bar dataKey="Principal" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
-                    <Bar dataKey="Intérêts"  stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                    <Legend iconType="circle" iconSize={7} formatter={(v) => <span className="text-xs text-slate-600">{v}</span>} />
+                    <Bar dataKey="Principal" stackId="a" fill="#1d325b" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="Intérêts"  stackId="a" fill="#c6902a" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -247,27 +247,27 @@ export default function LoanDetailPage({ params }: Props) {
 
       {/* Tableau amortissement */}
       {loan.monthlyAccruals && loan.monthlyAccruals.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-            <h2 className="text-base font-semibold text-gray-800">Tableau d&apos;amortissement</h2>
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h2 className="text-base font-semibold text-slate-800">Tableau d&apos;amortissement</h2>
           </div>
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Mois</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Solde début</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Intérêts</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Reçu</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Solde fin</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Mois</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">Solde début</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">Intérêts</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">Reçu</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">Solde fin</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {loan.monthlyAccruals.map((a) => (
-                <tr key={a.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-3 text-gray-700">M{a.month}</td>
+                <tr key={a.id} className="hover:bg-slate-50">
+                  <td className="px-6 py-3 text-slate-700">M{a.month}</td>
                   <td className="px-6 py-3 text-right tabular-nums">{parseFloat(a.balanceAtMonthStart).toLocaleString('fr-FR')}</td>
-                  <td className="px-6 py-3 text-right tabular-nums text-orange-600">{parseFloat(a.interestAccrued).toLocaleString('fr-FR')}</td>
-                  <td className="px-6 py-3 text-right tabular-nums text-green-600">{parseFloat(a.repaymentReceived).toLocaleString('fr-FR')}</td>
+                  <td className="px-6 py-3 text-right tabular-nums text-amber-600">{parseFloat(a.interestAccrued).toLocaleString('fr-FR')}</td>
+                  <td className="px-6 py-3 text-right tabular-nums text-emerald-600">{parseFloat(a.repaymentReceived).toLocaleString('fr-FR')}</td>
                   <td className="px-6 py-3 text-right tabular-nums font-medium">{parseFloat(a.balanceAtMonthEnd).toLocaleString('fr-FR')}</td>
                 </tr>
               ))}

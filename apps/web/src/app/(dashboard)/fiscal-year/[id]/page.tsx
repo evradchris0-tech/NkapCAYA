@@ -34,10 +34,10 @@ const STATUS_LABELS: Record<FiscalYearStatus, string> = {
 
 const STATUS_COLORS: Record<FiscalYearStatus, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
-  ACTIVE: 'bg-green-100 text-green-800',
-  CASSATION: 'bg-blue-100 text-blue-800',
-  CLOSED: 'bg-gray-100 text-gray-600',
-  ARCHIVED: 'bg-gray-100 text-gray-400',
+  ACTIVE: 'bg-emerald-100 text-emerald-800',
+  CASSATION: 'bg-primary-100 text-primary-800',
+  CLOSED: 'bg-slate-100 text-slate-600',
+  ARCHIVED: 'bg-slate-100 text-slate-400',
 };
 
 interface Props {
@@ -47,8 +47,8 @@ interface Props {
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col sm:flex-row sm:gap-4">
-      <span className="text-sm text-gray-500 sm:w-44 shrink-0">{label}</span>
-      <span className="text-sm text-gray-900 font-medium">{value ?? '—'}</span>
+      <span className="text-sm text-slate-500 sm:w-44 shrink-0">{label}</span>
+      <span className="text-sm text-slate-900 font-medium">{value ?? '—'}</span>
     </div>
   );
 }
@@ -174,7 +174,7 @@ export default function FiscalYearDetailPage({ params }: Props) {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-24 text-gray-400 text-sm">Chargement…</div>;
+    return <div className="flex items-center justify-center py-24 text-slate-400 text-sm">Chargement…</div>;
   }
 
   if (isError || !fy) {
@@ -251,9 +251,9 @@ export default function FiscalYearDetailPage({ params }: Props) {
       />
 
       {/* ── Informations générales ── */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-800">Informations générales</h2>
+          <h2 className="text-base font-semibold text-slate-800">Informations générales</h2>
           <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[fy.status]}`}>
             {STATUS_LABELS[fy.status]}
           </span>
@@ -269,44 +269,44 @@ export default function FiscalYearDetailPage({ params }: Props) {
 
       {/* ── Formulaire de modification ── */}
       {showEdit && (
-        <div className="bg-white rounded-xl border border-indigo-200 p-6">
-          <h2 className="text-base font-semibold text-gray-800 mb-4">Modifier l&apos;exercice fiscal</h2>
+        <div className="bg-white rounded-xl border border-primary-200 p-6">
+          <h2 className="text-base font-semibold text-slate-800 mb-4">Modifier l&apos;exercice fiscal</h2>
           <form onSubmit={handleEditSubmit} className="space-y-4">
             <div>
-              <label className="text-xs font-medium text-gray-700 block mb-1">Libellé</label>
+              <label className="text-xs font-medium text-slate-700 block mb-1">Libellé</label>
               <input
                 type="text"
                 required
                 value={editForm.label}
                 onChange={(e) => setEditForm({ ...editForm, label: e.target.value })}
-                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-300"
               />
             </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div>
-                <label className="text-xs font-medium text-gray-700 block mb-1">Date de début</label>
-                <input type="date" required value={editForm.startDate} onChange={(e) => setEditForm({ ...editForm, startDate: e.target.value })} className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                <label className="text-xs font-medium text-slate-700 block mb-1">Date de début</label>
+                <input type="date" required value={editForm.startDate} onChange={(e) => setEditForm({ ...editForm, startDate: e.target.value })} className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-300" />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-700 block mb-1">Date limite prêts</label>
-                <input type="date" required value={editForm.loanDueDate} onChange={(e) => setEditForm({ ...editForm, loanDueDate: e.target.value })} className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                <label className="text-xs font-medium text-slate-700 block mb-1">Date limite prêts</label>
+                <input type="date" required value={editForm.loanDueDate} onChange={(e) => setEditForm({ ...editForm, loanDueDate: e.target.value })} className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-300" />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-700 block mb-1">Date de cassation</label>
-                <input type="date" required value={editForm.cassationDate} onChange={(e) => setEditForm({ ...editForm, cassationDate: e.target.value })} className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                <label className="text-xs font-medium text-slate-700 block mb-1">Date de cassation</label>
+                <input type="date" required value={editForm.cassationDate} onChange={(e) => setEditForm({ ...editForm, cassationDate: e.target.value })} className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-300" />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-700 block mb-1">Date de fin</label>
-                <input type="date" required value={editForm.endDate} onChange={(e) => setEditForm({ ...editForm, endDate: e.target.value })} className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                <label className="text-xs font-medium text-slate-700 block mb-1">Date de fin</label>
+                <input type="date" required value={editForm.endDate} onChange={(e) => setEditForm({ ...editForm, endDate: e.target.value })} className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-300" />
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-700 block mb-1">Notes (optionnel)</label>
+              <label className="text-xs font-medium text-slate-700 block mb-1">Notes (optionnel)</label>
               <textarea
                 rows={2}
                 value={editForm.notes}
                 onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-300 resize-none"
               />
             </div>
             <div className="flex gap-2">
@@ -369,7 +369,7 @@ export default function FiscalYearDetailPage({ params }: Props) {
         const returningCount = memberships.filter((m) => m.enrollmentType === 'RETURNING').length;
         const typeData = [
           { name: 'Nouveaux',        value: newCount,       color: '#10b981' },
-          { name: 'Ré-inscriptions', value: returningCount, color: '#3b82f6' },
+          { name: 'Ré-inscriptions', value: returningCount, color: '#1d325b' },
         ].filter((d) => d.value > 0);
 
         const sharesOf = (m: typeof memberships[0]) => Number(m.shareCommitment?.sharesCount ?? 0);
@@ -393,7 +393,7 @@ export default function FiscalYearDetailPage({ params }: Props) {
                       {typeData.map((entry, i) => <Cell key={i} fill={entry.color} strokeWidth={0} />)}
                     </Pie>
                     <Tooltip formatter={(v: number, n: string) => [`${v} membre${v > 1 ? 's' : ''}`, n]} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
-                    <Legend iconType="circle" iconSize={7} formatter={(v) => <span className="text-xs text-gray-600">{v}</span>} />
+                    <Legend iconType="circle" iconSize={7} formatter={(v) => <span className="text-xs text-slate-600">{v}</span>} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -407,7 +407,7 @@ export default function FiscalYearDetailPage({ params }: Props) {
                       <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                       <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#374151' }} axisLine={false} tickLine={false} width={70} />
                       <Tooltip formatter={(v: number) => [`${v} part${v > 1 ? 's' : ''}`]} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
-                      <Bar dataKey="Parts" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="Parts" fill="#1d325b" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -418,11 +418,11 @@ export default function FiscalYearDetailPage({ params }: Props) {
       })()}
 
       {/* ── Membres inscrits ── */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
-          <h2 className="text-base font-semibold text-gray-800">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+          <h2 className="text-base font-semibold text-slate-800">
             Membres inscrits{' '}
-            <span className="text-gray-500 font-normal text-sm">
+            <span className="text-slate-500 font-normal text-sm">
               ({memberships?.length ?? 0})
             </span>
           </h2>
@@ -439,7 +439,7 @@ export default function FiscalYearDetailPage({ params }: Props) {
 
         {/* Formulaire inscription */}
         {showAddMember && (
-          <form onSubmit={handleAddMember} className="px-6 py-4 bg-blue-50 border-b border-blue-100 space-y-3">
+          <form onSubmit={handleAddMember} className="px-6 py-4 bg-primary-50 border-b border-primary-100 space-y-3">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="col-span-2">
                 <Select
@@ -481,7 +481,7 @@ export default function FiscalYearDetailPage({ params }: Props) {
               </div>
 
               <div>
-                <label htmlFor="shares-count" className="text-xs font-medium text-gray-700 block mb-1">Parts</label>
+                <label htmlFor="shares-count" className="text-xs font-medium text-slate-700 block mb-1">Parts</label>
                 <input
                   id="shares-count"
                   type="number"
@@ -490,12 +490,12 @@ export default function FiscalYearDetailPage({ params }: Props) {
                   max="10"
                   value={form.sharesCount}
                   onChange={(e) => setForm({ ...form, sharesCount: parseFloat(e.target.value) })}
-                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5"
+                  className="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5"
                 />
               </div>
 
               <div>
-                <label htmlFor="joined-at" className="text-xs font-medium text-gray-700 block mb-1">Date inscription</label>
+                <label htmlFor="joined-at" className="text-xs font-medium text-slate-700 block mb-1">Date inscription</label>
                 <input
                   id="joined-at"
                   type="date"
@@ -503,12 +503,12 @@ export default function FiscalYearDetailPage({ params }: Props) {
                   min={fy?.startDate?.substring(0, 10)}
                   max={fy?.cassationDate?.substring(0, 10) ?? fy?.endDate?.substring(0, 10)}
                   onChange={(e) => setForm({ ...form, joinedAt: e.target.value })}
-                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5"
+                  className="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5"
                 />
               </div>
 
               <div>
-                <label htmlFor="joined-at-month" className="text-xs font-medium text-gray-700 block mb-1">Mois (1-12)</label>
+                <label htmlFor="joined-at-month" className="text-xs font-medium text-slate-700 block mb-1">Mois (1-12)</label>
                 <input
                   id="joined-at-month"
                   type="number"
@@ -516,7 +516,7 @@ export default function FiscalYearDetailPage({ params }: Props) {
                   max="12"
                   value={form.joinedAtMonth}
                   onChange={(e) => setForm({ ...form, joinedAtMonth: parseInt(e.target.value) })}
-                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5"
+                  className="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5"
                 />
               </div>
             </div>
@@ -536,96 +536,96 @@ export default function FiscalYearDetailPage({ params }: Props) {
 
         {/* Table membres */}
         {!memberships || memberships.length === 0 ? (
-          <div className="px-6 py-10 text-center text-sm text-gray-400">
+          <div className="px-6 py-10 text-center text-sm text-slate-400">
             Aucun membre inscrit à cet exercice.
           </div>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="text-left px-6 py-3 font-medium text-gray-600 w-10">#</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Membre</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Code</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Type</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Parts</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Inscrit le</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600 w-10">#</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Membre</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Code</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Type</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Parts</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Inscrit le</th>
                 {canAddMember && fy.status === 'ACTIVE' && <th className="px-6 py-3" />}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {memberships.map((m, index) => {
                 const isEditing = editingMembershipId === m.id;
                 const isLocked = (m.shareCommitment as any)?.isLocked === true;
                 return isEditing ? (
-                  <tr key={m.id} className="bg-blue-50">
-                    <td className="px-6 py-3 text-gray-400 text-xs">{index + 1}</td>
-                    <td colSpan={2} className="px-6 py-3 font-medium text-gray-900 text-sm">
+                  <tr key={m.id} className="bg-primary-50">
+                    <td className="px-6 py-3 text-slate-400 text-xs">{index + 1}</td>
+                    <td colSpan={2} className="px-6 py-3 font-medium text-slate-900 text-sm">
                       {m.profile ? `${m.profile.lastName} ${m.profile.firstName}` : m.profileId}
                     </td>
                     <td colSpan={4} className="px-6 py-2">
                       <form onSubmit={handleUpdateMembership} className="flex items-end gap-2 flex-wrap">
                         <div>
-                          <label className="text-[11px] text-gray-500 block mb-0.5">Date</label>
+                          <label className="text-[11px] text-slate-500 block mb-0.5">Date</label>
                           <input
                             type="date"
                             value={editMembershipForm.joinedAt}
                             min={fy?.startDate?.substring(0, 10)}
                             max={fy?.cassationDate?.substring(0, 10) ?? fy?.endDate?.substring(0, 10)}
                             onChange={(e) => setEditMembershipForm({ ...editMembershipForm, joinedAt: e.target.value })}
-                            className="text-xs border border-gray-300 rounded px-2 py-1"
+                            className="text-xs border border-slate-300 rounded px-2 py-1"
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] text-gray-500 block mb-0.5">Mois</label>
+                          <label className="text-[11px] text-slate-500 block mb-0.5">Mois</label>
                           <input
                             type="number" min="1" max="12"
                             value={editMembershipForm.joinedAtMonth}
                             onChange={(e) => setEditMembershipForm({ ...editMembershipForm, joinedAtMonth: parseInt(e.target.value) })}
-                            className="text-xs border border-gray-300 rounded px-2 py-1 w-14"
+                            className="text-xs border border-slate-300 rounded px-2 py-1 w-14"
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] text-gray-500 block mb-0.5">Parts</label>
+                          <label className="text-[11px] text-slate-500 block mb-0.5">Parts</label>
                           <input
                             type="number" step="0.25" min="0.25" max="10"
                             value={editMembershipForm.sharesCount}
                             onChange={(e) => setEditMembershipForm({ ...editMembershipForm, sharesCount: parseFloat(e.target.value) })}
-                            className="text-xs border border-gray-300 rounded px-2 py-1 w-16"
+                            className="text-xs border border-slate-300 rounded px-2 py-1 w-16"
                           />
                         </div>
-                        <button type="submit" className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded font-medium hover:bg-blue-700">
+                        <button type="submit" className="text-xs bg-primary-600 text-white px-3 py-1.5 rounded font-medium hover:bg-primary-700">
                           Sauvegarder
                         </button>
-                        <button type="button" onClick={() => setEditingMembershipId(null)} className="text-xs text-gray-500 px-3 py-1.5 rounded hover:bg-gray-100">
+                        <button type="button" onClick={() => setEditingMembershipId(null)} className="text-xs text-slate-500 px-3 py-1.5 rounded hover:bg-slate-100">
                           Annuler
                         </button>
                       </form>
                     </td>
                   </tr>
                 ) : (
-                  <tr key={m.id} className="hover:bg-gray-50 transition">
-                    <td className="px-6 py-3 text-gray-400 text-xs tabular-nums">{index + 1}</td>
-                    <td className="px-6 py-3 font-medium text-gray-900">
+                  <tr key={m.id} className="hover:bg-slate-50 transition">
+                    <td className="px-6 py-3 text-slate-400 text-xs tabular-nums">{index + 1}</td>
+                    <td className="px-6 py-3 font-medium text-slate-900">
                       {m.profile
                         ? `${m.profile.lastName} ${m.profile.firstName}`
                         : m.profileId}
                     </td>
-                    <td className="px-6 py-3 font-mono text-gray-600 text-xs">
+                    <td className="px-6 py-3 font-mono text-slate-600 text-xs">
                       {m.profile?.memberCode ?? '—'}
                     </td>
                     <td className="px-6 py-3">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
                         m.enrollmentType === 'NEW'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-gray-100 text-gray-600'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-slate-100 text-slate-600'
                       }`}>
                         {m.enrollmentType === 'NEW' ? 'Nouveau' : 'Ré-inscription'}
                       </span>
                     </td>
-                    <td className="px-6 py-3 text-gray-700">
+                    <td className="px-6 py-3 text-slate-700">
                       {m.shareCommitment?.sharesCount ?? '—'}
                     </td>
-                    <td className="px-6 py-3 text-gray-600">
+                    <td className="px-6 py-3 text-slate-600">
                       {new Date(m.joinedAt).toLocaleDateString('fr-FR')}
                     </td>
                     {canAddMember && fy.status === 'ACTIVE' && (
@@ -634,7 +634,7 @@ export default function FiscalYearDetailPage({ params }: Props) {
                           <button
                             type="button"
                             onClick={() => handleEditMembership(m as any)}
-                            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                            className="text-xs text-primary-600 hover:text-primary-800 font-medium"
                           >
                             Modifier
                           </button>

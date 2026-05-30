@@ -28,15 +28,15 @@ export default function Table<T>({
   skeletonRows = 5,
 }: TableProps<T>) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-card">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50/80">
+    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-card">
+      <table className="min-w-full divide-y divide-slate-200 text-sm">
+        <thead className="bg-slate-50/80">
           <tr>
             {columns.map((col) => (
               <th
                 key={String(col.key)}
                 className={clsx(
-                  'px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wide text-xs',
+                  'px-4 py-3 text-left font-semibold text-slate-500 uppercase tracking-wide text-xs',
                   col.className
                 )}
               >
@@ -45,7 +45,7 @@ export default function Table<T>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-slate-100">
           {isLoading ? (
             Array.from({ length: skeletonRows }).map((_, i) => (
               <SkeletonRow key={i} cols={columns.length} />
@@ -54,7 +54,7 @@ export default function Table<T>({
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-4 py-10 text-center text-sm text-gray-400"
+                className="px-4 py-10 text-center text-sm text-slate-400"
               >
                 {emptyMessage}
               </td>
@@ -63,7 +63,7 @@ export default function Table<T>({
             data.map((row) => (
               <tr
                 key={keyExtractor(row)}
-                className="hover:bg-gray-50/60 transition-colors duration-100"
+                className="hover:bg-slate-50/60 transition-colors duration-100"
               >
                 {columns.map((col) => {
                   const rawValue = (row as Record<string, unknown>)[
@@ -72,7 +72,7 @@ export default function Table<T>({
                   return (
                     <td
                       key={String(col.key)}
-                      className={clsx('px-4 py-3 text-gray-700', col.className)}
+                      className={clsx('px-4 py-3 text-slate-700', col.className)}
                     >
                       {col.render
                         ? col.render(rawValue, row)

@@ -90,8 +90,8 @@ export default function CassationPage() {
                 </p>
                 <div className="max-h-40 overflow-y-auto pr-1 space-y-2">
                   {activeLoans.map((loan) => (
-                    <div key={loan.id} className="flex justify-between text-sm bg-gray-50 px-3 py-2 rounded border border-gray-100">
-                      <span className="font-medium text-gray-700">
+                    <div key={loan.id} className="flex justify-between text-sm bg-slate-50 px-3 py-2 rounded border border-slate-100">
+                      <span className="font-medium text-slate-700">
                         {loan.membership?.profile
                           ? `${loan.membership.profile.lastName} ${loan.membership.profile.firstName}`
                           : loan.membershipId}
@@ -121,14 +121,14 @@ export default function CassationPage() {
       )}
 
       {noCassationFy ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 text-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400 text-sm">
           Aucun exercice en phase de cassation ou clôturé.
         </div>
       ) : isLoading ? (
-        <div className="flex items-center justify-center py-16 text-gray-400 text-sm">Chargement…</div>
+        <div className="flex items-center justify-center py-16 text-slate-400 text-sm">Chargement…</div>
       ) : isError || !record ? (
         cassationFy?.status === 'CASSATION' ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 text-sm">
+          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400 text-sm">
             La cassation n&apos;a pas encore été exécutée pour l&apos;exercice <strong>{cassationFy.label}</strong>.
           </div>
         ) : null
@@ -143,16 +143,16 @@ export default function CassationPage() {
               { label: 'Membres', value: String(record.memberCount) },
               { label: 'Prêts (N+1)', value: String(record.carryoverCount ?? 0) },
             ].map(({ label, value }) => (
-              <div key={label} className="bg-white rounded-xl border border-gray-200 p-4">
-                <p className="text-xs text-gray-500 mb-1">{label}</p>
-                <p className="font-semibold text-gray-900 tabular-nums">{value}</p>
+              <div key={label} className="bg-white rounded-xl border border-slate-200 p-4">
+                <p className="text-xs text-slate-500 mb-1">{label}</p>
+                <p className="font-semibold text-slate-900 tabular-nums">{value}</p>
               </div>
             ))}
           </div>
 
           {/* Notes */}
           {record.notes && (
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800">
+            <div className="bg-primary-50 border border-primary-100 rounded-xl p-4 text-sm text-primary-800">
               {record.notes}
             </div>
           )}
@@ -198,8 +198,8 @@ export default function CassationPage() {
                         formatter={(v: number, n: string) => [`${v.toLocaleString('fr-FR')} XAF`, n]}
                         contentStyle={{ borderRadius: 8, fontSize: 12 }}
                       />
-                      <Legend iconType="circle" iconSize={7} formatter={(v) => <span className="text-xs text-gray-600">{v}</span>} />
-                      <Bar dataKey="Capital"  stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
+                      <Legend iconType="circle" iconSize={7} formatter={(v) => <span className="text-xs text-slate-600">{v}</span>} />
+                      <Bar dataKey="Capital"  stackId="a" fill="#1d325b" radius={[0, 0, 0, 0]} />
                       <Bar dataKey="Intérêts" stackId="a" fill="#10b981" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -210,37 +210,37 @@ export default function CassationPage() {
 
           {/* Redistributions par membre */}
           {record.redistributions && record.redistributions.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-                <h2 className="text-base font-semibold text-gray-800">Redistributions par membre</h2>
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                <h2 className="text-base font-semibold text-slate-800">Redistributions par membre</h2>
               </div>
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-100">
+                <thead className="bg-slate-50 border-b border-slate-100">
                   <tr>
-                    <th className="text-left px-6 py-3 font-medium text-gray-600">Membre</th>
-                    <th className="text-right px-6 py-3 font-medium text-gray-600">Capital</th>
-                    <th className="text-right px-6 py-3 font-medium text-gray-600">Intérêts</th>
-                    <th className="text-right px-6 py-3 font-medium text-gray-600">Total</th>
+                    <th className="text-left px-6 py-3 font-medium text-slate-600">Membre</th>
+                    <th className="text-right px-6 py-3 font-medium text-slate-600">Capital</th>
+                    <th className="text-right px-6 py-3 font-medium text-slate-600">Intérêts</th>
+                    <th className="text-right px-6 py-3 font-medium text-slate-600">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-slate-100">
                   {record.redistributions.map((r) => (
-                    <tr key={r.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-3 text-gray-800 font-medium">
+                    <tr key={r.id} className="hover:bg-slate-50">
+                      <td className="px-6 py-3 text-slate-800 font-medium">
                         {r.membership?.profile
                           ? `${r.membership.profile.lastName} ${r.membership.profile.firstName}`
                           : r.membershipId}
                         {r.membership?.profile?.memberCode && (
-                          <span className="ml-1 text-xs text-gray-400">({r.membership.profile.memberCode})</span>
+                          <span className="ml-1 text-xs text-slate-400">({r.membership.profile.memberCode})</span>
                         )}
                       </td>
-                      <td className="px-6 py-3 text-right tabular-nums text-gray-700">
+                      <td className="px-6 py-3 text-right tabular-nums text-slate-700">
                         {parseFloat(r.savingsAmount).toLocaleString('fr-FR')}
                       </td>
-                      <td className="px-6 py-3 text-right tabular-nums text-blue-700">
+                      <td className="px-6 py-3 text-right tabular-nums text-primary-700">
                         {parseFloat(r.interestAmount).toLocaleString('fr-FR')}
                       </td>
-                      <td className="px-6 py-3 text-right tabular-nums font-semibold text-gray-900">
+                      <td className="px-6 py-3 text-right tabular-nums font-semibold text-slate-900">
                         {parseFloat(r.totalReturned).toLocaleString('fr-FR')} XAF
                       </td>
                     </tr>
@@ -252,30 +252,30 @@ export default function CassationPage() {
 
           {/* Parts institutionnelles */}
           {record.participantShares && record.participantShares.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-                <h2 className="text-base font-semibold text-gray-800">Parts institutionnelles</h2>
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                <h2 className="text-base font-semibold text-slate-800">Parts institutionnelles</h2>
               </div>
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-100">
+                <thead className="bg-slate-50 border-b border-slate-100">
                   <tr>
-                    <th className="text-left px-6 py-3 font-medium text-gray-600">Entité</th>
-                    <th className="text-right px-6 py-3 font-medium text-gray-600">Principal</th>
-                    <th className="text-right px-6 py-3 font-medium text-gray-600">Intérêts</th>
-                    <th className="text-right px-6 py-3 font-medium text-gray-600">Total</th>
+                    <th className="text-left px-6 py-3 font-medium text-slate-600">Entité</th>
+                    <th className="text-right px-6 py-3 font-medium text-slate-600">Principal</th>
+                    <th className="text-right px-6 py-3 font-medium text-slate-600">Intérêts</th>
+                    <th className="text-right px-6 py-3 font-medium text-slate-600">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-slate-100">
                   {record.participantShares.map((p) => (
-                    <tr key={p.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-3 text-gray-800">{p.participantType}</td>
-                      <td className="px-6 py-3 text-right tabular-nums text-gray-700">
+                    <tr key={p.id} className="hover:bg-slate-50">
+                      <td className="px-6 py-3 text-slate-800">{p.participantType}</td>
+                      <td className="px-6 py-3 text-right tabular-nums text-slate-700">
                         {parseFloat(p.principalAmount).toLocaleString('fr-FR')}
                       </td>
-                      <td className="px-6 py-3 text-right tabular-nums text-blue-700">
+                      <td className="px-6 py-3 text-right tabular-nums text-primary-700">
                         {parseFloat(p.interestEarned).toLocaleString('fr-FR')}
                       </td>
-                      <td className="px-6 py-3 text-right tabular-nums font-semibold text-gray-900">
+                      <td className="px-6 py-3 text-right tabular-nums font-semibold text-slate-900">
                         {parseFloat(p.totalDistributed).toLocaleString('fr-FR')} XAF
                       </td>
                     </tr>

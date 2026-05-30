@@ -198,7 +198,7 @@ export default function TransactionForm({
         {selectedMembershipId && (
           <>
             {loansLoading && (
-              <p className="text-xs text-gray-400 mt-1 animate-pulse">Vérification des prêts…</p>
+              <p className="text-xs text-slate-400 mt-1 animate-pulse">Vérification des prêts…</p>
             )}
             {!loansLoading && usedTypes.size > 0 && (
               <p className="text-xs text-amber-600 mt-1">
@@ -218,7 +218,7 @@ export default function TransactionForm({
         disabled={!selectedType}
         readOnly={isAmountLocked}
         className={clsx(
-          (isAmountLocked || !selectedType) && 'bg-gray-50 text-gray-500 cursor-not-allowed'
+          (isAmountLocked || !selectedType) && 'bg-slate-50 text-slate-500 cursor-not-allowed'
         )}
         helperText={isAmountLocked ? 'Montant fixé par la configuration' : undefined}
         error={errors.amount?.message}

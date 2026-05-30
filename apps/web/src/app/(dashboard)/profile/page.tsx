@@ -23,7 +23,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-48 text-gray-500">
+      <div className="flex items-center justify-center h-48 text-slate-500">
         Chargement...
       </div>
     );
@@ -71,30 +71,30 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
-      <h1 className="text-2xl font-bold text-gray-900">Mon profil</h1>
+      <h1 className="text-2xl font-bold text-slate-900">Mon profil</h1>
 
       {/* Informations du compte */}
-      <section className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-          <h2 className="text-base font-semibold text-gray-800">Informations du compte</h2>
+      <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+          <h2 className="text-base font-semibold text-slate-800">Informations du compte</h2>
         </div>
         <div className="px-6 py-5 space-y-4">
           <div className="flex items-center gap-4">
-            <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 text-blue-700 font-bold text-xl">
+            <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary-100 text-primary-700 font-bold text-xl">
               {memberProfile
                 ? `${memberProfile.firstName[0]}${memberProfile.lastName[0]}`.toUpperCase()
                 : user.username.slice(0, 2).toUpperCase()}
             </span>
             <div>
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-lg font-semibold text-slate-900">
                 {memberProfile
                   ? `${memberProfile.lastName} ${memberProfile.firstName}`
                   : user.username}
               </p>
               {memberProfile?.neighborhood && (
-                <p className="text-sm text-gray-500">{memberProfile.neighborhood}</p>
+                <p className="text-sm text-slate-500">{memberProfile.neighborhood}</p>
               )}
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 mt-1">
                 {roleLabel}
               </span>
             </div>
@@ -104,35 +104,35 @@ export default function ProfilePage() {
             {memberProfile && (
               <>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Code membre</p>
-                  <p className="text-sm font-mono font-medium text-gray-900">{memberProfile.memberCode}</p>
+                  <p className="text-xs text-slate-500 mb-1">Code membre</p>
+                  <p className="text-sm font-mono font-medium text-slate-900">{memberProfile.memberCode}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Quartier</p>
-                  <p className="text-sm font-medium text-gray-900">{memberProfile.neighborhood}</p>
+                  <p className="text-xs text-slate-500 mb-1">Quartier</p>
+                  <p className="text-sm font-medium text-slate-900">{memberProfile.neighborhood}</p>
                 </div>
               </>
             )}
             <div>
-              <p className="text-xs text-gray-500 mb-1">Identifiant</p>
-              <p className="text-sm font-medium text-gray-900">{user.username}</p>
+              <p className="text-xs text-slate-500 mb-1">Identifiant</p>
+              <p className="text-sm font-medium text-slate-900">{user.username}</p>
             </div>
             {user.phone && (
               <div>
-                <p className="text-xs text-gray-500 mb-1">Téléphone</p>
-                <p className="text-sm font-medium text-gray-900">{user.phone}</p>
+                <p className="text-xs text-slate-500 mb-1">Téléphone</p>
+                <p className="text-sm font-medium text-slate-900">{user.phone}</p>
               </div>
             )}
             <div>
-              <p className="text-xs text-gray-500 mb-1">Rôle</p>
-              <p className="text-sm font-medium text-gray-900">{roleLabel}</p>
+              <p className="text-xs text-slate-500 mb-1">Rôle</p>
+              <p className="text-sm font-medium text-slate-900">{roleLabel}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-1">Statut</p>
+              <p className="text-xs text-slate-500 mb-1">Statut</p>
               <span
                 className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                   user.isActive
-                    ? 'bg-green-100 text-green-800'
+                    ? 'bg-emerald-100 text-emerald-800'
                     : 'bg-red-100 text-red-800'
                 }`}
               >
@@ -141,8 +141,8 @@ export default function ProfilePage() {
             </div>
             {user.lastLoginAt && (
               <div>
-                <p className="text-xs text-gray-500 mb-1">Dernière connexion</p>
-                <p className="text-sm text-gray-700">
+                <p className="text-xs text-slate-500 mb-1">Dernière connexion</p>
+                <p className="text-sm text-slate-700">
                   {new Date(user.lastLoginAt).toLocaleString('fr-FR')}
                 </p>
               </div>
@@ -152,9 +152,9 @@ export default function ProfilePage() {
       </section>
 
       {/* Changement de mot de passe */}
-      <section className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-          <h2 className="text-base font-semibold text-gray-800">Changer le mot de passe</h2>
+      <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+          <h2 className="text-base font-semibold text-slate-800">Changer le mot de passe</h2>
         </div>
         <form onSubmit={handleChangePassword} className="px-6 py-5 space-y-4">
           <Input
@@ -183,7 +183,7 @@ export default function ProfilePage() {
             <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{pwError}</p>
           )}
           {pwSuccess && (
-            <p className="text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg">
+            <p className="text-sm text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg">
               Mot de passe modifié avec succès.
             </p>
           )}

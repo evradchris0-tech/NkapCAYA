@@ -226,14 +226,14 @@ export default function BatchTransactionModal({
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[540px]">
               <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left py-2 pr-3 font-medium text-gray-500 w-6"></th>
-                  <th className="text-left py-2 pr-4 font-medium text-gray-600">Type</th>
-                  <th className="text-left py-2 pr-4 font-medium text-gray-600">Montant (XAF)</th>
-                  <th className="text-left py-2 font-medium text-gray-600">Prêt associé</th>
+                <tr className="border-b border-slate-100">
+                  <th className="text-left py-2 pr-3 font-medium text-slate-500 w-6"></th>
+                  <th className="text-left py-2 pr-4 font-medium text-slate-600">Type</th>
+                  <th className="text-left py-2 pr-4 font-medium text-slate-600">Montant (XAF)</th>
+                  <th className="text-left py-2 font-medium text-slate-600">Prêt associé</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-slate-50">
                 {rows.map((row, idx) => {
                   const alreadyDone = usedTypes.has(row.type);
                   const needsLoan =
@@ -244,7 +244,7 @@ export default function BatchTransactionModal({
                   return (
                     <tr
                       key={row.type}
-                      className={`transition-colors ${alreadyDone ? 'opacity-40' : row.enabled ? 'bg-blue-50/30' : ''}`}
+                      className={`transition-colors ${alreadyDone ? 'opacity-40' : row.enabled ? 'bg-primary-50/30' : ''}`}
                     >
                       {/* Checkbox */}
                       <td className="py-2.5 pr-3">
@@ -253,13 +253,13 @@ export default function BatchTransactionModal({
                           checked={row.enabled}
                           onChange={() => toggleRow(idx)}
                           disabled={alreadyDone || noLoans}
-                          className="rounded text-blue-600 focus:ring-blue-500 disabled:opacity-40"
+                          className="rounded text-primary-600 focus:ring-primary-500 disabled:opacity-40"
                         />
                       </td>
 
                       {/* Label */}
                       <td className="py-2.5 pr-4">
-                        <span className="text-gray-700 font-medium">
+                        <span className="text-slate-700 font-medium">
                           {TRANSACTION_TYPE_LABELS[row.type]}
                         </span>
                         {alreadyDone && (
@@ -268,7 +268,7 @@ export default function BatchTransactionModal({
                           </span>
                         )}
                         {noLoans && (
-                          <span className="ml-2 text-[10px] text-gray-400">aucun prêt actif</span>
+                          <span className="ml-2 text-[10px] text-slate-400">aucun prêt actif</span>
                         )}
                       </td>
 
@@ -281,10 +281,10 @@ export default function BatchTransactionModal({
                           value={row.amount}
                           onChange={(e) => setAmount(idx, e.target.value)}
                           disabled={!row.enabled || row.locked}
-                          className="w-32 rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+                          className="w-32 rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
                         />
                         {row.locked && (
-                          <span className="ml-1.5 text-[10px] text-gray-400">calculé</span>
+                          <span className="ml-1.5 text-[10px] text-slate-400">calculé</span>
                         )}
                       </td>
 
@@ -294,7 +294,7 @@ export default function BatchTransactionModal({
                           <select
                             value={row.loanId ?? ''}
                             onChange={(e) => setLoan(idx, e.target.value)}
-                            className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                            className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400"
                           >
                             <option value="">Sélectionner…</option>
                             {activeLoans.map((l) => (
@@ -304,7 +304,7 @@ export default function BatchTransactionModal({
                             ))}
                           </select>
                         ) : (
-                          <span className="text-gray-300">—</span>
+                          <span className="text-slate-300">—</span>
                         )}
                       </td>
                     </tr>
@@ -320,7 +320,7 @@ export default function BatchTransactionModal({
         )}
 
         {membershipId && rows.filter((r) => r.enabled).length > 0 && (
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-slate-400">
             {rows.filter((r) => r.enabled).length} ligne{rows.filter((r) => r.enabled).length > 1 ? 's' : ''} à enregistrer
           </p>
         )}

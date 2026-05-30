@@ -37,17 +37,17 @@ export default function NewMemberPage() {
         {/* Panneau d'aide */}
         <div className="space-y-4">
           {/* Checklist informations */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">Informations à préparer</h3>
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 className="text-sm font-semibold text-slate-800 mb-3">Informations à préparer</h3>
             <ul className="space-y-2.5">
               {CHECKLIST.map(({ icon: Icon, label, required }) => (
                 <li key={label} className="flex items-center gap-2.5 text-sm">
                   {required ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
                   ) : (
-                    <CheckCircle2 className="h-4 w-4 text-gray-300 shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 text-slate-300 shrink-0" />
                   )}
-                  <span className={required ? 'text-gray-700' : 'text-gray-400'}>
+                  <span className={required ? 'text-slate-700' : 'text-slate-400'}>
                     {label}
                     {required && <span className="text-red-400 ml-1">*</span>}
                   </span>
@@ -57,15 +57,15 @@ export default function NewMemberPage() {
           </div>
 
           {/* Notes importantes */}
-          <div className="bg-blue-50 rounded-xl border border-blue-100 p-5">
-            <h3 className="text-sm font-semibold text-blue-800 mb-3 flex items-center gap-2">
+          <div className="bg-primary-50 rounded-xl border border-primary-100 p-5">
+            <h3 className="text-sm font-semibold text-primary-800 mb-3 flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               À noter
             </h3>
             <ul className="space-y-2">
               {NOTES.map((note) => (
-                <li key={note} className="text-xs text-blue-700 flex gap-2">
-                  <span className="text-blue-400 shrink-0 mt-0.5">•</span>
+                <li key={note} className="text-xs text-primary-700 flex gap-2">
+                  <span className="text-primary-400 shrink-0 mt-0.5">•</span>
                   {note}
                 </li>
               ))}

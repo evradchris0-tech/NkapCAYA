@@ -130,8 +130,8 @@ export default function ReportsPage() {
       />
 
       {/* Sélecteur d'exercice */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-card">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-card">
+        <label className="block text-sm font-medium text-slate-700 mb-2">
           Exercice fiscal cible
         </label>
         <Select
@@ -146,7 +146,7 @@ export default function ReportsPage() {
           ))}
         </Select>
         {selectedFy && (
-          <p className="text-xs text-gray-400 mt-1.5">
+          <p className="text-xs text-slate-400 mt-1.5">
             {new Date(selectedFy.startDate).toLocaleDateString('fr-FR')} →{' '}
             {new Date(selectedFy.endDate).toLocaleDateString('fr-FR')}
           </p>
@@ -160,19 +160,19 @@ export default function ReportsPage() {
           const available = dataAvailability[type];
 
           return (
-            <div key={type} className="bg-white rounded-xl border border-gray-200 shadow-card p-5 flex flex-col gap-4">
+            <div key={type} className="bg-white rounded-xl border border-slate-200 shadow-card p-5 flex flex-col gap-4">
               <div className="flex items-start gap-3">
                 <div className={`p-2.5 rounded-xl bg-${cfg.color}-50 shrink-0`}>
                   <Download className={`h-5 w-5 text-${cfg.color}-600`} strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800">{cfg.label}</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">{cfg.desc}</p>
+                  <h3 className="font-semibold text-slate-800">{cfg.label}</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">{cfg.desc}</p>
                 </div>
               </div>
 
               {/* Disponibilité des données */}
-              <div className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg ${available ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-50 text-gray-400'}`}>
+              <div className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg ${available ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-400'}`}>
                 {available ? <Check className="h-3.5 w-3.5" /> : <span className="w-3.5 h-3.5" />}
                 {available ? 'Données disponibles' : 'Aucune donnée pour cet exercice'}
               </div>
@@ -207,14 +207,14 @@ export default function ReportsPage() {
       </div>
 
       {/* Export CAYABASE complet */}
-      <div className="bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl border-2 border-indigo-200 shadow-card p-6">
+      <div className="bg-gradient-to-br from-primary-50 to-primary-50 rounded-xl border-2 border-primary-200 shadow-card p-6">
         <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-indigo-100 shrink-0">
-            <BookOpen className="h-6 w-6 text-indigo-600" strokeWidth={2} />
+          <div className="p-3 rounded-xl bg-primary-100 shrink-0">
+            <BookOpen className="h-6 w-6 text-primary-600" strokeWidth={2} />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-bold text-indigo-900">Export exercice complet — CAYABASE</h3>
-            <p className="text-sm text-indigo-600 mt-1">
+            <h3 className="text-lg font-bold text-primary-900">Export exercice complet — CAYABASE</h3>
+            <p className="text-sm text-primary-600 mt-1">
               Génère un fichier Excel multi-feuilles au format CAYABASE : épargne + intérêts, prêts,
               remboursements, intérêts sur prêts, inscriptions + secours, et le détail de chaque session mensuelle.
             </p>
@@ -229,7 +229,7 @@ export default function ReportsPage() {
                 Exporter l&apos;exercice complet
               </Button>
               {selectedFy && (
-                <span className="text-xs text-indigo-500">
+                <span className="text-xs text-primary-500">
                   {selectedFy.label} — {(memberships?.length ?? 0)} membres inscrits
                 </span>
               )}
@@ -241,12 +241,12 @@ export default function ReportsPage() {
       {/* Import CAYABASE — composant dédié */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-base font-bold text-gray-800">Importer un exercice depuis l&apos;historique papier</h2>
+          <h2 className="text-base font-bold text-slate-800">Importer un exercice depuis l&apos;historique papier</h2>
         </div>
         <ImportCAYABASE />
       </div>
 
-      <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-700">
+      <div className="bg-primary-50 border border-primary-100 rounded-xl p-4 text-sm text-primary-700">
         Les exports contiennent toutes les données de l&apos;exercice sélectionné. Les fichiers sont générés directement dans votre navigateur — aucune donnée n&apos;est envoyée vers un serveur externe.
       </div>
     </div>

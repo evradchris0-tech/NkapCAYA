@@ -39,13 +39,15 @@ import {
 } from 'recharts';
 
 // ── Palette centralisée ──────────────────────────────────────────────────────
+// Palette graphiques alignée sur le design system : marine + or + sémantique.
+// (clés conservées pour compat ; valeurs recolorées)
 const COLORS = {
-  blue:    '#3b82f6',
-  emerald: '#10b981',
-  amber:   '#f59e0b',
-  violet:  '#8b5cf6',
-  rose:    '#f43f5e',
-  teal:    '#14b8a6',
+  blue:    '#1d325b', // marine (primary-700)
+  emerald: '#10b981', // épargne / positif
+  amber:   '#c6902a', // or (accent-500)
+  violet:  '#5f80b0', // marine clair (primary-400)
+  rose:    '#e11d48', // négatif / alerte
+  teal:    '#64748b', // neutre (slate-500)
 };
 
 // ── KPI Card ─────────────────────────────────────────────────────────────────
@@ -89,8 +91,8 @@ interface TooltipProps { active?: boolean; payload?: TooltipPayloadEntry[]; labe
 function CustomTooltip({ active, payload, label }: TooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-sm">
-      <p className="font-medium text-gray-700 mb-1">{label}</p>
+    <div className="bg-white border border-slate-200 rounded-lg shadow-lg px-3 py-2 text-sm">
+      <p className="font-medium text-slate-700 mb-1">{label}</p>
       {payload.map((entry) => (
         <p key={entry.name} style={{ color: entry.color }} className="tabular-nums">
           {entry.name} : {Number(entry.value).toLocaleString('fr-FR')} XAF
@@ -108,14 +110,14 @@ const SESSION_STATUS_LABELS: Record<string, string> = {
 };
 
 const SESSION_STATUS_COLORS: Record<string, string> = {
-  OPEN:              'bg-green-100 text-green-700',
+  OPEN:              'bg-emerald-100 text-emerald-700',
   CLOSED_FOR_REVIEW: 'bg-amber-100 text-amber-700',
-  CLOSED:            'bg-gray-100 text-gray-500',
+  CLOSED:            'bg-slate-100 text-slate-500',
 };
 
 function SessionBadge({ status }: { status: string }) {
   return (
-    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${SESSION_STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-500'}`}>
+    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${SESSION_STATUS_COLORS[status] ?? 'bg-slate-100 text-slate-500'}`}>
       {SESSION_STATUS_LABELS[status] ?? status}
     </span>
   );
@@ -334,7 +336,7 @@ export default function DashboardPage() {
         items.push({
           id: `opened-${s.id}`,
           icon: Calendar,
-          iconCls: 'text-blue-600',
+          iconCls: 'text-primary-600',
           label: `Session #${s.sessionNumber} ouverte`,
           sub: s.location ?? 'Sans lieu',
           href: `/sessions/${s.id}`,
@@ -386,8 +388,8 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           icon={Users}
-          iconBg="bg-blue-50" iconColor="text-blue-600"
-          borderColor="border-blue-100"
+          iconBg="bg-primary-50" iconColor="text-primary-600"
+          borderColor="border-primary-100"
           label="Membres"
           value={loadingMembers ? '…' : `${activeMembers} / ${totalMembers}`}
           isLoading={false}
@@ -404,8 +406,8 @@ export default function DashboardPage() {
         />
         <KpiCard
           icon={TrendingUp}
-          iconBg="bg-indigo-50" iconColor="text-indigo-600"
-          borderColor="border-indigo-100"
+          iconBg="bg-primary-50" iconColor="text-primary-600"
+          borderColor="border-primary-100"
           label="Membres inscrits (FY)"
           value={selectedFy ? enrolledCount : '—'}
           isLoading={loadingMemberships && !!selectedFy}
@@ -413,8 +415,8 @@ export default function DashboardPage() {
         />
         <KpiCard
           icon={Shield}
-          iconBg="bg-violet-50" iconColor="text-violet-600"
-          borderColor="border-violet-100"
+          iconBg="bg-primary-50" iconColor="text-primary-600"
+          borderColor="border-primary-100"
           label="Caisse de secours"
           value={selectedFy ? `${rescueBalance.toLocaleString('fr-FR')} XAF` : '—'}
           isLoading={loadingRescue && !!selectedFy}
@@ -443,16 +445,16 @@ export default function DashboardPage() {
           />
           <KpiCard
             icon={Banknote}
-            iconBg="bg-orange-50" iconColor="text-orange-500"
-            borderColor="border-orange-100"
+            iconBg="bg-amber-50" iconColor="text-amber-500"
+            borderColor="border-amber-100"
             label="Prêts en cours"
             value={`${activeLoansCount} — ${formatAmount(totalEncoursPrets)} XAF`}
             description={`${activeLoansCount} prêt${activeLoansCount > 1 ? 's' : ''} actif${activeLoansCount > 1 ? 's' : ''}, encours total.`}
           />
           <KpiCard
             icon={Coins}
-            iconBg="bg-blue-50" iconColor="text-blue-600"
-            borderColor="border-blue-100"
+            iconBg="bg-primary-50" iconColor="text-primary-600"
+            borderColor="border-primary-100"
             label="Total Cotisations"
             value={`${totalCotisations.toLocaleString('fr-FR')} XAF`}
             description="Cotisations collectées sur toutes les sessions."
@@ -461,28 +463,28 @@ export default function DashboardPage() {
       )}
 
       {/* ── Actions rapides ── */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-card p-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">
+      <div className="bg-white rounded-xl border border-slate-100 shadow-card p-5">
+        <h2 className="text-sm font-semibold text-slate-700 mb-4">
           Accès rapides
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
             { label: 'Sessions',       href: '/sessions',      icon: Calendar,     bg: 'bg-emerald-50', hoverBg: 'group-hover:bg-emerald-100', iconCls: 'text-emerald-600', hoverText: 'group-hover:text-emerald-700', border: 'hover:border-emerald-200' },
-            { label: 'Membres',        href: '/members',       icon: Users,        bg: 'bg-blue-50',    hoverBg: 'group-hover:bg-blue-100',    iconCls: 'text-blue-600',    hoverText: 'group-hover:text-blue-700',    border: 'hover:border-blue-200'    },
-            { label: 'Prêts',          href: '/loans',         icon: TrendingUp,   bg: 'bg-orange-50',  hoverBg: 'group-hover:bg-orange-100',  iconCls: 'text-orange-500',  hoverText: 'group-hover:text-orange-600',  border: 'hover:border-orange-200'  },
-            { label: 'Caisse secours', href: '/rescue-fund',   icon: Shield,       bg: 'bg-violet-50',  hoverBg: 'group-hover:bg-violet-100',  iconCls: 'text-violet-600',  hoverText: 'group-hover:text-violet-700',  border: 'hover:border-violet-200'  },
-            { label: 'Bénéficiaires',  href: '/beneficiaries', icon: CheckCircle2, bg: 'bg-teal-50',    hoverBg: 'group-hover:bg-teal-100',    iconCls: 'text-teal-600',    hoverText: 'group-hover:text-teal-700',    border: 'hover:border-teal-200'    },
-            { label: 'Épargne',        href: '/savings',       icon: Clock,        bg: 'bg-rose-50',    hoverBg: 'group-hover:bg-rose-100',    iconCls: 'text-rose-500',    hoverText: 'group-hover:text-rose-600',    border: 'hover:border-rose-200'    },
+            { label: 'Membres',        href: '/members',       icon: Users,        bg: 'bg-primary-50',    hoverBg: 'group-hover:bg-primary-100',    iconCls: 'text-primary-600',    hoverText: 'group-hover:text-primary-700',    border: 'hover:border-primary-200'    },
+            { label: 'Prêts',          href: '/loans',         icon: TrendingUp,   bg: 'bg-amber-50',  hoverBg: 'group-hover:bg-amber-100',  iconCls: 'text-amber-500',  hoverText: 'group-hover:text-amber-600',  border: 'hover:border-amber-200'  },
+            { label: 'Caisse secours', href: '/rescue-fund',   icon: Shield,       bg: 'bg-primary-50',  hoverBg: 'group-hover:bg-primary-100',  iconCls: 'text-primary-600',  hoverText: 'group-hover:text-primary-700',  border: 'hover:border-primary-200'  },
+            { label: 'Bénéficiaires',  href: '/beneficiaries', icon: CheckCircle2, bg: 'bg-primary-50',    hoverBg: 'group-hover:bg-primary-100',    iconCls: 'text-primary-600',    hoverText: 'group-hover:text-primary-700',    border: 'hover:border-primary-200'    },
+            { label: 'Épargne',        href: '/savings',       icon: Clock,        bg: 'bg-red-50',    hoverBg: 'group-hover:bg-red-100',    iconCls: 'text-red-500',    hoverText: 'group-hover:text-red-600',    border: 'hover:border-red-200'    },
           ].map(({ label, href, icon: Icon, bg, hoverBg, iconCls, hoverText, border }) => (
             <Link
               key={href}
               href={href}
-              className={`flex flex-col items-center gap-2 rounded-xl border border-gray-100 p-3.5 bg-white hover:shadow-md transition-all duration-200 group ${border}`}
+              className={`flex flex-col items-center gap-2 rounded-xl border border-slate-100 p-3.5 bg-white hover:shadow-md transition-all duration-200 group ${border}`}
             >
               <div className={`p-2.5 rounded-xl transition-all duration-200 ${bg} ${hoverBg} group-hover:scale-110`}>
                 <Icon className={`h-5 w-5 transition-colors duration-200 ${iconCls}`} strokeWidth={2} />
               </div>
-              <span className={`text-xs font-medium text-center leading-tight transition-colors duration-200 text-gray-600 ${hoverText}`}>
+              <span className={`text-xs font-medium text-center leading-tight transition-colors duration-200 text-slate-600 ${hoverText}`}>
                 {label}
               </span>
             </Link>
@@ -505,7 +507,7 @@ export default function DashboardPage() {
                 <Skeleton className="h-40 w-full" />
               </div>
             ) : sessionChartData.length === 0 ? (
-              <div className="h-56 flex items-center justify-center text-gray-300 text-sm">
+              <div className="h-56 flex items-center justify-center text-slate-300 text-sm">
                 Aucune session clôturée
               </div>
             ) : (
@@ -516,7 +518,7 @@ export default function DashboardPage() {
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tickFormatter={formatAmount} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={52} />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-                    <Legend iconType="circle" iconSize={8} formatter={(v) => <span className="text-xs text-gray-600">{v}</span>} />
+                    <Legend iconType="circle" iconSize={8} formatter={(v) => <span className="text-xs text-slate-600">{v}</span>} />
                     <Bar dataKey="Collecté" fill={COLORS.blue} radius={[4, 4, 0, 0]} />
                     <Bar dataKey="Reste en caisse" fill={COLORS.emerald} radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -535,7 +537,7 @@ export default function DashboardPage() {
                 <Skeleton className="h-40 w-40 rounded-full" />
               </div>
             ) : enrollmentData.length === 0 ? (
-              <div className="h-56 flex items-center justify-center text-gray-300 text-sm">
+              <div className="h-56 flex items-center justify-center text-slate-300 text-sm">
                 Aucun membre inscrit
               </div>
             ) : (
@@ -559,7 +561,7 @@ export default function DashboardPage() {
                       iconType="circle"
                       iconSize={8}
                       formatter={(value: string, entry: { payload?: { value?: number } }) => (
-                        <span className="text-xs text-gray-600">{value} ({entry.payload?.value ?? 0})</span>
+                        <span className="text-xs text-slate-600">{value} ({entry.payload?.value ?? 0})</span>
                       )}
                     />
                     <Tooltip
@@ -589,7 +591,7 @@ export default function DashboardPage() {
                 <Skeleton className="h-40 w-full" />
               </div>
             ) : savingsChartData.every((d) => d.Épargne === 0) ? (
-              <div className="h-56 flex items-center justify-center text-gray-300 text-sm">
+              <div className="h-56 flex items-center justify-center text-slate-300 text-sm">
                 Aucune épargne enregistrée
               </div>
             ) : (
@@ -617,7 +619,7 @@ export default function DashboardPage() {
                 <Skeleton className="h-40 w-full" />
               </div>
             ) : secoursVsEpargneChartData.every((d) => d.Épargne === 0 && d.Secours === 0) ? (
-              <div className="h-56 flex items-center justify-center text-gray-300 text-sm">
+              <div className="h-56 flex items-center justify-center text-slate-300 text-sm">
                 Aucune donnée
               </div>
             ) : (
@@ -628,7 +630,7 @@ export default function DashboardPage() {
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tickFormatter={formatAmount} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={52} />
                     <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#e2e8f0' }} />
-                    <Legend iconType="circle" iconSize={8} formatter={(v) => <span className="text-xs text-gray-600">{v}</span>} />
+                    <Legend iconType="circle" iconSize={8} formatter={(v) => <span className="text-xs text-slate-600">{v}</span>} />
                     <Line type="monotone" dataKey="Épargne" stroke={COLORS.emerald} strokeWidth={2.5} dot={{ fill: COLORS.emerald, r: 3 }} />
                     <Line type="monotone" dataKey="Secours" stroke={COLORS.violet} strokeWidth={2.5} dot={{ fill: COLORS.violet, r: 3 }} />
                   </LineChart>
@@ -647,7 +649,7 @@ export default function DashboardPage() {
                 <Skeleton className="h-40 w-40 rounded-full" />
               </div>
             ) : loansByStatusData.length === 0 ? (
-              <div className="h-56 flex items-center justify-center text-gray-300 text-sm">
+              <div className="h-56 flex items-center justify-center text-slate-300 text-sm">
                 Aucun prêt
               </div>
             ) : (
@@ -671,7 +673,7 @@ export default function DashboardPage() {
                       iconType="circle"
                       iconSize={8}
                       formatter={(value: string, entry: { payload?: { value?: number } }) => (
-                        <span className="text-xs text-gray-600">{value} ({entry.payload?.value ?? 0})</span>
+                        <span className="text-xs text-slate-600">{value} ({entry.payload?.value ?? 0})</span>
                       )}
                     />
                     <Tooltip
@@ -719,8 +721,8 @@ export default function DashboardPage() {
               { label: 'Cassation',    value: new Date(selectedFy.cassationDate).toLocaleDateString('fr-FR') },
             ].map(({ label, value }) => (
               <div key={label}>
-                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">{label}</p>
-                <p className="font-medium text-gray-800">{value}</p>
+                <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">{label}</p>
+                <p className="font-medium text-slate-800">{value}</p>
               </div>
             ))}
           </div>
@@ -741,28 +743,28 @@ export default function DashboardPage() {
                   Voir tout <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-slate-100">
                 {top5Savers.map((ledger, i) => {
                   const name = membershipNameMap[ledger.membershipId] ?? ledger.membershipId.slice(-6);
                   const balance = parseFloat(ledger.balance);
                   const maxBalance = parseFloat(top5Savers[0].balance);
                   const pct = maxBalance > 0 ? (balance / maxBalance) * 100 : 0;
                   return (
-                    <li key={ledger.membershipId} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50">
+                    <li key={ledger.membershipId} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50">
                       <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                         i === 0 ? 'bg-amber-100 text-amber-700' :
-                        i === 1 ? 'bg-gray-100 text-gray-500' :
-                        i === 2 ? 'bg-orange-100 text-orange-600' :
-                        'bg-gray-50 text-gray-400'
+                        i === 1 ? 'bg-slate-100 text-slate-500' :
+                        i === 2 ? 'bg-amber-100 text-amber-600' :
+                        'bg-slate-50 text-slate-400'
                       }`}>{i + 1}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">{name}</p>
-                        <div className="mt-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+                        <p className="text-sm font-medium text-slate-800 truncate">{name}</p>
+                        <div className="mt-1 h-1 bg-slate-100 rounded-full overflow-hidden">
                           <div className="h-1 bg-emerald-400 rounded-full" style={{ width: `${pct}%` }} />
                         </div>
                       </div>
                       <span className="text-sm font-semibold tabular-nums text-emerald-700 shrink-0">
-                        {balance.toLocaleString('fr-FR')} <span className="text-xs font-normal text-gray-400">XAF</span>
+                        {balance.toLocaleString('fr-FR')} <span className="text-xs font-normal text-slate-400">XAF</span>
                       </span>
                     </li>
                   );
@@ -775,13 +777,13 @@ export default function DashboardPage() {
           {top5Loans.length > 0 && (
             <div className="bg-white rounded-xl border border-slate-200 shadow-card overflow-hidden">
               <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-orange-500" strokeWidth={2} />
+                <TrendingUp className="h-4 w-4 text-amber-500" strokeWidth={2} />
                 <h2 className="text-sm font-semibold text-slate-900 font-heading">Top 5 — Prêts en cours</h2>
-                <Link href="/loans" className="ml-auto text-xs text-orange-600 hover:text-orange-800 font-medium flex items-center gap-1">
+                <Link href="/loans" className="ml-auto text-xs text-amber-600 hover:text-amber-800 font-medium flex items-center gap-1">
                   Voir tout <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-slate-100">
                 {top5Loans.map((loan, i) => {
                   const name = membershipNameMap[loan.membershipId] ?? loan.membershipId.slice(-6);
                   const principal = parseFloat(loan.principalAmount);
@@ -790,24 +792,24 @@ export default function DashboardPage() {
                   const pct = maxPrincipal > 0 ? (principal / maxPrincipal) * 100 : 0;
                   const repaidPct = principal > 0 ? Math.round(((principal - outstanding) / principal) * 100) : 0;
                   return (
-                    <li key={loan.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50">
+                    <li key={loan.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50">
                       <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                         i === 0 ? 'bg-amber-100 text-amber-700' :
-                        i === 1 ? 'bg-gray-100 text-gray-500' :
-                        i === 2 ? 'bg-orange-100 text-orange-600' :
-                        'bg-gray-50 text-gray-400'
+                        i === 1 ? 'bg-slate-100 text-slate-500' :
+                        i === 2 ? 'bg-amber-100 text-amber-600' :
+                        'bg-slate-50 text-slate-400'
                       }`}>{i + 1}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">{name}</p>
-                        <div className="mt-1 h-1 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-1 bg-orange-400 rounded-full" style={{ width: `${pct}%` }} />
+                        <p className="text-sm font-medium text-slate-800 truncate">{name}</p>
+                        <div className="mt-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-1 bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-sm font-semibold tabular-nums text-orange-700">
-                          {principal.toLocaleString('fr-FR')} <span className="text-xs font-normal text-gray-400">XAF</span>
+                        <p className="text-sm font-semibold tabular-nums text-amber-700">
+                          {principal.toLocaleString('fr-FR')} <span className="text-xs font-normal text-slate-400">XAF</span>
                         </p>
-                        <p className="text-[11px] text-gray-400">{repaidPct}% remboursé</p>
+                        <p className="text-[11px] text-slate-400">{repaidPct}% remboursé</p>
                       </div>
                     </li>
                   );
@@ -826,14 +828,14 @@ export default function DashboardPage() {
             <h2 className="text-sm font-semibold text-slate-900 font-heading">Sessions récentes</h2>
             <Link
               href="/sessions"
-              className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+              className="text-xs text-primary-600 hover:text-primary-800 font-medium flex items-center gap-1"
             >
               Voir tout <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
 
           {loadingSessions ? (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-slate-100">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="px-6 py-3.5 flex items-center gap-4">
                   <Skeleton className="h-4 w-10" />
@@ -843,34 +845,34 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : recentSessions.length === 0 ? (
-            <div className="px-6 py-8 text-center text-gray-400 text-sm">
+            <div className="px-6 py-8 text-center text-slate-400 text-sm">
               Aucune session pour cet exercice.
             </div>
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Session</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Date</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600 hidden sm:table-cell">Lieu</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Statut</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Session</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Date</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600 hidden sm:table-cell">Lieu</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Statut</th>
                   <th className="px-6 py-3"><span className="sr-only">Lien</span></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100">
                 {recentSessions.map((s) => (
-                  <tr key={s.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-3 font-semibold text-gray-800">
+                  <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-3 font-semibold text-slate-800">
                       #{s.sessionNumber}
                     </td>
-                    <td className="px-6 py-3 text-gray-600">
+                    <td className="px-6 py-3 text-slate-600">
                       {new Date(s.meetingDate).toLocaleDateString('fr-FR', {
                         day: 'numeric',
                         month: 'short',
                         year: 'numeric',
                       })}
                     </td>
-                    <td className="px-6 py-3 text-gray-500 hidden sm:table-cell">
+                    <td className="px-6 py-3 text-slate-500 hidden sm:table-cell">
                       {s.location ?? '—'}
                     </td>
                     <td className="px-6 py-3">
@@ -879,7 +881,7 @@ export default function DashboardPage() {
                     <td className="px-6 py-3 text-right">
                       <Link
                         href={`/sessions/${s.id}`}
-                        className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                        className="text-primary-600 hover:text-primary-800 text-xs font-medium"
                       >
                         Voir →
                       </Link>
@@ -901,7 +903,7 @@ export default function DashboardPage() {
           </div>
 
           {loadingSessions ? (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-slate-100">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="px-6 py-3.5 flex items-center gap-3">
                   <Skeleton className="h-7 w-7 rounded-lg shrink-0" />
@@ -914,23 +916,23 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : recentActions.length === 0 ? (
-            <div className="px-6 py-8 text-center text-gray-400 text-sm">
+            <div className="px-6 py-8 text-center text-slate-400 text-sm">
               Aucune action récente pour cet exercice.
             </div>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-slate-100">
               {recentActions.map((action) => {
                 const Icon = action.icon;
                 const row = (
-                  <div className="flex items-center gap-3 px-6 py-3.5 hover:bg-gray-50 transition-colors group">
-                    <div className="p-1.5 rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors shrink-0">
+                  <div className="flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50 transition-colors group">
+                    <div className="p-1.5 rounded-lg bg-slate-100 group-hover:bg-slate-200 transition-colors shrink-0">
                       <Icon className={`h-3.5 w-3.5 ${action.iconCls}`} strokeWidth={2} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{action.label}</p>
-                      <p className="text-xs text-gray-400 truncate">{action.sub}</p>
+                      <p className="text-sm font-medium text-slate-800 truncate">{action.label}</p>
+                      <p className="text-xs text-slate-400 truncate">{action.sub}</p>
                     </div>
-                    <span className="text-xs text-gray-400 shrink-0 tabular-nums">
+                    <span className="text-xs text-slate-400 shrink-0 tabular-nums">
                       {action.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                     </span>
                   </div>

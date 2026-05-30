@@ -33,9 +33,9 @@ const STATUS_LABELS: Record<LoanStatus, string> = {
 
 const STATUS_COLORS: Record<LoanStatus, string> = {
   PENDING: 'bg-yellow-100 text-yellow-700',
-  ACTIVE: 'bg-green-100 text-green-700',
-  PARTIALLY_REPAID: 'bg-blue-100 text-blue-700',
-  CLOSED: 'bg-gray-100 text-gray-500',
+  ACTIVE: 'bg-emerald-100 text-emerald-700',
+  PARTIALLY_REPAID: 'bg-primary-100 text-primary-700',
+  CLOSED: 'bg-slate-100 text-slate-500',
 };
 
 const PAGE_SIZE = 10;
@@ -67,16 +67,16 @@ function MembersTable({ memberships, isLoading, selectedId, onSelect }: MembersT
   const sliced = memberships.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-800">Membres inscrits</h2>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h2 className="text-base font-semibold text-slate-800">Membres inscrits</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
             Cliquez sur un membre pour voir ses prêts
           </p>
         </div>
         {!isLoading && (
-          <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+          <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
             {total} membre{total > 1 ? 's' : ''}
           </span>
         )}
@@ -84,23 +84,23 @@ function MembersTable({ memberships, isLoading, selectedId, onSelect }: MembersT
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-100">
+          <thead className="bg-slate-50 border-b border-slate-100">
             <tr>
-              <th className="text-left px-6 py-3 font-medium text-gray-600 w-10">#</th>
-              <th className="text-left px-6 py-3 font-medium text-gray-600">Nom</th>
-              <th className="text-left px-6 py-3 font-medium text-gray-600">Code</th>
-              <th className="text-left px-6 py-3 font-medium text-gray-600">Nombre de parts</th>
-              <th className="text-left px-6 py-3 font-medium text-gray-600">Type</th>
+              <th className="text-left px-6 py-3 font-medium text-slate-600 w-10">#</th>
+              <th className="text-left px-6 py-3 font-medium text-slate-600">Nom</th>
+              <th className="text-left px-6 py-3 font-medium text-slate-600">Code</th>
+              <th className="text-left px-6 py-3 font-medium text-slate-600">Nombre de parts</th>
+              <th className="text-left px-6 py-3 font-medium text-slate-600">Type</th>
               <th className="px-6 py-3"><span className="sr-only">Voir prêts</span></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-slate-100">
             {isLoading
               ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} cols={6} />)
               : sliced.length === 0
               ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-gray-400 text-sm">
+                  <td colSpan={6} className="px-6 py-10 text-center text-slate-400 text-sm">
                     Aucun membre inscrit pour cet exercice.
                   </td>
                 </tr>
@@ -118,16 +118,16 @@ function MembersTable({ memberships, isLoading, selectedId, onSelect }: MembersT
                       onClick={() => onSelect(isSelected ? '' : m.id)}
                       className={`cursor-pointer transition-colors ${
                         isSelected
-                          ? 'bg-blue-50 border-l-2 border-l-blue-500'
-                          : 'hover:bg-gray-50'
+                          ? 'bg-primary-50 border-l-2 border-l-primary-500'
+                          : 'hover:bg-slate-50'
                       }`}
                     >
-                      <td className="px-6 py-3 text-gray-400 text-xs tabular-nums">{(page - 1) * PAGE_SIZE + index + 1}</td>
-                      <td className="px-6 py-3 font-medium text-gray-800">{fullName}</td>
-                      <td className="px-6 py-3 text-gray-500 font-mono text-xs">
+                      <td className="px-6 py-3 text-slate-400 text-xs tabular-nums">{(page - 1) * PAGE_SIZE + index + 1}</td>
+                      <td className="px-6 py-3 font-medium text-slate-800">{fullName}</td>
+                      <td className="px-6 py-3 text-slate-500 font-mono text-xs">
                         {m.profile?.memberCode ?? '—'}
                       </td>
-                      <td className="px-6 py-3 tabular-nums text-gray-700">
+                      <td className="px-6 py-3 tabular-nums text-slate-700">
                         {sharesCount === '—' ? '—' : `${sharesCount} part${Number(sharesCount) > 1 ? 's' : ''}`}
                       </td>
                       <td className="px-6 py-3">
@@ -135,8 +135,8 @@ function MembersTable({ memberships, isLoading, selectedId, onSelect }: MembersT
                           m.enrollmentType === 'NEW'
                             ? 'bg-emerald-100 text-emerald-700'
                             : m.enrollmentType === 'RETURNING'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-orange-100 text-orange-700'
+                            ? 'bg-primary-100 text-primary-700'
+                            : 'bg-amber-100 text-amber-700'
                         }`}>
                           {m.enrollmentType === 'NEW'
                             ? 'Nouveau'
@@ -146,7 +146,7 @@ function MembersTable({ memberships, isLoading, selectedId, onSelect }: MembersT
                         </span>
                       </td>
                       <td className="px-6 py-3 text-right">
-                        <span className={`text-xs font-medium ${isSelected ? 'text-blue-600' : 'text-gray-400'}`}>
+                        <span className={`text-xs font-medium ${isSelected ? 'text-primary-600' : 'text-slate-400'}`}>
                           {isSelected ? 'Sélectionné ✓' : 'Voir prêts →'}
                         </span>
                       </td>
@@ -216,20 +216,20 @@ function AmortizationPanel({ balance, rate, dueBeforeDate }: AmortizationPanelPr
   const fmt = (v: number) => v.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-t border-blue-100 p-5 space-y-4">
+    <div className="bg-gradient-to-br from-primary-50 to-primary-50 border-t border-primary-100 p-5 space-y-4">
       {/* Titre */}
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-blue-900">Simulation de remboursement</h4>
-        <span className="text-xs text-blue-500 bg-blue-100 px-2 py-0.5 rounded-full">
+        <h4 className="text-sm font-semibold text-primary-900">Simulation de remboursement</h4>
+        <span className="text-xs text-primary-500 bg-primary-100 px-2 py-0.5 rounded-full">
           Taux : {(rate * 100).toFixed(0)} %/mois
         </span>
       </div>
 
       {/* Slider mois */}
-      <div className="bg-white rounded-xl border border-blue-100 p-4 shadow-sm space-y-3">
+      <div className="bg-white rounded-xl border border-primary-100 p-4 shadow-sm space-y-3">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 font-medium">Durée du remboursement</span>
-          <span className="text-lg font-bold text-blue-700 tabular-nums">{months} mois</span>
+          <span className="text-slate-600 font-medium">Durée du remboursement</span>
+          <span className="text-lg font-bold text-primary-700 tabular-nums">{months} mois</span>
         </div>
         <input
           type="range"
@@ -237,11 +237,11 @@ function AmortizationPanel({ balance, rate, dueBeforeDate }: AmortizationPanelPr
           max={36}
           value={months}
           onChange={(e) => setMonths(Number(e.target.value))}
-          className="w-full h-2 bg-blue-100 rounded-full appearance-none cursor-pointer accent-blue-600"
+          className="w-full h-2 bg-primary-100 rounded-full appearance-none cursor-pointer accent-primary-600"
         />
-        <div className="flex justify-between text-xs text-gray-400">
+        <div className="flex justify-between text-xs text-slate-400">
           <span>1 mois</span>
-          <span className="text-blue-400 font-medium">
+          <span className="text-primary-400 font-medium">
             Date limite : {new Date(dueBeforeDate).toLocaleDateString('fr-FR')}
             {' '}({defaultMonths} mois)
           </span>
@@ -256,8 +256,8 @@ function AmortizationPanel({ balance, rate, dueBeforeDate }: AmortizationPanelPr
             label: 'Mensualité',
             value: `${fmt(payment)} XAF`,
             sub: 'capital + intérêts',
-            color: 'text-blue-700',
-            bg: 'bg-white border-blue-100',
+            color: 'text-primary-700',
+            bg: 'bg-white border-primary-100',
           },
           {
             label: 'Total intérêts',
@@ -270,47 +270,47 @@ function AmortizationPanel({ balance, rate, dueBeforeDate }: AmortizationPanelPr
             label: 'Total remboursé',
             value: `${fmt(totalPaid)} XAF`,
             sub: isPaidOff ? '✓ Solde clôturé' : `solde résiduel`,
-            color: isPaidOff ? 'text-green-700' : 'text-gray-700',
-            bg: `${isPaidOff ? 'bg-green-50 border-green-100' : 'bg-white border-gray-100'}`,
+            color: isPaidOff ? 'text-emerald-700' : 'text-slate-700',
+            bg: `${isPaidOff ? 'bg-emerald-50 border-emerald-100' : 'bg-white border-slate-100'}`,
           },
         ].map(({ label, value, sub, color, bg }) => (
           <div key={label} className={`rounded-xl border p-3 shadow-sm ${bg}`}>
-            <p className="text-xs text-gray-500 mb-1">{label}</p>
+            <p className="text-xs text-slate-500 mb-1">{label}</p>
             <p className={`text-sm font-bold tabular-nums ${color}`}>{value}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+            <p className="text-xs text-slate-400 mt-0.5">{sub}</p>
           </div>
         ))}
       </div>
 
       {/* Table mois par mois */}
-      <div className="overflow-x-auto rounded-xl border border-blue-100 shadow-sm">
+      <div className="overflow-x-auto rounded-xl border border-primary-100 shadow-sm">
         <table className="w-full text-xs bg-white">
           <thead>
-            <tr className="bg-blue-600 text-white">
+            <tr className="bg-primary-600 text-white">
               <th className="text-left px-3 py-2 font-semibold rounded-tl-xl">Mois</th>
               <th className="text-right px-3 py-2 font-semibold">Solde début</th>
               <th className="text-right px-3 py-2 font-semibold text-amber-200">+ Intérêts</th>
-              <th className="text-right px-3 py-2 font-semibold text-green-200">− Mensualité</th>
+              <th className="text-right px-3 py-2 font-semibold text-emerald-200">− Mensualité</th>
               <th className="text-right px-3 py-2 font-semibold rounded-tr-xl">Solde fin</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-blue-50">
+          <tbody className="divide-y divide-primary-50">
             {rows.map((r, i) => (
               <tr
                 key={r.month}
                 className={`transition-colors ${
                   r.balanceEnd === 0
-                    ? 'bg-green-50'
+                    ? 'bg-emerald-50'
                     : i % 2 === 0
                     ? 'bg-white'
-                    : 'bg-blue-50/30'
+                    : 'bg-primary-50/30'
                 }`}
               >
-                <td className="px-3 py-2 font-medium text-blue-800">M+{r.month}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-gray-700">{fmt(r.balanceStart)}</td>
+                <td className="px-3 py-2 font-medium text-primary-800">M+{r.month}</td>
+                <td className="px-3 py-2 text-right tabular-nums text-slate-700">{fmt(r.balanceStart)}</td>
                 <td className="px-3 py-2 text-right tabular-nums text-amber-600 font-medium">+{fmt(r.interest)}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-green-700 font-medium">−{fmt(r.payment)}</td>
-                <td className={`px-3 py-2 text-right tabular-nums font-bold ${r.balanceEnd === 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                <td className="px-3 py-2 text-right tabular-nums text-emerald-700 font-medium">−{fmt(r.payment)}</td>
+                <td className={`px-3 py-2 text-right tabular-nums font-bold ${r.balanceEnd === 0 ? 'text-emerald-600' : 'text-slate-900'}`}>
                   {fmt(r.balanceEnd)}{r.balanceEnd === 0 ? ' ✓' : ''}
                 </td>
               </tr>
@@ -319,7 +319,7 @@ function AmortizationPanel({ balance, rate, dueBeforeDate }: AmortizationPanelPr
         </table>
       </div>
 
-      <p className="text-xs text-blue-400 text-center">
+      <p className="text-xs text-primary-400 text-center">
         Simulation indicative — basée sur le solde actuel de{' '}
         <strong>{fmt(balance)} XAF</strong>. Les remboursements réels modifieront les montants.
       </p>
@@ -342,10 +342,10 @@ function MemberLoans({ membershipId, displayName, isPresident, isReadOnly }: Mem
   const [expandedLoanId, setExpandedLoanId] = useState<string | null>(null);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-        <h2 className="text-base font-semibold text-gray-800">
-          Prêts — <span className="text-blue-700">{displayName}</span>
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+        <h2 className="text-base font-semibold text-slate-800">
+          Prêts — <span className="text-primary-700">{displayName}</span>
         </h2>
       </div>
 
@@ -356,36 +356,36 @@ function MemberLoans({ membershipId, displayName, isPresident, isReadOnly }: Mem
           </tbody>
         </table>
       ) : !loans || loans.length === 0 ? (
-        <div className="px-6 py-10 text-center text-gray-400 text-sm">
+        <div className="px-6 py-10 text-center text-slate-400 text-sm">
           Aucun prêt enregistré pour ce membre.
         </div>
       ) : (
         <div>
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Montant</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Taux mensuel</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Solde restant</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Date limite</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Statut</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Montant</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Taux mensuel</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Solde restant</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Date limite</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Statut</th>
                 <th className="px-6 py-3"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
               {loans.map((loan) => (
                 <React.Fragment key={loan.id}>
-                  <tr className="hover:bg-gray-50 transition border-b border-gray-100">
+                  <tr className="hover:bg-slate-50 transition border-b border-slate-100">
                     <td className="px-6 py-3 font-medium tabular-nums">
                       {parseFloat(loan.principalAmount).toLocaleString('fr-FR')} XAF
                     </td>
-                    <td className="px-6 py-3 text-gray-600">
+                    <td className="px-6 py-3 text-slate-600">
                       {(parseFloat(loan.monthlyRate) * 100).toFixed(0)} %
                     </td>
-                    <td className="px-6 py-3 tabular-nums text-gray-700">
+                    <td className="px-6 py-3 tabular-nums text-slate-700">
                       {parseFloat(loan.outstandingBalance).toLocaleString('fr-FR')} XAF
                     </td>
-                    <td className="px-6 py-3 text-gray-600">
+                    <td className="px-6 py-3 text-slate-600">
                       {new Date(loan.dueBeforeDate).toLocaleDateString('fr-FR')}
                     </td>
                     <td className="px-6 py-3">
@@ -398,7 +398,7 @@ function MemberLoans({ membershipId, displayName, isPresident, isReadOnly }: Mem
                         {(loan.status === 'ACTIVE' || loan.status === 'PARTIALLY_REPAID') && (
                           <button
                             onClick={() => setExpandedLoanId(expandedLoanId === loan.id ? null : loan.id)}
-                            className="text-xs text-blue-600 hover:text-blue-800 font-medium underline"
+                            className="text-xs text-primary-600 hover:text-primary-800 font-medium underline"
                           >
                             {expandedLoanId === loan.id ? 'Masquer simulation' : 'Simuler remboursement'}
                           </button>
@@ -414,7 +414,7 @@ function MemberLoans({ membershipId, displayName, isPresident, isReadOnly }: Mem
                         )}
                         <Link
                           href={`/loans/${loan.id}`}
-                          className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                          className="text-primary-600 hover:text-primary-800 text-xs font-medium"
                         >
                           Voir →
                         </Link>
@@ -539,11 +539,11 @@ export default function LoansPage() {
 
       {/* Formulaire demande de prêt */}
       {showForm && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-xl animate-slide-up">
-          <h2 className="text-base font-semibold text-gray-800 mb-4">Nouvelle demande de prêt</h2>
+        <div className="bg-white rounded-xl border border-slate-200 p-6 max-w-xl animate-slide-up">
+          <h2 className="text-base font-semibold text-slate-800 mb-4">Nouvelle demande de prêt</h2>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="flex flex-col gap-1">
-              <label htmlFor="loan-membership" className="text-sm font-medium text-gray-700">
+              <label htmlFor="loan-membership" className="text-sm font-medium text-slate-700">
                 Membre
               </label>
               {loadingMemberships ? (
@@ -611,7 +611,7 @@ export default function LoansPage() {
         <>
           {/* Filtre rapide par membre (select) + indicateur exercice */}
           <div className="flex items-center gap-3 flex-wrap">
-            <label htmlFor="member-filter" className="text-sm font-medium text-gray-700">
+            <label htmlFor="member-filter" className="text-sm font-medium text-slate-700">
               Filtrer par membre :
             </label>
             {loadingMemberships ? (
@@ -634,14 +634,14 @@ export default function LoansPage() {
             {selectedMembershipId && (
               <button
                 onClick={() => setSelectedMembershipId('')}
-                className="text-xs text-gray-500 hover:text-gray-700 underline"
+                className="text-xs text-slate-500 hover:text-slate-700 underline"
               >
                 Effacer le filtre
               </button>
             )}
             {selectedFy && (
-              <span className="ml-auto text-xs text-gray-400">
-                Exercice : <span className="font-medium text-gray-600">{selectedFy.label}</span>
+              <span className="ml-auto text-xs text-slate-400">
+                Exercice : <span className="font-medium text-slate-600">{selectedFy.label}</span>
               </span>
             )}
           </div>

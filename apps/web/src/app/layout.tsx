@@ -48,7 +48,7 @@ export default function RootLayout({
                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
               },
               success: { iconTheme: { primary: '#10b981', secondary: '#ffffff' } },
-              error: { iconTheme: { primary: '#f43f5e', secondary: '#ffffff' } },
+              error: { iconTheme: { primary: '#e11d48', secondary: '#ffffff' } },
             }}
           />
           {children}

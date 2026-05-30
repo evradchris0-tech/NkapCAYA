@@ -21,12 +21,12 @@ const EVENT_TYPE_LABELS: Record<RescueEventType, string> = {
 
 function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-white rounded-xl border border-slate-200 p-6">
       <div className="mb-3">
-        <h2 className="text-base font-semibold text-gray-800">{title}</h2>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+        <h2 className="text-base font-semibold text-slate-800">{title}</h2>
+        {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
       </div>
-      <div className="divide-y divide-gray-100">{children}</div>
+      <div className="divide-y divide-slate-100">{children}</div>
     </div>
   );
 }
@@ -81,7 +81,7 @@ export default function ConfigPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-24 text-gray-400 text-sm">Chargement…</div>
+      <div className="flex items-center justify-center py-24 text-slate-400 text-sm">Chargement…</div>
     );
   }
 
@@ -103,7 +103,7 @@ export default function ConfigPage() {
     tooltip?: string;
   }) => (
     <div className="flex justify-between items-center py-2.5">
-      <span className="flex items-center gap-1.5 text-sm text-gray-500">
+      <span className="flex items-center gap-1.5 text-sm text-slate-500">
         {label}
         {tooltip && <InfoTooltip content={tooltip} />}
       </span>
@@ -115,7 +115,7 @@ export default function ConfigPage() {
             step={field === 'loanMonthlyRate' ? '0.001' : undefined}
             onChange={(e) => setFieldValue(e.target.value)}
             aria-label={`Modifier ${label}`}
-            className="text-sm border border-gray-300 rounded-lg px-3 py-1 w-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="text-sm border border-slate-300 rounded-lg px-3 py-1 w-40 focus:outline-none focus:ring-2 focus:ring-primary-500"
             autoFocus
           />
           <Button type="button" size="sm" onClick={saveField} isLoading={updateConfig.isPending}>OK</Button>
@@ -123,12 +123,12 @@ export default function ConfigPage() {
         </div>
       ) : (
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-gray-900">{value ?? '—'}</span>
+          <span className="text-sm font-medium text-slate-900">{value ?? '—'}</span>
           {isSuperAdmin && (
             <button
               type="button"
               onClick={() => startEdit(field, rawValue ?? value)}
-              className="text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors"
+              className="text-xs text-primary-500 hover:text-primary-700 font-medium transition-colors"
             >
               Modifier
             </button>
@@ -147,11 +147,11 @@ export default function ConfigPage() {
 
       {/* Bannière admin */}
       <div className="rounded-2xl overflow-hidden flex items-center gap-5 px-6 py-5"
-        style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 60%, #7c3aed 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #0f1c33 0%, #162848 60%, #5f80b0 100%)' }}>
         <Logo size="lg" onDark />
         <div>
           <p className="text-white font-bold text-lg leading-tight">CAYA — Administration</p>
-          <p className="text-blue-200 text-sm mt-0.5">
+          <p className="text-primary-200 text-sm mt-0.5">
             {isSuperAdmin
               ? 'Vous êtes connecté en tant que Super Admin. Toutes les modifications sont autorisées.'
               : 'Mode lecture seule — contactez votre Super Admin pour modifier la configuration.'}
@@ -205,19 +205,19 @@ export default function ConfigPage() {
       </Section>
 
       {/* Montants événements secours */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
           <div>
-            <h2 className="text-base font-semibold text-gray-800">Montants des événements secours</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Aide versée automatiquement lors des événements de vie déclarés par un membre.</p>
+            <h2 className="text-base font-semibold text-slate-800">Montants des événements secours</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Aide versée automatiquement lors des événements de vie déclarés par un membre.</p>
           </div>
         </div>
         {rescueAmounts && rescueAmounts.length > 0 ? (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Événement</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Événement</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">
                   <span className="flex items-center justify-end gap-1.5">
                     Montant (XAF)
                     <InfoTooltip content="Montant versé depuis la caisse de secours au membre concerné lors de chaque type d'événement déclaré." position="left" />
@@ -225,10 +225,10 @@ export default function ConfigPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {rescueAmounts.map((evt) => (
-                <tr key={evt.eventType} className="hover:bg-gray-50">
-                  <td className="px-6 py-3 text-gray-800">{EVENT_TYPE_LABELS[evt.eventType]}</td>
+                <tr key={evt.eventType} className="hover:bg-slate-50">
+                  <td className="px-6 py-3 text-slate-800">{EVENT_TYPE_LABELS[evt.eventType]}</td>
                   <td className="px-6 py-3 text-right">
                     {editingEventType === evt.eventType ? (
                       <div className="flex items-center justify-end gap-2">
@@ -237,7 +237,7 @@ export default function ConfigPage() {
                           value={eventAmountValue}
                           onChange={(e) => setEventAmountValue(e.target.value)}
                           aria-label={`Montant ${EVENT_TYPE_LABELS[evt.eventType]}`}
-                          className="text-sm border border-gray-300 rounded-lg px-2 py-1 w-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="text-sm border border-slate-300 rounded-lg px-2 py-1 w-32 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           autoFocus
                         />
                         <Button type="button" size="sm" onClick={saveRescueAmount} isLoading={updateRescueAmount.isPending}>OK</Button>
@@ -252,7 +252,7 @@ export default function ConfigPage() {
                           <button
                             type="button"
                             onClick={() => { setEditingEventType(evt.eventType); setEventAmountValue(evt.amount); }}
-                            className="text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors"
+                            className="text-xs text-primary-500 hover:text-primary-700 font-medium transition-colors"
                           >
                             Modifier
                           </button>
@@ -265,7 +265,7 @@ export default function ConfigPage() {
             </tbody>
           </table>
         ) : (
-          <div className="p-8 text-center text-gray-400 text-sm">
+          <div className="p-8 text-center text-slate-400 text-sm">
             Aucun montant configuré.
           </div>
         )}
