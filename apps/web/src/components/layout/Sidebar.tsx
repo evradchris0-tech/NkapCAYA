@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
 import {
   LayoutDashboard, Calendar, Users, ClipboardList, PiggyBank, Banknote,
-  Shield, Gift, BarChart3, Settings, UserCircle, Activity, BookOpen,
+  Shield, Gift, Settings, UserCircle, Activity, BookOpen,
   ChevronDown, FileDown, X as CloseIcon, type LucideIcon,
 } from 'lucide-react';
 import { useCurrentUser } from '@lib/hooks/useCurrentUser';
@@ -44,9 +44,10 @@ const navItems: NavItem[] = [
   { label: 'Guide',            href: '/guide',         icon: BookOpen },
 ];
 
-const LINK_BASE = 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 border-l-2 pl-[10px]';
-const LINK_ACTIVE = 'bg-primary-50 text-primary-900 font-semibold border-primary-900 shadow-sm';
-const LINK_INACTIVE = 'text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-transparent';
+// Thème marine foncé (sidebar). Actif = liseré or + fond clair translucide.
+const LINK_BASE = 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] transition-all duration-150 border-l-2 pl-[10px]';
+const LINK_ACTIVE = 'bg-white/10 text-white font-semibold border-accent-400 shadow-sm';
+const LINK_INACTIVE = 'text-primary-200 hover:text-white hover:bg-white/5 border-transparent';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -60,37 +61,37 @@ export default function Sidebar() {
     <>
       {/* Overlay Mobile */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-[60] md:hidden backdrop-blur-sm animate-fade-in"
           onClick={close}
         />
       )}
 
-      <aside 
+      <aside
         className={clsx(
-          "fixed inset-y-0 left-0 z-[70] w-64 bg-white border-r border-slate-200 text-slate-600 flex flex-col h-full transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 shrink-0",
+          "fixed inset-y-0 left-0 z-[70] w-64 bg-primary-900 border-r border-primary-800 text-primary-200 flex flex-col h-full transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 shrink-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Logo & Close Button (Mobile) */}
-        <div className="px-5 py-5 border-b border-slate-100 flex items-center justify-between">
+        <div className="px-5 py-6 border-b border-primary-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Logo size="sm" />
+            <Logo size="md" />
             <div>
-              <h1 className="text-base font-bold tracking-tight text-primary-900 leading-tight font-heading">NkapZen</h1>
-              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider leading-tight mt-0.5">Gestion de tontine</p>
+              <h1 className="text-lg font-extrabold tracking-tight text-white leading-tight">NkapZen</h1>
+              <p className="text-[10px] text-accent-300 font-semibold uppercase tracking-[0.15em] leading-tight mt-0.5">Gestion de tontine</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={close}
-            className="md:hidden p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+            className="md:hidden p-2 rounded-lg text-primary-300 hover:text-white hover:bg-white/10 transition-colors"
           >
             <CloseIcon className="h-5 w-5" />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             if (item.label === 'Audit') {
               const canAccessAudit =
@@ -119,7 +120,7 @@ export default function Sidebar() {
                     )}
                   >
                     <span className="flex items-center gap-3">
-                      <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={isGroupActive ? 2.2 : 1.8} />
+                      <Icon className="h-5 w-5 shrink-0" strokeWidth={isGroupActive ? 2.2 : 1.8} />
                       {item.label}
                     </span>
                     <ChevronDown
@@ -129,7 +130,7 @@ export default function Sidebar() {
                   </button>
 
                   {isActuallyOpen && (
-                    <div className="ml-8 mt-0.5 space-y-0.5 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                    <div className="ml-8 mt-1 space-y-0.5 animate-fade-in" onClick={(e) => e.stopPropagation()}>
                       {item.children.map((child) => {
                         const childActive = pathname === child.href || pathname.startsWith(child.href + '/');
                         return (
@@ -138,13 +139,13 @@ export default function Sidebar() {
                             href={child.href}
                             onClick={() => { if(window.innerWidth < 768) close(); }}
                             className={clsx(
-                              'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all duration-150',
+                              'flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-150',
                               childActive
-                                ? 'text-primary-900 font-medium bg-slate-50'
-                                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                                ? 'text-white font-medium bg-white/10'
+                                : 'text-primary-300 hover:text-white hover:bg-white/5'
                             )}
                           >
-                            <span className={clsx('w-1.5 h-1.5 rounded-full shrink-0', childActive ? 'bg-primary-900' : 'bg-slate-300')} />
+                            <span className={clsx('w-1.5 h-1.5 rounded-full shrink-0', childActive ? 'bg-accent-400' : 'bg-primary-500')} />
                             {child.label}
                           </Link>
                         );
@@ -163,39 +164,39 @@ export default function Sidebar() {
                 onClick={() => { if(window.innerWidth < 768) close(); }}
                 className={clsx(LINK_BASE, isActive ? LINK_ACTIVE : LINK_INACTIVE)}
               >
-                <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={isActive ? 2.2 : 1.8} />
+                <Icon className="h-5 w-5 shrink-0" strokeWidth={isActive ? 2.2 : 1.8} />
                 {item.label}
               </Link>
             );
           })}
 
-          <div className="pt-2 mt-2 border-t border-slate-100">
+          <div className="pt-2 mt-2 border-t border-primary-800">
             <Link
               href="/profile"
               onClick={() => { if(window.innerWidth < 768) close(); }}
               className={clsx(LINK_BASE, pathname === '/profile' ? LINK_ACTIVE : LINK_INACTIVE)}
             >
-              <UserCircle className="h-[18px] w-[18px] shrink-0" strokeWidth={pathname === '/profile' ? 2.2 : 1.8} />
+              <UserCircle className="h-5 w-5 shrink-0" strokeWidth={pathname === '/profile' ? 2.2 : 1.8} />
               Mon profil
             </Link>
           </div>
         </nav>
 
-        <div className="px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+        <div className="px-5 py-4 border-t border-primary-800 bg-primary-950/40">
           {user ? (
             <Link href="/profile" onClick={() => { if(window.innerWidth < 768) close(); }} className="flex items-center gap-3 group">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 text-slate-700 font-semibold text-xs shrink-0 ring-1 ring-slate-300 group-hover:bg-primary-900 group-hover:text-white transition-all">
+              <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary-700 text-white font-semibold text-xs shrink-0 ring-1 ring-primary-600 group-hover:bg-accent-500 group-hover:text-primary-900 transition-all">
                 {user.username.slice(0, 2).toUpperCase()}
               </span>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-900 truncate group-hover:text-primary-700 transition-colors">
+                <p className="text-sm font-semibold text-white truncate group-hover:text-accent-300 transition-colors">
                   {user.username}
                 </p>
-                <p className="text-xs text-slate-500 truncate">{roleLabel}</p>
+                <p className="text-xs text-primary-300 truncate">{roleLabel}</p>
               </div>
             </Link>
           ) : (
-            <p className="text-xs text-slate-400 font-medium">v1.0.0</p>
+            <p className="text-xs text-primary-400 font-medium">v1.0.0</p>
           )}
         </div>
       </aside>
