@@ -20,10 +20,10 @@ const STATUS_LABELS: Record<FiscalYearStatus, string> = {
 
 const STATUS_COLORS: Record<FiscalYearStatus, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
-  ACTIVE: 'bg-green-100 text-green-800',
-  CASSATION: 'bg-blue-100 text-blue-800',
-  CLOSED: 'bg-gray-100 text-gray-600',
-  ARCHIVED: 'bg-gray-100 text-gray-400',
+  ACTIVE: 'bg-emerald-100 text-emerald-800',
+  CASSATION: 'bg-primary-100 text-primary-800',
+  CLOSED: 'bg-slate-100 text-slate-600',
+  ARCHIVED: 'bg-slate-100 text-slate-400',
 };
 
 export default function FiscalYearListPage() {
@@ -55,12 +55,12 @@ export default function FiscalYearListPage() {
       />
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-24 text-gray-400 text-sm">
+        <div className="flex items-center justify-center py-24 text-slate-400 text-sm">
           Chargement…
         </div>
       ) : !fiscalYears || fiscalYears.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <p className="text-gray-500 text-sm mb-4">Aucun exercice fiscal créé.</p>
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+          <p className="text-slate-500 text-sm mb-4">Aucun exercice fiscal créé.</p>
           {isSuperAdmin && (
             <Link href="/fiscal-year/new">
               <Button>Créer le premier exercice</Button>
@@ -68,27 +68,27 @@ export default function FiscalYearListPage() {
           )}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[640px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Exercice</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Période</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Cassation</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Statut</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Exercice</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Période</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Cassation</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Statut</th>
                   <th className="px-6 py-3"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100">
                 {fiscalYears.map((fy) => (
-                  <tr key={fy.id} className="hover:bg-gray-50 transition">
-                    <td className="px-6 py-4 font-semibold text-gray-900">{fy.label}</td>
-                    <td className="px-6 py-4 text-gray-600">
+                  <tr key={fy.id} className="hover:bg-slate-50 transition">
+                    <td className="px-6 py-4 font-semibold text-slate-900">{fy.label}</td>
+                    <td className="px-6 py-4 text-slate-600">
                       {new Date(fy.startDate).toLocaleDateString('fr-FR')} →{' '}
                       {new Date(fy.endDate).toLocaleDateString('fr-FR')}
                     </td>
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-6 py-4 text-slate-600">
                       {new Date(fy.cassationDate).toLocaleDateString('fr-FR')}
                     </td>
                     <td className="px-6 py-4">
@@ -98,7 +98,7 @@ export default function FiscalYearListPage() {
                         {STATUS_LABELS[fy.status]}
                       </span>
                       {fy.isImported && (
-                        <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 ml-1.5">
+                        <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700 ml-1.5">
                           Importé
                         </span>
                       )}
@@ -121,7 +121,7 @@ export default function FiscalYearListPage() {
                         )}
                         <Link
                           href={`/fiscal-year/${fy.id}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium text-xs"
+                          className="text-primary-600 hover:text-primary-800 font-medium text-xs"
                         >
                           Voir →
                         </Link>

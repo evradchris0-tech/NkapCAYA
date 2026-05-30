@@ -36,14 +36,14 @@ interface Props {
   params: { id: string };
 }
 
-const PIE_COLORS = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#f43f5e','#14b8a6','#f97316','#6366f1','#94a3b8'];
+const PIE_COLORS = ['#1d325b','#c6902a','#10b981','#5f80b0','#e11d48','#64748b','#92accf','#86571c','#0f1c33'];
 
 function AmountCell({ label, value }: { label: string; value: string }) {
   const n = parseFloat(value || '0');
   if (n === 0) return null;
   return (
-    <div className="flex justify-between text-sm py-1.5 border-b border-gray-50">
-      <span className="text-gray-600">{label}</span>
+    <div className="flex justify-between text-sm py-1.5 border-b border-slate-50">
+      <span className="text-slate-600">{label}</span>
       <span className="font-medium tabular-nums">{n.toLocaleString('fr-FR')} XAF</span>
     </div>
   );
@@ -55,14 +55,14 @@ function KpiCard({
   label: string; value: React.ReactNode; icon: React.ElementType; color: string; sub?: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5 flex items-start gap-4">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-card p-5 flex items-start gap-4">
       <div className={`p-2.5 rounded-lg ${color} shrink-0`}>
         <Icon className="h-5 w-5" strokeWidth={2} />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-medium text-gray-500 truncate">{label}</p>
-        <div className="text-2xl font-bold text-gray-900 mt-0.5 tabular-nums">{value}</div>
-        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+        <p className="text-xs font-medium text-slate-500 truncate">{label}</p>
+        <div className="text-2xl font-bold text-slate-900 mt-0.5 tabular-nums">{value}</div>
+        {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
       </div>
     </div>
   );
@@ -195,10 +195,10 @@ export default function SessionDetailPage({ params }: Props) {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
+        <div className="h-8 w-48 bg-slate-200 rounded animate-pulse" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-200 p-5">
+            <div key={i} className="bg-white rounded-xl border border-slate-200 p-5">
               <Skeleton className="h-3 w-24 mb-3" />
               <Skeleton className="h-7 w-20" />
             </div>
@@ -266,14 +266,14 @@ export default function SessionDetailPage({ params }: Props) {
           label="Participants"
           value={derived.participantIds.size}
           icon={Users}
-          color="bg-blue-50 text-blue-600"
+          color="bg-primary-50 text-primary-600"
           sub={memberships ? `sur ${memberships.length} membres` : undefined}
         />
         <KpiCard
           label="Transactions"
           value={session.entries?.length ?? 0}
           icon={CreditCard}
-          color="bg-violet-50 text-violet-600"
+          color="bg-primary-50 text-primary-600"
         />
         <KpiCard
           label="Taux cotisation"
@@ -286,7 +286,7 @@ export default function SessionDetailPage({ params }: Props) {
           label="Remboursements"
           value={`${derived.totalRbt.toLocaleString('fr-FR')} XAF`}
           icon={Banknote}
-          color="bg-rose-50 text-rose-600"
+          color="bg-red-50 text-red-600"
           sub="Principal + Intérêts"
         />
       </div>
@@ -294,8 +294,8 @@ export default function SessionDetailPage({ params }: Props) {
       {/* ── Timeline statut + Bénéficiaire ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Timeline workflow */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-card p-5">
-          <p className="text-sm font-semibold text-gray-800 mb-4">Progression de la session</p>
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-card p-5">
+          <p className="text-sm font-semibold text-slate-800 mb-4">Progression de la session</p>
           <div className="flex items-start gap-0">
             {WORKFLOW.map((step, i) => {
               const done = i < currentOrder;
@@ -305,37 +305,37 @@ export default function SessionDetailPage({ params }: Props) {
                   {/* Connecteur + cercle */}
                   <div className="flex items-center w-full">
                     {i > 0 && (
-                      <div className={`flex-1 h-0.5 ${done || active ? 'bg-blue-500' : 'bg-gray-200'}`} />
+                      <div className={`flex-1 h-0.5 ${done || active ? 'bg-primary-500' : 'bg-slate-200'}`} />
                     )}
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                      done    ? 'bg-blue-500' :
-                      active  ? 'bg-blue-100 ring-2 ring-blue-500' :
-                                'bg-gray-100'
+                      done    ? 'bg-primary-500' :
+                      active  ? 'bg-primary-100 ring-2 ring-primary-500' :
+                                'bg-slate-100'
                     }`}>
                       {done
                         ? <CheckCircle2 className="h-4 w-4 text-white" />
                         : active
-                        ? <Clock className="h-4 w-4 text-blue-600" />
-                        : <Circle className="h-4 w-4 text-gray-300" />}
+                        ? <Clock className="h-4 w-4 text-primary-600" />
+                        : <Circle className="h-4 w-4 text-slate-300" />}
                     </div>
                     {i < WORKFLOW.length - 1 && (
-                      <div className={`flex-1 h-0.5 ${done ? 'bg-blue-500' : 'bg-gray-200'}`} />
+                      <div className={`flex-1 h-0.5 ${done ? 'bg-primary-500' : 'bg-slate-200'}`} />
                     )}
                   </div>
                   {/* Label */}
                   <p className={`text-[10px] font-medium text-center mt-1.5 px-1 leading-tight ${
-                    active ? 'text-blue-600' : done ? 'text-gray-600' : 'text-gray-300'
+                    active ? 'text-primary-600' : done ? 'text-slate-600' : 'text-slate-300'
                   }`}>
                     {step.label}
                   </p>
                   {/* Timestamp */}
                   {step.key === 'OPEN' && session.openedAt && (
-                    <p className="text-[9px] text-gray-400 mt-0.5 text-center">
+                    <p className="text-[9px] text-slate-400 mt-0.5 text-center">
                       {new Date(session.openedAt).toLocaleDateString('fr-FR')}
                     </p>
                   )}
                   {step.key === 'CLOSED' && session.closedAt && (
-                    <p className="text-[9px] text-gray-400 mt-0.5 text-center">
+                    <p className="text-[9px] text-slate-400 mt-0.5 text-center">
                       {new Date(session.closedAt).toLocaleDateString('fr-FR')}
                     </p>
                   )}
@@ -345,24 +345,24 @@ export default function SessionDetailPage({ params }: Props) {
           </div>
 
           {/* Infos complémentaires */}
-          <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-gray-100">
+          <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-slate-100">
             <div>
-              <p className="text-xs text-gray-500">Date de réunion</p>
-              <p className="text-sm font-semibold text-gray-800 mt-0.5">
+              <p className="text-xs text-slate-500">Date de réunion</p>
+              <p className="text-sm font-semibold text-slate-800 mt-0.5">
                 {new Date(session.meetingDate).toLocaleDateString('fr-FR', {
                   day: 'numeric', month: 'long', year: 'numeric',
                 })}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Lieu</p>
-              <p className="text-sm font-semibold text-gray-800 mt-0.5">
+              <p className="text-xs text-slate-500">Lieu</p>
+              <p className="text-sm font-semibold text-slate-800 mt-0.5">
                 {session.location ?? '—'}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Total collecté</p>
-              <p className="text-sm font-semibold text-gray-900 tabular-nums mt-0.5">
+              <p className="text-xs text-slate-500">Total collecté</p>
+              <p className="text-sm font-semibold text-slate-900 tabular-nums mt-0.5">
                 {derived.totalGeneral.toLocaleString('fr-FR')} XAF
               </p>
             </div>
@@ -370,14 +370,14 @@ export default function SessionDetailPage({ params }: Props) {
         </div>
 
         {/* Bénéficiaires du mois (multi-slots) */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-card p-5">
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
-              <Gift className="h-4 w-4 text-teal-600" />
-              <p className="text-sm font-semibold text-gray-800">
+              <Gift className="h-4 w-4 text-primary-600" />
+              <p className="text-sm font-semibold text-slate-800">
                 Bénéficiaire{beneficiarySlots.length > 1 ? 's' : ''} du mois
                 {beneficiarySlots.length > 0 && (
-                  <span className="ml-2 text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full font-medium">
+                  <span className="ml-2 text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full font-medium">
                     {beneficiarySlots.length}
                   </span>
                 )}
@@ -387,7 +387,7 @@ export default function SessionDetailPage({ params }: Props) {
               <button
                 onClick={() => addSlot.mutate(params.id)}
                 disabled={addSlot.isPending}
-                className="text-xs font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50"
+                className="text-xs font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50"
               >
                 + Ajouter
               </button>
@@ -397,11 +397,11 @@ export default function SessionDetailPage({ params }: Props) {
           {beneficiarySlots.length > 0 ? (
             <div className="space-y-3">
               {beneficiarySlots.map((slot, i) => (
-                <div key={slot.id} className={`${i > 0 ? 'border-t border-gray-100 pt-3' : ''}`}>
+                <div key={slot.id} className={`${i > 0 ? 'border-t border-slate-100 pt-3' : ''}`}>
                   {/* Slot UNASSIGNED — picker membre */}
                   {slot.status === 'UNASSIGNED' && session.status === 'OPEN' && isPresident ? (
                     <div className="space-y-2">
-                      <p className="text-xs text-gray-400">Slot #{slot.slotIndex} — Non attribué</p>
+                      <p className="text-xs text-slate-400">Slot #{slot.slotIndex} — Non attribué</p>
                       <div className="flex gap-2 items-start">
                         <Select
                           value={assignMembershipId[slot.id] ?? ''}
@@ -425,7 +425,7 @@ export default function SessionDetailPage({ params }: Props) {
                             setAssignMembershipId((prev) => ({ ...prev, [slot.id]: '' }));
                           }}
                           disabled={!assignMembershipId[slot.id] || assignSlot.isPending}
-                          className="text-xs font-medium bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 disabled:opacity-40 transition-colors"
+                          className="text-xs font-medium bg-primary-600 text-white px-3 py-1.5 rounded-lg hover:bg-primary-700 disabled:opacity-40 transition-colors"
                         >
                           Assigner
                         </button>
@@ -434,21 +434,21 @@ export default function SessionDetailPage({ params }: Props) {
                   ) : (
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-slate-400">
                           Slot #{slot.slotIndex}
                           {slot.isHost && (
-                            <span className="ml-1.5 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
+                            <span className="ml-1.5 text-[10px] bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full font-medium">
                               Hôte
                             </span>
                           )}
                         </p>
-                        <p className="text-sm font-semibold text-gray-900 mt-0.5">
+                        <p className="text-sm font-semibold text-slate-900 mt-0.5">
                           {slot.membership?.profile
                             ? `${slot.membership.profile.lastName} ${slot.membership.profile.firstName}`
-                            : <span className="text-gray-400 italic text-xs">Non désigné</span>}
+                            : <span className="text-slate-400 italic text-xs">Non désigné</span>}
                         </p>
                         {slot.status === 'DELIVERED' && parseFloat(slot.amountDelivered || '0') > 0 && (
-                          <p className="text-sm font-bold text-teal-700 tabular-nums mt-0.5">
+                          <p className="text-sm font-bold text-primary-700 tabular-nums mt-0.5">
                             {parseFloat(slot.amountDelivered).toLocaleString('fr-FR')} XAF
                           </p>
                         )}
@@ -457,14 +457,14 @@ export default function SessionDetailPage({ params }: Props) {
                         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
                           slot.status === 'DELIVERED' ? 'bg-emerald-100 text-emerald-700'
                           : slot.status === 'ASSIGNED' ? 'bg-amber-100 text-amber-700'
-                          : 'bg-gray-100 text-gray-500'
+                          : 'bg-slate-100 text-slate-500'
                         }`}>
                           {slot.status === 'DELIVERED' ? 'Livré ✓' : slot.status === 'ASSIGNED' ? 'En attente' : 'Non attribué'}
                         </span>
                         {slot.status === 'ASSIGNED' && isPresident && (
                           <button
                             onClick={() => { setDeliverySlotId(slot.id); setDeliveryAmount(''); }}
-                            className="text-[11px] font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2 py-0.5 rounded-full transition-colors"
+                            className="text-[11px] font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 px-2 py-0.5 rounded-full transition-colors"
                           >
                             Confirmer remise
                           </button>
@@ -477,8 +477,8 @@ export default function SessionDetailPage({ params }: Props) {
 
               {/* Hôte toggle — visible si ≥ 2 slots ASSIGNED */}
               {beneficiarySlots.filter((s) => s.status === 'ASSIGNED').length >= 2 && session.status === 'OPEN' && isPresident && (
-                <div className="pt-3 border-t border-gray-100">
-                  <p className="text-xs font-medium text-gray-600 mb-2">Hôte de la réunion :</p>
+                <div className="pt-3 border-t border-slate-100">
+                  <p className="text-xs font-medium text-slate-600 mb-2">Hôte de la réunion :</p>
                   <div className="space-y-1.5">
                     {beneficiarySlots
                       .filter((s) => s.status === 'ASSIGNED' || s.status === 'DELIVERED')
@@ -489,9 +489,9 @@ export default function SessionDetailPage({ params }: Props) {
                             name="host"
                             checked={s.isHost}
                             onChange={() => setHost.mutate(s.id)}
-                            className="text-teal-600 focus:ring-teal-500"
+                            className="text-primary-600 focus:ring-primary-500"
                           />
-                          <span className="text-xs text-gray-700">
+                          <span className="text-xs text-slate-700">
                             {s.membership?.profile
                               ? `${s.membership.profile.lastName} ${s.membership.profile.firstName}`
                               : `Slot #${s.slotIndex}`}
@@ -504,8 +504,8 @@ export default function SessionDetailPage({ params }: Props) {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Gift className="h-8 w-8 text-gray-200 mb-2" />
-              <p className="text-xs text-gray-400">Aucun bénéficiaire pour cette session</p>
+              <Gift className="h-8 w-8 text-slate-200 mb-2" />
+              <p className="text-xs text-slate-400">Aucun bénéficiaire pour cette session</p>
             </div>
           )}
         </div>
@@ -513,14 +513,14 @@ export default function SessionDetailPage({ params }: Props) {
 
       {/* ── Taux de participation (barre) ── */}
       {memberships && memberships.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-card p-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-gray-800">Taux de cotisation</p>
+            <p className="text-sm font-semibold text-slate-800">Taux de cotisation</p>
             <span className={`text-sm font-bold tabular-nums ${derived.pct === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>
               {derived.pct} % ({derived.cotisantIds.size}/{memberships.length})
             </span>
           </div>
-          <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
             <div
               className={`h-3 rounded-full transition-all duration-700 ${derived.pct === 100 ? 'bg-emerald-500' : 'bg-amber-400'}`}
               style={{ width: `${derived.pct}%` }}
@@ -576,8 +576,8 @@ export default function SessionDetailPage({ params }: Props) {
       {/* ── Totaux + Charts ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Détail textuel */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-sm font-semibold text-gray-800 mb-4">Totaux par type</h2>
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="text-sm font-semibold text-slate-800 mb-4">Totaux par type</h2>
           <div className="space-y-0.5">
             <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.COTISATION]} value={session.totalCotisation} />
             <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.POT]} value={session.totalPot} />
@@ -590,7 +590,7 @@ export default function SessionDetailPage({ params }: Props) {
             <AmountCell label={TRANSACTION_TYPE_LABELS[TransactionType.AUTRES]} value={session.totalAutres} />
           </div>
           {derived.totalGeneral === 0 && (
-            <p className="text-sm text-gray-400 text-center py-4">Aucune transaction enregistrée.</p>
+            <p className="text-sm text-slate-400 text-center py-4">Aucune transaction enregistrée.</p>
           )}
         </div>
 
@@ -620,7 +620,7 @@ export default function SessionDetailPage({ params }: Props) {
                   <Legend
                     iconType="circle"
                     iconSize={7}
-                    formatter={(value) => <span className="text-xs text-gray-600">{value}</span>}
+                    formatter={(value) => <span className="text-xs text-slate-600">{value}</span>}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -631,19 +631,19 @@ export default function SessionDetailPage({ params }: Props) {
 
       {/* ── Journal financier ── */}
       {derived.totalGeneral > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-            <h2 className="text-sm font-semibold text-gray-800">Journal financier de la session</h2>
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h2 className="text-sm font-semibold text-slate-800">Journal financier de la session</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[400px]">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Rubrique</th>
-                  <th className="text-right px-6 py-3 font-medium text-gray-600">Montant (XAF)</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Rubrique</th>
+                  <th className="text-right px-6 py-3 font-medium text-slate-600">Montant (XAF)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-slate-50">
                 {/* RECETTES */}
                 <tr className="bg-emerald-50/40">
                   <td colSpan={2} className="px-6 py-2 text-xs font-bold text-emerald-700 uppercase tracking-wide">
@@ -663,9 +663,9 @@ export default function SessionDetailPage({ params }: Props) {
                 ]
                   .filter((r) => parseFloat(r.value || '0') > 0)
                   .map((r) => (
-                    <tr key={r.label} className="hover:bg-gray-50">
-                      <td className="px-6 py-2.5 text-gray-600 pl-10">{r.label}</td>
-                      <td className="px-6 py-2.5 text-right tabular-nums font-medium text-gray-800">
+                    <tr key={r.label} className="hover:bg-slate-50">
+                      <td className="px-6 py-2.5 text-slate-600 pl-10">{r.label}</td>
+                      <td className="px-6 py-2.5 text-right tabular-nums font-medium text-slate-800">
                         {parseFloat(r.value || '0').toLocaleString('fr-FR')}
                       </td>
                     </tr>
@@ -687,8 +687,8 @@ export default function SessionDetailPage({ params }: Props) {
                 })()}
 
                 {/* DÉPENSES */}
-                <tr className="bg-rose-50/40">
-                  <td colSpan={2} className="px-6 py-2 text-xs font-bold text-rose-700 uppercase tracking-wide">
+                <tr className="bg-red-50/40">
+                  <td colSpan={2} className="px-6 py-2 text-xs font-bold text-red-700 uppercase tracking-wide">
                     Dépenses
                   </td>
                 </tr>
@@ -697,13 +697,13 @@ export default function SessionDetailPage({ params }: Props) {
                     {beneficiarySlots
                       .filter((s) => s.status === 'DELIVERED' && parseFloat(s.amountDelivered || '0') > 0)
                       .map((s) => (
-                        <tr key={s.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-2.5 text-gray-600 pl-10">
+                        <tr key={s.id} className="hover:bg-slate-50">
+                          <td className="px-6 py-2.5 text-slate-600 pl-10">
                             Tontine versée — {s.membership?.profile
                               ? `${s.membership.profile.lastName} ${s.membership.profile.firstName}`
                               : `Slot #${s.slotIndex}`}
                           </td>
-                          <td className="px-6 py-2.5 text-right tabular-nums font-medium text-rose-700">
+                          <td className="px-6 py-2.5 text-right tabular-nums font-medium text-red-700">
                             {parseFloat(s.amountDelivered || '0').toLocaleString('fr-FR')}
                           </td>
                         </tr>
@@ -711,16 +711,16 @@ export default function SessionDetailPage({ params }: Props) {
                   </>
                 ) : (
                   <tr>
-                    <td colSpan={2} className="px-6 py-2.5 text-xs text-gray-400 pl-10 italic">Aucune tontine versée pour cette session</td>
+                    <td colSpan={2} className="px-6 py-2.5 text-xs text-slate-400 pl-10 italic">Aucune tontine versée pour cette session</td>
                   </tr>
                 )}
                 {/* Secours versés depuis la caisse de secours */}
                 {parseFloat(session.totalSecours || '0') > 0 && (
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-2.5 text-gray-600 pl-10">
+                  <tr className="hover:bg-slate-50">
+                    <td className="px-6 py-2.5 text-slate-600 pl-10">
                       {TRANSACTION_TYPE_LABELS[TransactionType.SECOURS]} (caisse de secours)
                     </td>
-                    <td className="px-6 py-2.5 text-right tabular-nums font-medium text-rose-700">
+                    <td className="px-6 py-2.5 text-right tabular-nums font-medium text-red-700">
                       {parseFloat(session.totalSecours).toLocaleString('fr-FR')}
                     </td>
                   </tr>
@@ -738,15 +738,15 @@ export default function SessionDetailPage({ params }: Props) {
                   const solde = totalRecettes - totalDepenses;
                   return (
                     <>
-                      <tr className="border-t border-rose-100 bg-rose-50/60">
-                        <td className="px-6 py-2.5 text-sm font-bold text-rose-800">Total Dépenses</td>
-                        <td className="px-6 py-2.5 text-right tabular-nums font-bold text-rose-800">
+                      <tr className="border-t border-red-100 bg-red-50/60">
+                        <td className="px-6 py-2.5 text-sm font-bold text-red-800">Total Dépenses</td>
+                        <td className="px-6 py-2.5 text-right tabular-nums font-bold text-red-800">
                           {totalDepenses.toLocaleString('fr-FR')}
                         </td>
                       </tr>
-                      <tr className="border-t-2 border-gray-200 bg-blue-50/50">
-                        <td className="px-6 py-3 text-sm font-bold text-blue-900">Solde en caisse</td>
-                        <td className={`px-6 py-3 text-right tabular-nums text-base font-bold ${solde >= 0 ? 'text-blue-700' : 'text-red-600'}`}>
+                      <tr className="border-t-2 border-slate-200 bg-primary-50/50">
+                        <td className="px-6 py-3 text-sm font-bold text-primary-900">Solde en caisse</td>
+                        <td className={`px-6 py-3 text-right tabular-nums text-base font-bold ${solde >= 0 ? 'text-primary-700' : 'text-red-600'}`}>
                           {solde.toLocaleString('fr-FR')} XAF
                         </td>
                       </tr>
@@ -761,44 +761,44 @@ export default function SessionDetailPage({ params }: Props) {
 
       {/* ── Tableau des transactions ── */}
       {session.entries && session.entries.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-            <h2 className="text-sm font-semibold text-gray-800">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h2 className="text-sm font-semibold text-slate-800">
               Transactions ({session.entries.length})
             </h2>
           </div>
           <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[560px]">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Référence</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Membre</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Type</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Montant</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Date</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Référence</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Membre</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Type</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">Montant</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">Date</th>
                 {session.status !== 'CLOSED' && isTresorier && (
-                  <th className="text-center px-4 py-3 font-medium text-gray-600">Actions</th>
+                  <th className="text-center px-4 py-3 font-medium text-slate-600">Actions</th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {session.entries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-3 font-mono text-xs text-gray-400">{entry.reference}</td>
-                  <td className="px-6 py-3 text-gray-700">
+                <tr key={entry.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-3 font-mono text-xs text-slate-400">{entry.reference}</td>
+                  <td className="px-6 py-3 text-slate-700">
                     {entry.membership?.profile
                       ? `${entry.membership.profile.lastName} ${entry.membership.profile.firstName}`
                       : entry.membershipId.slice(-8)}
                   </td>
                   <td className="px-6 py-3">
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
                       {TRANSACTION_TYPE_LABELS[entry.type as TransactionType] ?? entry.type}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-right tabular-nums font-semibold text-gray-900">
+                  <td className="px-6 py-3 text-right tabular-nums font-semibold text-slate-900">
                     {parseFloat(entry.amount).toLocaleString('fr-FR')} XAF
                   </td>
-                  <td className="px-6 py-3 text-right text-xs text-gray-400">
+                  <td className="px-6 py-3 text-right text-xs text-slate-400">
                     {new Date(entry.recordedAt).toLocaleDateString('fr-FR')}
                   </td>
                   {session.status !== 'CLOSED' && isTresorier && (
@@ -811,14 +811,14 @@ export default function SessionDetailPage({ params }: Props) {
                             setEditAmount(entry.amount);
                             setEditNotes(entry.notes ?? '');
                           }}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button
                           title="Supprimer"
                           onClick={() => setDeleteEntryId(entry.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -828,10 +828,10 @@ export default function SessionDetailPage({ params }: Props) {
                 </tr>
               ))}
             </tbody>
-            <tfoot className="border-t border-gray-200 bg-gray-50">
+            <tfoot className="border-t border-slate-200 bg-slate-50">
               <tr>
-                <td colSpan={3} className="px-6 py-3 text-sm font-semibold text-gray-700">Total</td>
-                <td className="px-6 py-3 text-right text-sm font-bold text-gray-900 tabular-nums">
+                <td colSpan={3} className="px-6 py-3 text-sm font-semibold text-slate-700">Total</td>
+                <td className="px-6 py-3 text-right text-sm font-bold text-slate-900 tabular-nums">
                   {derived.totalGeneral.toLocaleString('fr-FR')} XAF
                 </td>
                 <td />
@@ -877,17 +877,17 @@ export default function SessionDetailPage({ params }: Props) {
         )}
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-slate-600">
             Saisir le montant perçu par le bénéficiaire pour ce pot.
           </p>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-700">Montant (XAF)</label>
+            <label className="text-xs font-medium text-slate-700">Montant (XAF)</label>
             <input
               type="number"
               placeholder="0"
               value={deliveryAmount}
               onChange={(e) => setDeliveryAmount(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400"
               autoFocus
             />
           </div>
@@ -928,29 +928,29 @@ export default function SessionDetailPage({ params }: Props) {
         {editEntry && (
           <div className="space-y-4">
             <div>
-              <p className="text-xs text-gray-500 mb-1">Type</p>
-              <span className="text-sm font-medium text-gray-800">
+              <p className="text-xs text-slate-500 mb-1">Type</p>
+              <span className="text-sm font-medium text-slate-800">
                 {TRANSACTION_TYPE_LABELS[editEntry.type as TransactionType] ?? editEntry.type}
               </span>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-700">Montant (XAF)</label>
+              <label className="text-xs font-medium text-slate-700">Montant (XAF)</label>
               <input
                 type="number"
                 min="1"
                 value={editAmount}
                 onChange={(e) => setEditAmount(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-700">Notes (optionnel)</label>
+              <label className="text-xs font-medium text-slate-700">Notes (optionnel)</label>
               <input
                 type="text"
                 value={editNotes}
                 onChange={(e) => setEditNotes(e.target.value)}
                 placeholder="Commentaire libre"
-                className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400"
               />
             </div>
           </div>

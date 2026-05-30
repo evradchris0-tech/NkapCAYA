@@ -11,7 +11,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <AuthGuard>
       <FiscalYearProvider>
         <MobileNavProvider>
-          <div className="flex h-screen overflow-hidden flex-col md:flex-row" style={{ background: 'linear-gradient(135deg, #f0f4ff 0%, #e8f5ff 40%, #f5f0ff 100%)' }}>
+          <div className="flex h-screen overflow-hidden flex-col md:flex-row" style={{ background: 'linear-gradient(135deg, #f0f4fa 0%, #eef1f5 40%, #f0f4fa 100%)' }}>
             <Sidebar />
             <div className="flex flex-col flex-1 overflow-hidden min-w-0">
               <Header />

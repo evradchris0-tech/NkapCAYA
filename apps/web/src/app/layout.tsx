@@ -28,7 +28,11 @@ export default function RootLayout({
 
   return (
     <html lang="fr">
-      <body className="font-sans bg-slate-50 text-slate-900">
+      <head>
+        <title>NkapZen — Gestion de tontine</title>
+        <meta name="description" content="NkapZen — plateforme de gestion de tontine (épargne, prêts, caisse de secours)." />
+      </head>
+      <body className="font-sans bg-surface-secondary text-slate-800">
         <QueryClientProvider client={queryClient}>
           <Toaster
             position="bottom-right"
@@ -44,7 +48,7 @@ export default function RootLayout({
                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
               },
               success: { iconTheme: { primary: '#10b981', secondary: '#ffffff' } },
-              error: { iconTheme: { primary: '#f43f5e', secondary: '#ffffff' } },
+              error: { iconTheme: { primary: '#e11d48', secondary: '#ffffff' } },
             }}
           />
           {children}

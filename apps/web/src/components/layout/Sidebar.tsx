@@ -77,8 +77,8 @@ export default function Sidebar() {
           <div className="flex items-center gap-3">
             <Logo size="sm" />
             <div>
-              <h1 className="text-base font-bold tracking-tight text-primary-900 leading-tight font-heading">CAYA</h1>
-              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider leading-tight mt-0.5">Gestion tontine</p>
+              <h1 className="text-base font-bold tracking-tight text-primary-900 leading-tight font-heading">NkapZen</h1>
+              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider leading-tight mt-0.5">Gestion de tontine</p>
             </div>
           </div>
           <button 

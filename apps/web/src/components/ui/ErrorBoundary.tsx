@@ -66,14 +66,14 @@ export class ErrorBoundary extends Component<Props, State> {
           <AlertTriangle className="h-7 w-7 text-red-500" strokeWidth={1.8} />
         </div>
         <div className="text-center space-y-1">
-          <p className="text-base font-semibold text-gray-800">{message}</p>
-          <p className="text-sm text-gray-400">
+          <p className="text-base font-semibold text-slate-800">{message}</p>
+          <p className="text-sm text-slate-400">
             {this.state.error?.message ?? 'Erreur inattendue'}
           </p>
         </div>
         <button
           onClick={this.handleRetry}
-          className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl transition-colors"
+          className="flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 px-4 py-2 rounded-xl transition-colors"
         >
           <RefreshCw className="h-4 w-4" />
           Réessayer

@@ -28,7 +28,7 @@ const STEPS: Step[] = [
     title: 'Créer un exercice fiscal',
     category: 'Démarrage',
     icon: Calendar,
-    color: 'bg-violet-100 text-violet-700',
+    color: 'bg-primary-100 text-primary-700',
     description: "L'exercice fiscal est le cadre annuel de la tontine. Toutes les sessions, épargnes et prêts lui sont rattachés.",
     details: [
       "Allez dans « Exercices fiscaux » puis cliquez sur « Nouvel exercice ».",
@@ -44,7 +44,7 @@ const STEPS: Step[] = [
     title: 'Inscrire les membres à l\'exercice',
     category: 'Démarrage',
     icon: Users,
-    color: 'bg-blue-100 text-blue-700',
+    color: 'bg-primary-100 text-primary-700',
     description: "Chaque membre doit être inscrit à l'exercice actif pour participer aux sessions, épargner et emprunter.",
     details: [
       "Dans le détail d'un exercice, cliquez sur « + Inscrire un membre ».",
@@ -93,7 +93,7 @@ const STEPS: Step[] = [
     title: 'Gérer les prêts',
     category: 'Opérations',
     icon: Banknote,
-    color: 'bg-rose-100 text-rose-700',
+    color: 'bg-red-100 text-red-700',
     description: "Les membres peuvent emprunter durant l'exercice. Les prêts portent intérêt et sont remboursés mensuellement.",
     details: [
       "Le Trésorier crée une demande de prêt depuis « Prêts ».",
@@ -109,7 +109,7 @@ const STEPS: Step[] = [
     title: 'Attribuer les pots (bénéficiaires)',
     category: 'Opérations',
     icon: Gift,
-    color: 'bg-teal-100 text-teal-700',
+    color: 'bg-primary-100 text-primary-700',
     description: "Chaque mois, un ou plusieurs membres reçoivent le « pot » collecté. L'attribution se fait via le tableau de rotation.",
     details: [
       "Allez dans « Bénéficiaires » pour voir le tableau de rotation de l'exercice.",
@@ -125,7 +125,7 @@ const STEPS: Step[] = [
     title: 'Gérer la caisse de secours',
     category: 'Opérations',
     icon: BarChart3,
-    color: 'bg-indigo-100 text-indigo-700',
+    color: 'bg-primary-100 text-primary-700',
     description: "La caisse de secours finance les événements de vie des membres (décès, mariage, naissance, maladie…).",
     details: [
       "Le solde est alimenté par une partie des cotisations mensuelles.",
@@ -141,7 +141,7 @@ const STEPS: Step[] = [
     title: 'Lancer la cassation',
     category: 'Avancé',
     icon: Gavel,
-    color: 'bg-orange-100 text-orange-700',
+    color: 'bg-amber-100 text-amber-700',
     description: "La cassation est la clôture annuelle : elle redistribue l'épargne + intérêts à chaque membre et clôture l'exercice.",
     details: [
       "L'exercice doit être en statut CASSATION (ouvert par le Super Admin).",
@@ -173,9 +173,9 @@ const STEPS: Step[] = [
 
 const CATEGORIES = ['Démarrage', 'Opérations', 'Avancé'] as const;
 const CATEGORY_COLORS: Record<string, string> = {
-  'Démarrage': 'bg-blue-100 text-blue-700',
+  'Démarrage': 'bg-primary-100 text-primary-700',
   'Opérations': 'bg-emerald-100 text-emerald-700',
-  'Avancé': 'bg-orange-100 text-orange-700',
+  'Avancé': 'bg-amber-100 text-amber-700',
 };
 
 const STORAGE_KEY = 'caya_guide_completed';
@@ -232,7 +232,7 @@ export default function GuidePage() {
         action={
           <button
             onClick={reset}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             Réinitialiser
@@ -241,17 +241,17 @@ export default function GuidePage() {
       />
 
       {/* Barre de progression globale */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-card p-5">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-blue-600" />
-            <span className="text-sm font-medium text-gray-700">Progression</span>
+            <BookOpen className="h-4 w-4 text-primary-600" />
+            <span className="text-sm font-medium text-slate-700">Progression</span>
           </div>
-          <span className="text-sm font-bold tabular-nums text-blue-600">{pct} % ({completed.size}/{STEPS.length})</span>
+          <span className="text-sm font-bold tabular-nums text-primary-600">{pct} % ({completed.size}/{STEPS.length})</span>
         </div>
-        <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
           <div
-            className="h-2.5 rounded-full transition-all duration-500 bg-blue-500"
+            className="h-2.5 rounded-full transition-all duration-500 bg-primary-500"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -270,8 +270,8 @@ export default function GuidePage() {
             onClick={() => setFilter(cat)}
             className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
               filter === cat
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
+                ? 'bg-primary-600 text-white border-primary-600'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-primary-300 hover:text-primary-600'
             }`}
           >
             {cat}
@@ -292,8 +292,8 @@ export default function GuidePage() {
                 onClick={() => setSelected(step.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left border transition-all ${
                   isSelected
-                    ? 'bg-blue-50 border-blue-200'
-                    : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    ? 'bg-primary-50 border-primary-200'
+                    : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                 }`}
               >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${done ? 'bg-emerald-100' : step.color}`}>
@@ -302,14 +302,14 @@ export default function GuidePage() {
                     : <Icon className="h-4 w-4" strokeWidth={2} />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium truncate ${done ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                  <p className={`text-sm font-medium truncate ${done ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
                     {step.title}
                   </p>
                   <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${CATEGORY_COLORS[step.category]}`}>
                     {step.category}
                   </span>
                 </div>
-                <ChevronRight className={`h-4 w-4 shrink-0 transition-colors ${isSelected ? 'text-blue-500' : 'text-gray-300'}`} />
+                <ChevronRight className={`h-4 w-4 shrink-0 transition-colors ${isSelected ? 'text-primary-500' : 'text-slate-300'}`} />
               </button>
             );
           })}
@@ -317,19 +317,19 @@ export default function GuidePage() {
 
         {/* Détail de l'étape sélectionnée */}
         {selectedStep && (
-          <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-card p-6 animate-fade-in">
+          <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-card p-6 animate-fade-in">
             <div className="flex items-start gap-4 mb-4">
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${selectedStep.color}`}>
                 <selectedStep.icon className="h-6 w-6" strokeWidth={2} />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base font-bold text-gray-900">{selectedStep.title}</h2>
+                  <h2 className="text-base font-bold text-slate-900">{selectedStep.title}</h2>
                   <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${CATEGORY_COLORS[selectedStep.category]}`}>
                     {selectedStep.category}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">{selectedStep.description}</p>
+                <p className="text-sm text-slate-500 mt-1">{selectedStep.description}</p>
               </div>
             </div>
 
@@ -337,20 +337,20 @@ export default function GuidePage() {
             <ol className="space-y-3 mb-6">
               {selectedStep.details.map((detail, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
                     {i + 1}
                   </span>
-                  <p className="text-sm text-gray-700 leading-relaxed">{detail}</p>
+                  <p className="text-sm text-slate-700 leading-relaxed">{detail}</p>
                 </li>
               ))}
             </ol>
 
             {/* Actions */}
-            <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+            <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
               {selectedStep.href && (
                 <Link
                   href={selectedStep.href}
-                  className="inline-flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:text-blue-700 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm text-primary-600 font-medium hover:text-primary-700 transition-colors"
                 >
                   {selectedStep.linkLabel ?? 'Aller à cette section'}
                   <ChevronRight className="h-4 w-4" />
@@ -361,7 +361,7 @@ export default function GuidePage() {
                 className={`ml-auto flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border transition-colors ${
                   completed.has(selectedStep.id)
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                    : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`}
               >
                 <Check className="h-4 w-4" />

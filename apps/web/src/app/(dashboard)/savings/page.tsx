@@ -26,8 +26,8 @@ const ENTRY_TYPE_LABELS: Record<SavingsEntryType, string> = {
 };
 
 const ENTRY_TYPE_COLORS: Record<SavingsEntryType, string> = {
-  DEPOSIT: 'bg-green-100 text-green-700',
-  INTEREST_CREDIT: 'bg-blue-100 text-blue-700',
+  DEPOSIT: 'bg-emerald-100 text-emerald-700',
+  INTEREST_CREDIT: 'bg-primary-100 text-primary-700',
 };
 
 const PAGE_SIZE = 10;
@@ -61,16 +61,16 @@ function AllMembersTable({ savings, memberships, isLoading, onSelect }: AllMembe
   const sliced = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-800">Épargne de tous les membres</h2>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h2 className="text-base font-semibold text-slate-800">Épargne de tous les membres</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
             Cliquez sur un membre pour voir le détail de son compte
           </p>
         </div>
         {!isLoading && (
-          <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+          <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
             {total} membre{total > 1 ? 's' : ''}
           </span>
         )}
@@ -78,23 +78,23 @@ function AllMembersTable({ savings, memberships, isLoading, onSelect }: AllMembe
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-100">
+          <thead className="bg-slate-50 border-b border-slate-100">
             <tr>
-              <th className="text-left px-6 py-3 font-medium text-gray-600 w-10">#</th>
-              <th className="text-left px-6 py-3 font-medium text-gray-600">Membre</th>
-              <th className="text-left px-6 py-3 font-medium text-gray-600">Code</th>
-              <th className="text-right px-6 py-3 font-medium text-gray-600">Solde total</th>
-              <th className="text-right px-6 py-3 font-medium text-gray-600">Capital versé</th>
-              <th className="text-right px-6 py-3 font-medium text-gray-600">Intérêts reçus</th>
+              <th className="text-left px-6 py-3 font-medium text-slate-600 w-10">#</th>
+              <th className="text-left px-6 py-3 font-medium text-slate-600">Membre</th>
+              <th className="text-left px-6 py-3 font-medium text-slate-600">Code</th>
+              <th className="text-right px-6 py-3 font-medium text-slate-600">Solde total</th>
+              <th className="text-right px-6 py-3 font-medium text-slate-600">Capital versé</th>
+              <th className="text-right px-6 py-3 font-medium text-slate-600">Intérêts reçus</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-slate-100">
             {isLoading
               ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} cols={6} />)
               : sliced.length === 0
               ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-gray-400 text-sm">
+                  <td colSpan={6} className="px-6 py-10 text-center text-slate-400 text-sm">
                     Aucun membre inscrit pour cet exercice.
                   </td>
                 </tr>
@@ -110,18 +110,18 @@ function AllMembersTable({ savings, memberships, isLoading, onSelect }: AllMembe
                     <tr
                       key={membership.id}
                       onClick={() => hasLedger ? onSelect(membership.id) : undefined}
-                      className={hasLedger ? 'hover:bg-blue-50 cursor-pointer transition-colors' : 'opacity-50'}
+                      className={hasLedger ? 'hover:bg-primary-50 cursor-pointer transition-colors' : 'opacity-50'}
                     >
-                      <td className="px-6 py-3 text-gray-400 text-xs tabular-nums">{(page - 1) * PAGE_SIZE + index + 1}</td>
-                      <td className="px-6 py-3 font-medium text-gray-800">{fullName}</td>
-                      <td className="px-6 py-3 text-gray-500 font-mono text-xs">{code}</td>
-                      <td className="px-6 py-3 text-right tabular-nums font-semibold text-gray-900">
-                        {hasLedger ? `${fmt(ledger.balance)} XAF` : <span className="text-gray-300 text-xs">Aucun versement</span>}
+                      <td className="px-6 py-3 text-slate-400 text-xs tabular-nums">{(page - 1) * PAGE_SIZE + index + 1}</td>
+                      <td className="px-6 py-3 font-medium text-slate-800">{fullName}</td>
+                      <td className="px-6 py-3 text-slate-500 font-mono text-xs">{code}</td>
+                      <td className="px-6 py-3 text-right tabular-nums font-semibold text-slate-900">
+                        {hasLedger ? `${fmt(ledger.balance)} XAF` : <span className="text-slate-300 text-xs">Aucun versement</span>}
                       </td>
-                      <td className="px-6 py-3 text-right tabular-nums text-gray-600">
+                      <td className="px-6 py-3 text-right tabular-nums text-slate-600">
                         {hasLedger ? `${fmt(ledger.principalBalance)} XAF` : '—'}
                       </td>
-                      <td className="px-6 py-3 text-right tabular-nums text-blue-700">
+                      <td className="px-6 py-3 text-right tabular-nums text-primary-700">
                         {hasLedger ? `${fmt(ledger.totalInterestReceived)} XAF` : '—'}
                       </td>
                     </tr>
@@ -161,13 +161,13 @@ function MemberDetail({ membershipId, displayName }: MemberDetailProps) {
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
+            <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
               <Skeleton className="h-3 w-20" />
               <Skeleton className="h-6 w-32" />
             </div>
           ))}
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
           <Skeleton className="h-56 w-full" />
         </div>
       </div>
@@ -176,7 +176,7 @@ function MemberDetail({ membershipId, displayName }: MemberDetailProps) {
 
   if (!ledger) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 text-sm">
+      <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400 text-sm">
         Aucun compte d&apos;épargne trouvé pour ce membre.
       </div>
     );
@@ -206,9 +206,9 @@ function MemberDetail({ membershipId, displayName }: MemberDetailProps) {
   return (
     <>
       {/* Titre du membre sélectionné */}
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <span className="font-semibold text-gray-900">{displayName}</span>
-        <span className="text-gray-400">— détail du compte</span>
+      <div className="flex items-center gap-2 text-sm text-slate-600">
+        <span className="font-semibold text-slate-900">{displayName}</span>
+        <span className="text-slate-400">— détail du compte</span>
       </div>
 
       {/* KPI cards */}
@@ -217,21 +217,21 @@ function MemberDetail({ membershipId, displayName }: MemberDetailProps) {
           {
             label: 'Solde total',
             value: `${fmt(ledger.balance)} XAF`,
-            color: 'text-gray-900',
+            color: 'text-slate-900',
           },
           {
             label: 'Capital versé',
             value: `${fmt(ledger.principalBalance)} XAF`,
-            color: 'text-gray-900',
+            color: 'text-slate-900',
           },
           {
             label: 'Intérêts reçus',
             value: `${fmt(ledger.totalInterestReceived)} XAF`,
-            color: 'text-blue-700',
+            color: 'text-primary-700',
           },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-xs text-gray-500 mb-1">{label}</p>
+          <div key={label} className="bg-white rounded-xl border border-slate-200 p-4">
+            <p className="text-xs text-slate-500 mb-1">{label}</p>
             <p className={`font-semibold tabular-nums ${color}`}>{value}</p>
           </div>
         ))}
@@ -245,8 +245,8 @@ function MemberDetail({ membershipId, displayName }: MemberDetailProps) {
               <AreaChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
                 <defs>
                   <linearGradient id="soldeGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.18} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="#1d325b" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#1d325b" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="interetGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%"  stopColor="#10b981" stopOpacity={0.18} />
@@ -274,12 +274,12 @@ function MemberDetail({ membershipId, displayName }: MemberDetailProps) {
                 <Legend
                   iconType="circle"
                   iconSize={7}
-                  formatter={(v: string) => <span className="text-xs text-gray-600">{v}</span>}
+                  formatter={(v: string) => <span className="text-xs text-slate-600">{v}</span>}
                 />
                 <Area
                   type="monotone"
                   dataKey="Solde"
-                  stroke="#3b82f6"
+                  stroke="#1d325b"
                   strokeWidth={2}
                   fill="url(#soldeGrad)"
                   dot={false}
@@ -300,23 +300,23 @@ function MemberDetail({ membershipId, displayName }: MemberDetailProps) {
 
       {/* Historique des mouvements */}
       {sortedEntries.length > 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-            <h2 className="text-base font-semibold text-gray-800">Historique des mouvements</h2>
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h2 className="text-base font-semibold text-slate-800">Historique des mouvements</h2>
           </div>
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Mois</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Type</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Montant</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Solde après</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Mois</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Type</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">Montant</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">Solde après</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {sortedEntries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-3 text-gray-700">M{entry.month}</td>
+                <tr key={entry.id} className="hover:bg-slate-50">
+                  <td className="px-6 py-3 text-slate-700">M{entry.month}</td>
                   <td className="px-6 py-3">
                     <span
                       className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${ENTRY_TYPE_COLORS[entry.type]}`}
@@ -327,7 +327,7 @@ function MemberDetail({ membershipId, displayName }: MemberDetailProps) {
                   <td className="px-6 py-3 text-right tabular-nums font-medium">
                     +{fmt(entry.amount)} XAF
                   </td>
-                  <td className="px-6 py-3 text-right tabular-nums text-gray-600">
+                  <td className="px-6 py-3 text-right tabular-nums text-slate-600">
                     {fmt(entry.balanceAfter)} XAF
                   </td>
                 </tr>
@@ -336,7 +336,7 @@ function MemberDetail({ membershipId, displayName }: MemberDetailProps) {
           </table>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400 text-sm">
           Aucun mouvement enregistré.
         </div>
       )}
@@ -396,7 +396,7 @@ export default function SavingsPage() {
 
       {/* Filtre membre + export */}
       <div className="flex items-center gap-3 flex-wrap">
-        <label htmlFor="member-filter" className="text-sm font-medium text-gray-700">
+        <label htmlFor="member-filter" className="text-sm font-medium text-slate-700">
           Filtrer par membre :
         </label>
         {loadingMemberships ? (
@@ -419,14 +419,14 @@ export default function SavingsPage() {
         {selectedMembershipId && (
           <button
             onClick={() => handleSelect('')}
-            className="text-xs text-gray-500 hover:text-gray-700 underline"
+            className="text-xs text-slate-500 hover:text-slate-700 underline"
           >
             Voir tous
           </button>
         )}
         {selectedFy && (
-          <span className="text-xs text-gray-400">
-            Exercice : <span className="font-medium text-gray-600">{selectedFy.label}</span>
+          <span className="text-xs text-slate-400">
+            Exercice : <span className="font-medium text-slate-600">{selectedFy.label}</span>
           </span>
         )}
         {selectedFy && fysSavings.length > 0 && (

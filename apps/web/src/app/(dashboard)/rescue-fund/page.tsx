@@ -74,7 +74,7 @@ export default function RescueFundPage() {
           title="Caisse de secours"
           breadcrumbs={[{ label: 'Accueil', href: '/' }, { label: 'Caisse de secours' }]}
         />
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 text-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400 text-sm">
           Aucun exercice fiscal actif.
         </div>
       </div>
@@ -97,9 +97,9 @@ export default function RescueFundPage() {
 
       {/* Formulaire décaissement */}
       {showForm && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-xl">
-          <h2 className="text-base font-semibold text-gray-800 mb-4">Nouveau décaissement</h2>
-          <p className="text-xs text-gray-500 mb-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 max-w-xl">
+          <h2 className="text-base font-semibold text-slate-800 mb-4">Nouveau décaissement</h2>
+          <p className="text-xs text-slate-500 mb-4">
             Le montant est automatiquement fixé selon le type d&apos;événement (défini dans la configuration).
           </p>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -158,7 +158,7 @@ export default function RescueFundPage() {
 
       {/* KPI solde + graphes */}
       {ledgerLoading ? (
-        <div className="flex items-center justify-center py-16 text-gray-400 text-sm">Chargement…</div>
+        <div className="flex items-center justify-center py-16 text-slate-400 text-sm">Chargement…</div>
       ) : ledger ? (() => {
         const balance = parseFloat(ledger.totalBalance);
         const target  = parseFloat(ledger.targetPerMember);
@@ -167,14 +167,14 @@ export default function RescueFundPage() {
         // Solde moyen par membre vs objectif par membre
         const avgPerMember = balance / memberCount;
         const pct = target > 0 ? Math.min((avgPerMember / target) * 100, 100) : 0;
-        const gaugeColor = pct >= 80 ? '#10b981' : pct >= 40 ? '#f59e0b' : '#ef4444';
+        const gaugeColor = pct >= 80 ? '#10b981' : pct >= 40 ? '#c6902a' : '#ef4444';
 
         const eventCounts: Record<string, number> = {};
         (events ?? []).forEach((e) => {
           eventCounts[EVENT_TYPE_LABELS[e.eventType]] = (eventCounts[EVENT_TYPE_LABELS[e.eventType]] || 0) + 1;
         });
         const eventPieData = Object.entries(eventCounts).map(([name, value]) => ({ name, value }));
-        const PIE_COLORS = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#f43f5e','#14b8a6'];
+        const PIE_COLORS = ['#1d325b','#10b981','#c6902a','#5f80b0','#e11d48','#64748b'];
 
         return (
           <>
@@ -185,9 +185,9 @@ export default function RescueFundPage() {
                 { label: 'Objectif / membre',    value: `${target.toLocaleString('fr-FR')} XAF` },
                 { label: 'Minimum / membre',     value: `${minimum.toLocaleString('fr-FR')} XAF` },
               ].map(({ label, value }) => (
-                <div key={label} className="bg-white rounded-xl border border-gray-200 p-4">
-                  <p className="text-xs text-gray-500 mb-1">{label}</p>
-                  <p className="font-semibold text-gray-900 tabular-nums">{value}</p>
+                <div key={label} className="bg-white rounded-xl border border-slate-200 p-4">
+                  <p className="text-xs text-slate-500 mb-1">{label}</p>
+                  <p className="font-semibold text-slate-900 tabular-nums">{value}</p>
                 </div>
               ))}
             </div>
@@ -209,7 +209,7 @@ export default function RescueFundPage() {
                   </ResponsiveContainer>
                   <div className="absolute bottom-10 text-center pointer-events-none">
                     <p className="text-2xl font-bold tabular-nums" style={{ color: gaugeColor }}>{pct.toFixed(0)} %</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{balance.toLocaleString('fr-FR')} XAF</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{balance.toLocaleString('fr-FR')} XAF</p>
                   </div>
                 </div>
               </ChartCard>
@@ -226,13 +226,13 @@ export default function RescueFundPage() {
                           ))}
                         </Pie>
                         <Tooltip formatter={(v: number, n: string) => [`${v} événement${v > 1 ? 's' : ''}`, n]} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
-                        <Legend iconType="circle" iconSize={7} formatter={(v) => <span className="text-xs text-gray-600">{v}</span>} />
+                        <Legend iconType="circle" iconSize={7} formatter={(v) => <span className="text-xs text-slate-600">{v}</span>} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                 </ChartCard>
               ) : (
-                <div className="bg-white rounded-xl border border-gray-200 p-8 flex items-center justify-center text-gray-300 text-sm">
+                <div className="bg-white rounded-xl border border-slate-200 p-8 flex items-center justify-center text-slate-300 text-sm">
                   Aucun décaissement enregistré
                 </div>
               )}
@@ -275,22 +275,22 @@ export default function RescueFundPage() {
                   <table className="w-full text-sm">
                     <thead className="bg-amber-50/60 border-b border-amber-100">
                       <tr>
-                        <th className="text-left px-6 py-3 font-medium text-gray-600">Membre</th>
-                        <th className="text-left px-6 py-3 font-medium text-gray-600">Code</th>
-                        <th className="text-right px-6 py-3 font-medium text-gray-600">Versé</th>
-                        <th className="text-right px-6 py-3 font-medium text-gray-600">Solde position</th>
+                        <th className="text-left px-6 py-3 font-medium text-slate-600">Membre</th>
+                        <th className="text-left px-6 py-3 font-medium text-slate-600">Code</th>
+                        <th className="text-right px-6 py-3 font-medium text-slate-600">Versé</th>
+                        <th className="text-right px-6 py-3 font-medium text-slate-600">Solde position</th>
                         <th className="text-right px-6 py-3 font-medium text-amber-700">Dette restante</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-slate-100">
                       {debtors.map((d, i) => (
                         <tr key={i} className="hover:bg-amber-50/40">
-                          <td className="px-6 py-3 font-medium text-gray-900">{d.name}</td>
-                          <td className="px-6 py-3 text-gray-500 font-mono text-xs">{d.code}</td>
-                          <td className="px-6 py-3 text-right tabular-nums text-gray-700">
+                          <td className="px-6 py-3 font-medium text-slate-900">{d.name}</td>
+                          <td className="px-6 py-3 text-slate-500 font-mono text-xs">{d.code}</td>
+                          <td className="px-6 py-3 text-right tabular-nums text-slate-700">
                             {d.paidAmount.toLocaleString('fr-FR')} XAF
                           </td>
-                          <td className="px-6 py-3 text-right tabular-nums text-gray-700">
+                          <td className="px-6 py-3 text-right tabular-nums text-slate-700">
                             {d.balance.toLocaleString('fr-FR')} XAF
                           </td>
                           <td className="px-6 py-3 text-right tabular-nums font-semibold text-amber-700">
@@ -309,39 +309,39 @@ export default function RescueFundPage() {
 
       {/* Historique événements */}
       {events && events.length > 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-            <h2 className="text-base font-semibold text-gray-800">Historique des décaissements</h2>
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h2 className="text-base font-semibold text-slate-800">Historique des décaissements</h2>
           </div>
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Date</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Type</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-600">Montant</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Description</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Date</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Type</th>
+                <th className="text-right px-6 py-3 font-medium text-slate-600">Montant</th>
+                <th className="text-left px-6 py-3 font-medium text-slate-600">Description</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {events.map((event) => (
-                <tr key={event.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-3 text-gray-600">
+                <tr key={event.id} className="hover:bg-slate-50">
+                  <td className="px-6 py-3 text-slate-600">
                     {new Date(event.eventDate).toLocaleDateString('fr-FR')}
                   </td>
-                  <td className="px-6 py-3 text-gray-800 font-medium">
+                  <td className="px-6 py-3 text-slate-800 font-medium">
                     {EVENT_TYPE_LABELS[event.eventType]}
                   </td>
                   <td className="px-6 py-3 text-right tabular-nums font-medium text-red-600">
                     -{parseFloat(event.amount).toLocaleString('fr-FR')} XAF
                   </td>
-                  <td className="px-6 py-3 text-gray-500 text-xs">{event.description ?? '—'}</td>
+                  <td className="px-6 py-3 text-slate-500 text-xs">{event.description ?? '—'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400 text-sm">
           Aucun décaissement enregistré pour cet exercice.
         </div>
       )}

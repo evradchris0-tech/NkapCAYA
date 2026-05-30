@@ -23,9 +23,9 @@ const STATUS_LABELS: Record<BeneficiaryStatus, string> = {
 };
 
 const STATUS_COLORS: Record<BeneficiaryStatus, string> = {
-  UNASSIGNED: 'bg-gray-100 text-gray-500',
+  UNASSIGNED: 'bg-slate-100 text-slate-500',
   ASSIGNED: 'bg-yellow-100 text-yellow-700',
-  DELIVERED: 'bg-green-100 text-green-700',
+  DELIVERED: 'bg-emerald-100 text-emerald-700',
 };
 
 /** Modale détail bénéficiaire : calcul brut / retenues / net */
@@ -97,15 +97,15 @@ function BeneficiaryDetailModal({
           <h3 className="text-xs font-bold text-emerald-700 uppercase tracking-wide mb-2">Entrées</h3>
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <span className="flex-1 text-gray-600">Tontine (montant brut)</span>
+              <span className="flex-1 text-slate-600">Tontine (montant brut)</span>
               <input
                 type="number"
                 min="0"
                 value={tontineAmount}
                 onChange={(e) => setTontineAmount(e.target.value)}
-                className="w-36 rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-100"
+                className="w-36 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-primary-100"
               />
-              <span className="text-xs text-gray-400 w-6">XAF</span>
+              <span className="text-xs text-slate-400 w-6">XAF</span>
             </div>
             {extraRows.map((row, i) => (
               <div key={i} className="flex items-center gap-3">
@@ -114,7 +114,7 @@ function BeneficiaryDetailModal({
                   placeholder="Libellé"
                   value={row.label}
                   onChange={(e) => setExtraRows((prev) => prev.map((r, j) => j === i ? { ...r, label: e.target.value } : r))}
-                  className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="flex-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-100"
                 />
                 <input
                   type="number"
@@ -122,9 +122,9 @@ function BeneficiaryDetailModal({
                   placeholder="0"
                   value={row.amount}
                   onChange={(e) => setExtraRows((prev) => prev.map((r, j) => j === i ? { ...r, amount: e.target.value } : r))}
-                  className="w-36 rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-36 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-primary-100"
                 />
-                <button onClick={() => setExtraRows((prev) => prev.filter((_, j) => j !== i))} className="text-gray-300 hover:text-red-500 w-6">
+                <button onClick={() => setExtraRows((prev) => prev.filter((_, j) => j !== i))} className="text-slate-300 hover:text-red-500 w-6">
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -136,7 +136,7 @@ function BeneficiaryDetailModal({
               <Plus className="h-3 w-3" /> Ajouter une entrée
             </button>
           </div>
-          <div className="flex justify-between mt-2 pt-2 border-t border-gray-100 font-semibold text-emerald-700">
+          <div className="flex justify-between mt-2 pt-2 border-t border-slate-100 font-semibold text-emerald-700">
             <span>Total Entrées</span>
             <span className="tabular-nums">{totalEntrees.toLocaleString('fr-FR')} XAF</span>
           </div>
@@ -144,19 +144,19 @@ function BeneficiaryDetailModal({
 
         {/* Retenues */}
         <div>
-          <h3 className="text-xs font-bold text-rose-700 uppercase tracking-wide mb-2">Retenues</h3>
+          <h3 className="text-xs font-bold text-red-700 uppercase tracking-wide mb-2">Retenues</h3>
           <div className="space-y-2">
             {activeLoans.length > 0 ? (
               activeLoans.map((l) => (
-                <div key={l.id} className="flex justify-between text-gray-600 py-1 border-b border-gray-50">
+                <div key={l.id} className="flex justify-between text-slate-600 py-1 border-b border-slate-50">
                   <span>Prêt en cours (solde restant)</span>
-                  <span className="tabular-nums text-rose-600 font-medium">
+                  <span className="tabular-nums text-red-600 font-medium">
                     {parseFloat(l.outstandingBalance).toLocaleString('fr-FR')} XAF
                   </span>
                 </div>
               ))
             ) : (
-              <p className="text-xs text-gray-400 italic">Aucun prêt actif</p>
+              <p className="text-xs text-slate-400 italic">Aucun prêt actif</p>
             )}
             {retentionRows.map((row, i) => (
               <div key={i} className="flex items-center gap-3">
@@ -165,7 +165,7 @@ function BeneficiaryDetailModal({
                   placeholder="Libellé (ex: Secours, Projet)"
                   value={row.label}
                   onChange={(e) => setRetentionRows((prev) => prev.map((r, j) => j === i ? { ...r, label: e.target.value } : r))}
-                  className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="flex-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-100"
                 />
                 <input
                   type="number"
@@ -173,21 +173,21 @@ function BeneficiaryDetailModal({
                   placeholder="0"
                   value={row.amount}
                   onChange={(e) => setRetentionRows((prev) => prev.map((r, j) => j === i ? { ...r, amount: e.target.value } : r))}
-                  className="w-36 rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-36 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-primary-100"
                 />
-                <button onClick={() => setRetentionRows((prev) => prev.filter((_, j) => j !== i))} className="text-gray-300 hover:text-red-500 w-6">
+                <button onClick={() => setRetentionRows((prev) => prev.filter((_, j) => j !== i))} className="text-slate-300 hover:text-red-500 w-6">
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             ))}
             <button
               onClick={() => setRetentionRows((prev) => [...prev, { label: '', amount: '' }])}
-              className="text-xs text-rose-600 hover:text-rose-700 flex items-center gap-1"
+              className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1"
             >
               <Plus className="h-3 w-3" /> Ajouter une retenue
             </button>
           </div>
-          <div className="flex justify-between mt-2 pt-2 border-t border-gray-100 font-semibold text-rose-700">
+          <div className="flex justify-between mt-2 pt-2 border-t border-slate-100 font-semibold text-red-700">
             <span>Total Retenues</span>
             <span className="tabular-nums">{totalRetentions.toLocaleString('fr-FR')} XAF</span>
           </div>
@@ -255,7 +255,7 @@ export default function BeneficiariesPage() {
       {/* Sélecteur exercice */}
       {fiscalYears && fiscalYears.length > 0 && (
         <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-700 shrink-0">Exercice :</label>
+          <label className="text-sm font-medium text-slate-700 shrink-0">Exercice :</label>
           <Select
             value={selectedFyId}
             onChange={(e) => setSelectedFyId(e.target.value)}
@@ -269,7 +269,7 @@ export default function BeneficiariesPage() {
       )}
 
       {isLoading ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="flex gap-4">
               <Skeleton className="h-4 w-12" />
@@ -279,11 +279,11 @@ export default function BeneficiariesPage() {
           ))}
         </div>
       ) : !selectedFyId ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 text-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400 text-sm">
           Sélectionnez un exercice fiscal.
         </div>
       ) : sessionGroups.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 text-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400 text-sm">
           Aucun tableau de rotation disponible. L&apos;exercice doit être actif et les membres inscrits.
         </div>
       ) : (
@@ -294,13 +294,13 @@ export default function BeneficiariesPage() {
             const totalDelivered = slots.filter((s) => s.status === 'DELIVERED').reduce((sum, s) => sum + parseFloat(s.amountDelivered || '0'), 0);
 
             return (
-              <div key={sessionId} className="bg-white rounded-xl border border-gray-200 overflow-visible relative">
+              <div key={sessionId} className="bg-white rounded-xl border border-slate-200 overflow-visible relative">
                 {/* En-tête session */}
-                <div className="px-6 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                <div className="px-6 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <h2 className="text-sm font-semibold text-gray-800">Session — Mois {month}</h2>
+                    <h2 className="text-sm font-semibold text-slate-800">Session — Mois {month}</h2>
                     {deliveredCount > 0 && (
-                      <span className="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                      <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                         {deliveredCount} livré{deliveredCount > 1 ? 's' : ''} · {totalDelivered.toLocaleString('fr-FR')} XAF
                       </span>
                     )}
@@ -319,19 +319,19 @@ export default function BeneficiariesPage() {
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm min-w-[600px]">
-                    <thead className="bg-gray-50 border-b border-gray-100">
+                    <thead className="bg-slate-50 border-b border-slate-100">
                       <tr>
-                        <th className="text-left px-6 py-2.5 font-medium text-gray-500 text-xs">Slot</th>
-                        <th className="text-left px-6 py-2.5 font-medium text-gray-500 text-xs">Bénéficiaire</th>
-                        <th className="text-right px-6 py-2.5 font-medium text-gray-500 text-xs">Montant livré</th>
-                        <th className="text-left px-6 py-2.5 font-medium text-gray-500 text-xs">Statut</th>
+                        <th className="text-left px-6 py-2.5 font-medium text-slate-500 text-xs">Slot</th>
+                        <th className="text-left px-6 py-2.5 font-medium text-slate-500 text-xs">Bénéficiaire</th>
+                        <th className="text-right px-6 py-2.5 font-medium text-slate-500 text-xs">Montant livré</th>
+                        <th className="text-left px-6 py-2.5 font-medium text-slate-500 text-xs">Statut</th>
                         <th className="px-6 py-2.5"><span className="sr-only">Actions</span></th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-slate-100">
                       {slots.map((slot) => (
-                        <tr key={slot.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-3 text-gray-500 text-xs font-mono">#{slot.slotIndex}</td>
+                        <tr key={slot.id} className="hover:bg-slate-50">
+                          <td className="px-6 py-3 text-slate-500 text-xs font-mono">#{slot.slotIndex}</td>
                           <td className="px-6 py-3">
                             {assigningSlotId === slot.id ? (
                               <div className="flex items-center gap-2">
@@ -365,14 +365,14 @@ export default function BeneficiariesPage() {
                                 </Button>
                               </div>
                             ) : slot.membership?.profile ? (
-                              <span className="text-gray-900 font-medium flex items-center gap-1.5">
+                              <span className="text-slate-900 font-medium flex items-center gap-1.5">
                                 {slot.membership.profile.lastName} {slot.membership.profile.firstName}
                                 {slot.isHost && (
-                                  <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Hôte</span>
+                                  <span className="text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full">Hôte</span>
                                 )}
                               </span>
                             ) : (
-                              <span className="text-gray-400 text-xs italic">Non désigné</span>
+                              <span className="text-slate-400 text-xs italic">Non désigné</span>
                             )}
                           </td>
                           <td className="px-6 py-3 text-right tabular-nums font-medium">
@@ -388,7 +388,7 @@ export default function BeneficiariesPage() {
                               <button
                                 title="Détail brut / retenues / net"
                                 onClick={() => setDetailSlot(slot)}
-                                className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors mr-1"
+                                className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors mr-1"
                               >
                                 <FileText className="h-3.5 w-3.5" />
                               </button>
@@ -435,10 +435,10 @@ export default function BeneficiariesPage() {
                       ))}
                     </tbody>
                     {slots.some((s) => parseFloat(s.amountDelivered || '0') > 0) && (
-                      <tfoot className="border-t border-gray-200 bg-gray-50">
+                      <tfoot className="border-t border-slate-200 bg-slate-50">
                         <tr>
-                          <td colSpan={2} className="px-6 py-2.5 text-xs font-bold text-gray-700">Total</td>
-                          <td className="px-6 py-2.5 text-right tabular-nums font-bold text-gray-900 text-xs">
+                          <td colSpan={2} className="px-6 py-2.5 text-xs font-bold text-slate-700">Total</td>
+                          <td className="px-6 py-2.5 text-right tabular-nums font-bold text-slate-900 text-xs">
                             {slots.reduce((sum, s) => sum + parseFloat(s.amountDelivered || '0'), 0).toLocaleString('fr-FR')} XAF
                           </td>
                           <td colSpan={2} />
@@ -492,17 +492,17 @@ export default function BeneficiariesPage() {
         )}
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-slate-600">
             Saisir le montant perçu par le bénéficiaire pour ce pot.
           </p>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-700">Montant (XAF)</label>
+            <label className="text-xs font-medium text-slate-700">Montant (XAF)</label>
             <input
               type="number"
               placeholder="0"
               value={deliveryAmount}
               onChange={(e) => setDeliveryAmount(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400"
               autoFocus
             />
           </div>

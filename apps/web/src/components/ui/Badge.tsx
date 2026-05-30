@@ -6,6 +6,7 @@ type BadgeVariant =
   | 'warning'
   | 'danger'
   | 'info'
+  | 'accent'
   | 'neutral';
 
 interface BadgeProps {
@@ -19,19 +20,21 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  success: 'bg-green-100 text-green-700',
-  warning: 'bg-yellow-100 text-yellow-700',
-  danger:  'bg-red-100 text-red-700',
-  info:    'bg-blue-100 text-blue-700',
-  neutral: 'bg-gray-100 text-gray-600',
+  success: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100',
+  warning: 'bg-amber-50 text-amber-700 ring-1 ring-amber-100',
+  danger: 'bg-red-50 text-red-700 ring-1 ring-red-100',
+  info: 'bg-primary-50 text-primary-700 ring-1 ring-primary-100',
+  accent: 'bg-accent-50 text-accent-700 ring-1 ring-accent-100',
+  neutral: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
 };
 
 const dotColors: Record<BadgeVariant, string> = {
-  success: 'bg-green-500',
-  warning: 'bg-yellow-500',
-  danger:  'bg-red-500',
-  info:    'bg-blue-500',
-  neutral: 'bg-gray-400',
+  success: 'bg-emerald-500',
+  warning: 'bg-amber-500',
+  danger: 'bg-red-500',
+  info: 'bg-primary-600',
+  accent: 'bg-accent-500',
+  neutral: 'bg-slate-400',
 };
 
 export default function Badge({
@@ -46,7 +49,7 @@ export default function Badge({
       className={clsx(
         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
         variantStyles[variant],
-        className
+        className,
       )}
     >
       {dot && (
@@ -54,8 +57,7 @@ export default function Badge({
           className={clsx(
             'h-1.5 w-1.5 rounded-full shrink-0',
             dotColors[variant],
-            // Pulsation douce uniquement pour success et warning (statuts actifs)
-            (variant === 'success' || variant === 'warning') && 'animate-pulse-slow'
+            (variant === 'success' || variant === 'warning') && 'animate-pulse-slow',
           )}
         />
       )}

@@ -33,16 +33,16 @@ const LOAN_STATUS_LABELS: Record<LoanStatus, string> = {
 };
 const LOAN_STATUS_COLORS: Record<LoanStatus, string> = {
   PENDING: 'bg-yellow-100 text-yellow-700',
-  ACTIVE: 'bg-green-100 text-green-700',
-  PARTIALLY_REPAID: 'bg-blue-100 text-blue-700',
-  CLOSED: 'bg-gray-100 text-gray-500',
+  ACTIVE: 'bg-emerald-100 text-emerald-700',
+  PARTIALLY_REPAID: 'bg-primary-100 text-primary-700',
+  CLOSED: 'bg-slate-100 text-slate-500',
 };
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col sm:flex-row sm:gap-4">
-      <span className="text-sm text-gray-500 sm:w-40 shrink-0">{label}</span>
-      <span className="text-sm text-gray-900 font-medium">{value ?? '—'}</span>
+      <span className="text-sm text-slate-500 sm:w-40 shrink-0">{label}</span>
+      <span className="text-sm text-slate-900 font-medium">{value ?? '—'}</span>
     </div>
   );
 }
@@ -52,12 +52,12 @@ function SectionCard({ icon: Icon, iconColor, iconBg, title, children }: {
   title: string; children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+    <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
       <div className="flex items-center gap-2">
         <div className={`p-1.5 rounded-lg ${iconBg}`}>
           <Icon className={`h-4 w-4 ${iconColor}`} strokeWidth={2} />
         </div>
-        <h2 className="text-base font-semibold text-gray-800">{title}</h2>
+        <h2 className="text-base font-semibold text-slate-800">{title}</h2>
       </div>
       {children}
     </div>
@@ -165,7 +165,7 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
     setPendingRole(null);
   };
 
-  if (isLoading) return <div className="flex items-center justify-center py-24 text-gray-400 text-sm">Chargement…</div>;
+  if (isLoading) return <div className="flex items-center justify-center py-24 text-slate-400 text-sm">Chargement…</div>;
   if (isError || !member) return <div className="flex items-center justify-center py-24 text-red-500 text-sm">Membre introuvable.</div>;
 
   return (
@@ -185,7 +185,7 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
             </Button>
             <Link
               href={`/members/${member.id}/edit`}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium px-4 py-2 rounded-lg transition"
+              className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-medium px-4 py-2 rounded-lg transition"
             >
               Modifier
             </Link>
@@ -211,9 +211,9 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
               label: 'Épargne',
               value: savings ? `${parseFloat(savings.balance).toLocaleString('fr-FR')} XAF` : '—',
               sub: savings ? `Capital : ${parseFloat(savings.principalBalance).toLocaleString('fr-FR')} XAF` : '',
-              color: 'text-blue-700',
-              bg: 'bg-blue-50 border-blue-100',
-              dot: 'bg-blue-500',
+              color: 'text-primary-700',
+              bg: 'bg-primary-50 border-primary-100',
+              dot: 'bg-primary-500',
             },
             {
               label: 'Caisse de secours',
@@ -223,9 +223,9 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
               sub: myRescuePosition
                 ? `Versé : ${parseFloat(myRescuePosition.paidAmount).toLocaleString('fr-FR')} XAF`
                 : '',
-              color: 'text-rose-700',
-              bg: 'bg-rose-50 border-rose-100',
-              dot: 'bg-rose-500',
+              color: 'text-red-700',
+              bg: 'bg-red-50 border-red-100',
+              dot: 'bg-red-500',
             },
             {
               label: 'Prêts actifs',
@@ -253,30 +253,30 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
                   ? 'En attente'
                   : 'Non désigné'
                 : '',
-              color: 'text-violet-700',
-              bg: 'bg-violet-50 border-violet-100',
-              dot: 'bg-violet-500',
+              color: 'text-primary-700',
+              bg: 'bg-primary-50 border-primary-100',
+              dot: 'bg-primary-500',
             },
           ].map(({ label, value, sub, color, bg, dot }) => (
             <div key={label} className={`rounded-xl border p-4 ${bg}`}>
               <div className="flex items-center gap-1.5 mb-2">
                 <span className={`w-2 h-2 rounded-full ${dot}`} />
-                <p className="text-xs text-gray-500">{label}</p>
+                <p className="text-xs text-slate-500">{label}</p>
               </div>
               <p className={`font-bold text-sm tabular-nums ${color}`}>{value}</p>
-              {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+              {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
             </div>
           ))}
         </div>
       )}
 
       {/* ── Informations personnelles ── */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="text-base font-semibold text-gray-800">Informations personnelles</h2>
+      <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+        <h2 className="text-base font-semibold text-slate-800">Informations personnelles</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <InfoRow label="Code membre" value={<span className="font-mono">{member.memberCode}</span>} />
           <InfoRow label="Statut" value={
-            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${member.user.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${member.user.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>
               {member.user.isActive ? 'Actif' : 'Inactif'}
             </span>
           } />
@@ -291,12 +291,12 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
       </div>
 
       {/* ── Compte utilisateur ── */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="text-base font-semibold text-gray-800">Compte utilisateur</h2>
+      <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+        <h2 className="text-base font-semibold text-slate-800">Compte utilisateur</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <InfoRow label="Identifiant" value={member.user.username} />
           <div className="flex flex-col sm:flex-row sm:gap-4 sm:items-center">
-            <span className="text-sm text-gray-500 sm:w-40 shrink-0">Rôle</span>
+            <span className="text-sm text-slate-500 sm:w-40 shrink-0">Rôle</span>
             {isSuperAdmin ? (
               <Select
                 value={member.user.role}
@@ -309,7 +309,7 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
                 ))}
               </Select>
             ) : (
-              <span className="text-sm text-gray-900 font-medium">
+              <span className="text-sm text-slate-900 font-medium">
                 {BUREAU_ROLE_LABELS[member.user.role as BureauRole] ?? member.user.role}
               </span>
             )}
@@ -319,9 +319,9 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
 
       {/* ── Épargne exercice actif ── */}
       {activeFy && (
-        <SectionCard icon={TrendingUp} iconColor="text-blue-600" iconBg="bg-blue-50" title={`Épargne — ${activeFy.label}`}>
+        <SectionCard icon={TrendingUp} iconColor="text-primary-600" iconBg="bg-primary-50" title={`Épargne — ${activeFy.label}`}>
           {!activeMembership ? (
-            <p className="text-sm text-gray-400">Non inscrit à l'exercice actif.</p>
+            <p className="text-sm text-slate-400">Non inscrit à l'exercice actif.</p>
           ) : loadingSavings ? (
             <div className="grid grid-cols-3 gap-3">
               {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
@@ -329,12 +329,12 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
           ) : savings ? (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { label: 'Solde total',    value: parseFloat(savings.balance),              color: 'text-gray-900' },
-                { label: 'Capital versé',  value: parseFloat(savings.principalBalance),     color: 'text-gray-700' },
-                { label: 'Intérêts reçus', value: parseFloat(savings.totalInterestReceived), color: 'text-blue-700' },
+                { label: 'Solde total',    value: parseFloat(savings.balance),              color: 'text-slate-900' },
+                { label: 'Capital versé',  value: parseFloat(savings.principalBalance),     color: 'text-slate-700' },
+                { label: 'Intérêts reçus', value: parseFloat(savings.totalInterestReceived), color: 'text-primary-700' },
               ].map(({ label, value, color }) => (
-                <div key={label} className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 mb-0.5">{label}</p>
+                <div key={label} className="bg-slate-50 rounded-lg p-3">
+                  <p className="text-xs text-slate-500 mb-0.5">{label}</p>
                   <p className={`font-semibold tabular-nums text-sm ${color}`}>
                     {value.toLocaleString('fr-FR')} XAF
                   </p>
@@ -342,10 +342,10 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-400">Aucun compte d'épargne pour cet exercice.</p>
+            <p className="text-sm text-slate-400">Aucun compte d'épargne pour cet exercice.</p>
           )}
           {savings && (
-            <Link href="/savings" className="text-xs text-blue-600 hover:underline">
+            <Link href="/savings" className="text-xs text-primary-600 hover:underline">
               Voir le détail de l'épargne →
             </Link>
           )}
@@ -358,7 +358,7 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
           {loadingLoans ? (
             <Skeleton className="h-16 rounded-lg" />
           ) : !loans || loans.length === 0 ? (
-            <p className="text-sm text-gray-400">Aucun prêt pour cet exercice.</p>
+            <p className="text-sm text-slate-400">Aucun prêt pour cet exercice.</p>
           ) : (
             <div className="space-y-2">
               {loans.map((loan: any) => {
@@ -366,21 +366,21 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
                   ? Math.min((parseFloat(loan.totalRepaid) / parseFloat(loan.principalAmount)) * 100, 100)
                   : 0;
                 return (
-                  <div key={loan.id} className="bg-gray-50 rounded-lg p-3">
+                  <div key={loan.id} className="bg-slate-50 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm font-medium text-gray-800">
+                      <span className="text-sm font-medium text-slate-800">
                         {parseFloat(loan.principalAmount).toLocaleString('fr-FR')} XAF
                       </span>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${LOAN_STATUS_COLORS[loan.status as LoanStatus]}`}>
                         {LOAN_STATUS_LABELS[loan.status as LoanStatus]}
                       </span>
                     </div>
-                    <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden mb-1">
+                    <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mb-1">
                       <div className="h-1.5 rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
                     </div>
-                    <div className="flex justify-between text-xs text-gray-400">
+                    <div className="flex justify-between text-xs text-slate-400">
                       <span>Remboursé : {parseFloat(loan.totalRepaid).toLocaleString('fr-FR')} XAF ({pct.toFixed(0)} %)</span>
-                      <Link href={`/loans/${loan.id}`} className="text-blue-600 hover:underline">Détail →</Link>
+                      <Link href={`/loans/${loan.id}`} className="text-primary-600 hover:underline">Détail →</Link>
                     </div>
                   </div>
                 );
@@ -392,32 +392,32 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
 
       {/* ── Slot bénéficiaire ── */}
       {activeFy && activeMembership && (
-        <SectionCard icon={Gift} iconColor="text-violet-600" iconBg="bg-violet-50" title="Slot bénéficiaire programmé">
+        <SectionCard icon={Gift} iconColor="text-primary-600" iconBg="bg-primary-50" title="Slot bénéficiaire programmé">
           {!nextSlot ? (
-            <p className="text-sm text-gray-400">Aucun slot attribué pour cet exercice.</p>
+            <p className="text-sm text-slate-400">Aucun slot attribué pour cet exercice.</p>
           ) : (
-            <div className="flex items-center gap-4 bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center gap-4 bg-slate-50 rounded-lg p-4">
               <div className="text-center shrink-0">
-                <p className="text-2xl font-bold text-gray-900 tabular-nums">M{nextSlot.month}</p>
-                <p className="text-xs text-gray-400">Mois</p>
+                <p className="text-2xl font-bold text-slate-900 tabular-nums">M{nextSlot.month}</p>
+                <p className="text-xs text-slate-400">Mois</p>
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-800">
+                <p className="text-sm font-medium text-slate-800">
                   {parseFloat(nextSlot.amountDelivered).toLocaleString('fr-FR')} XAF
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">Slot #{nextSlot.slotIndex}</p>
+                <p className="text-xs text-slate-500 mt-0.5">Slot #{nextSlot.slotIndex}</p>
               </div>
               <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                nextSlot.status === 'DELIVERED' ? 'bg-green-100 text-green-700' :
+                nextSlot.status === 'DELIVERED' ? 'bg-emerald-100 text-emerald-700' :
                 nextSlot.status === 'ASSIGNED'  ? 'bg-yellow-100 text-yellow-700' :
-                'bg-gray-100 text-gray-500'
+                'bg-slate-100 text-slate-500'
               }`}>
                 {nextSlot.status === 'DELIVERED' ? 'Livré' : nextSlot.status === 'ASSIGNED' ? 'Désigné' : 'Non désigné'}
               </span>
             </div>
           )}
           {mySlots.length > 1 && (
-            <p className="text-xs text-gray-400">{mySlots.length} slot{mySlots.length > 1 ? 's' : ''} au total cet exercice.</p>
+            <p className="text-xs text-slate-400">{mySlots.length} slot{mySlots.length > 1 ? 's' : ''} au total cet exercice.</p>
           )}
         </SectionCard>
       )}
@@ -427,37 +427,37 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
         {loadingMemberships ? (
           <Skeleton className="h-24 rounded-lg" />
         ) : !Array.isArray(memberships) || memberships.length === 0 ? (
-          <p className="text-sm text-gray-400">Aucun historique d'inscription.</p>
+          <p className="text-sm text-slate-400">Aucun historique d'inscription.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                <tr className="text-left text-xs text-slate-400 uppercase tracking-wide border-b border-slate-100">
                   <th className="pb-2 pr-4">Exercice</th>
                   <th className="pb-2 pr-4">Type</th>
                   <th className="pb-2 pr-4">Parts</th>
                   <th className="pb-2">Inscrit le</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-slate-50">
                 {(memberships as any[]).map((m) => {
                   const fy = fiscalYears?.find((f) => f.id === m.fiscalYearId);
                   return (
-                    <tr key={m.id} className="hover:bg-gray-50">
-                      <td className="py-2 pr-4 font-medium text-gray-800">
+                    <tr key={m.id} className="hover:bg-slate-50">
+                      <td className="py-2 pr-4 font-medium text-slate-800">
                         {fy ? (
-                          <Link href={`/fiscal-year/${fy.id}`} className="hover:text-blue-600 hover:underline">
+                          <Link href={`/fiscal-year/${fy.id}`} className="hover:text-primary-600 hover:underline">
                             {fy.label}
                           </Link>
                         ) : m.fiscalYearId.slice(-6)}
                       </td>
                       <td className="py-2 pr-4">
-                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${m.enrollmentType === 'NEW' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${m.enrollmentType === 'NEW' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
                           {m.enrollmentType === 'NEW' ? 'Nouveau' : 'Ré-inscription'}
                         </span>
                       </td>
                       <td className="py-2 pr-4 tabular-nums">{Number(m.shareCommitment?.sharesCount ?? 0)}</td>
-                      <td className="py-2 text-gray-500">
+                      <td className="py-2 text-slate-500">
                         {new Date(m.joinedAt).toLocaleDateString('fr-FR')}
                       </td>
                     </tr>
@@ -470,12 +470,12 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
       </SectionCard>
 
       {/* ── Contacts d'urgence ── */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="text-base font-semibold text-gray-800">Contacts d&apos;urgence</h2>
+      <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+        <h2 className="text-base font-semibold text-slate-800">Contacts d&apos;urgence</h2>
         {!member.emergencyContacts || member.emergencyContacts.length === 0 ? (
-          <p className="text-sm text-gray-400">Aucun contact d&apos;urgence enregistré.</p>
+          <p className="text-sm text-slate-400">Aucun contact d&apos;urgence enregistré.</p>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-slate-100">
             {member.emergencyContacts.map((contact) => (
               <div key={contact.id} className="py-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <InfoRow label="Nom" value={contact.fullName} />

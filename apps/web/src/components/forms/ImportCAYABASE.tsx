@@ -40,8 +40,8 @@ function StatCard({ item }: { item: StatItem }) {
     <div className={`rounded-xl p-4 border ${item.color} flex items-center gap-3`}>
       <div className="shrink-0">{item.icon}</div>
       <div>
-        <p className="text-xs text-gray-500 leading-none mb-1">{item.label}</p>
-        <p className="text-xl font-bold text-gray-900">{item.value}</p>
+        <p className="text-xs text-slate-500 leading-none mb-1">{item.label}</p>
+        <p className="text-xl font-bold text-slate-900">{item.value}</p>
       </div>
     </div>
   );
@@ -152,7 +152,7 @@ export default function ImportCAYABASE() {
   /* État DONE */
   if (step === 'done') {
     return (
-      <div className="rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-8 flex flex-col items-center text-center gap-4">
+      <div className="rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-primary-50 p-8 flex flex-col items-center text-center gap-4">
         <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
           <CheckCircle2 className="h-9 w-9 text-emerald-600" strokeWidth={1.5} />
         </div>
@@ -183,14 +183,14 @@ export default function ImportCAYABASE() {
       {
         label: 'Membres détectés',
         value: d.members.length,
-        icon: <Users className="h-5 w-5 text-indigo-500" />,
-        color: 'bg-indigo-50 border-indigo-100',
+        icon: <Users className="h-5 w-5 text-primary-500" />,
+        color: 'bg-primary-50 border-primary-100',
       },
       {
         label: 'Sessions mensuelles',
         value: `${d.sessions.length} / 12`,
-        icon: <CalendarDays className="h-5 w-5 text-blue-500" />,
-        color: 'bg-blue-50 border-blue-100',
+        icon: <CalendarDays className="h-5 w-5 text-primary-500" />,
+        color: 'bg-primary-50 border-primary-100',
       },
       {
         label: 'Prêts identifiés',
@@ -207,8 +207,8 @@ export default function ImportCAYABASE() {
       {
         label: 'Caisse de secours',
         value: d.rescueFund.length,
-        icon: <ShieldCheck className="h-5 w-5 text-rose-500" />,
-        color: 'bg-rose-50 border-rose-100',
+        icon: <ShieldCheck className="h-5 w-5 text-red-500" />,
+        color: 'bg-red-50 border-red-100',
       },
       {
         label: 'Comptes spéciaux',
@@ -222,23 +222,23 @@ export default function ImportCAYABASE() {
     const endFmt = new Date(d.endDate).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
     return (
-      <div className="rounded-2xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50/60 to-violet-50/60 p-6 space-y-5">
+      <div className="rounded-2xl border-2 border-primary-200 bg-gradient-to-br from-primary-50/60 to-primary-50/60 p-6 space-y-5">
 
         {/* Header prévisualisation */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-              <FileSpreadsheet className="h-5 w-5 text-indigo-600" />
+            <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center shrink-0">
+              <FileSpreadsheet className="h-5 w-5 text-primary-600" />
             </div>
             <div>
-              <h3 className="font-bold text-indigo-900">Prévisualisation de l&apos;import</h3>
-              <p className="text-xs text-indigo-600">{startFmt} → {endFmt}</p>
+              <h3 className="font-bold text-primary-900">Prévisualisation de l&apos;import</h3>
+              <p className="text-xs text-primary-600">{startFmt} → {endFmt}</p>
             </div>
           </div>
           <button
             onClick={handleReset}
             disabled={step === 'importing'}
-            className="p-1.5 rounded-lg hover:bg-indigo-100 text-indigo-400 hover:text-indigo-700 transition-colors disabled:opacity-40"
+            className="p-1.5 rounded-lg hover:bg-primary-100 text-primary-400 hover:text-primary-700 transition-colors disabled:opacity-40"
             title="Annuler"
           >
             <X className="h-4 w-4" />
@@ -247,7 +247,7 @@ export default function ImportCAYABASE() {
 
         {/* Nom de l'exercice */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">
             Nom de l&apos;exercice <span className="text-red-500">*</span>
           </label>
           <input
@@ -256,11 +256,11 @@ export default function ImportCAYABASE() {
             onChange={(e) => setImportLabel(e.target.value)}
             disabled={step === 'importing'}
             placeholder="Ex : 2024-2025"
-            className="w-full max-w-xs rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-mono font-semibold text-indigo-900 shadow-sm
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition
+            className="w-full max-w-xs rounded-lg border border-primary-200 bg-white px-3 py-2 text-sm font-mono font-semibold text-primary-900 shadow-sm
+                       focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition
                        disabled:opacity-60"
           />
-          <p className="text-xs text-indigo-400 mt-1">Détecté automatiquement depuis le fichier. Modifiable si besoin.</p>
+          <p className="text-xs text-primary-400 mt-1">Détecté automatiquement depuis le fichier. Modifiable si besoin.</p>
         </div>
 
         {/* Type d'import : archivé vs en cours */}
@@ -300,23 +300,23 @@ export default function ImportCAYABASE() {
         </div>
 
         {/* Liste des membres (collapsible) */}
-        <div className="rounded-xl border border-indigo-100 bg-white overflow-hidden">
+        <div className="rounded-xl border border-primary-100 bg-white overflow-hidden">
           <button
             onClick={() => setShowMemberList((v) => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
           >
             <span className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-indigo-500" />
+              <Users className="h-4 w-4 text-primary-500" />
               Membres détectés ({d.members.length})
             </span>
-            {showMemberList ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+            {showMemberList ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
           </button>
           {showMemberList && (
-            <div className="border-t border-indigo-50 px-4 py-3 max-h-48 overflow-y-auto">
+            <div className="border-t border-primary-50 px-4 py-3 max-h-48 overflow-y-auto">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                 {d.members.map((name, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-xs text-gray-700 bg-gray-50 rounded-lg px-2.5 py-1.5">
-                    <span className="w-4 h-4 rounded-full bg-indigo-100 text-indigo-600 text-[10px] font-bold flex items-center justify-center shrink-0">
+                  <div key={i} className="flex items-center gap-1.5 text-xs text-slate-700 bg-slate-50 rounded-lg px-2.5 py-1.5">
+                    <span className="w-4 h-4 rounded-full bg-primary-100 text-primary-600 text-[10px] font-bold flex items-center justify-center shrink-0">
                       {i + 1}
                     </span>
                     <span className="truncate">{name}</span>
@@ -365,7 +365,7 @@ export default function ImportCAYABASE() {
         )}
 
         {/* Note informative */}
-        <div className="flex items-start gap-2.5 text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+        <div className="flex items-start gap-2.5 text-xs text-primary-700 bg-primary-50 border border-primary-100 rounded-xl px-4 py-3">
           <Info className="h-4 w-4 shrink-0 mt-0.5" />
           <span>
             Les membres non trouvés dans la base seront <strong>créés automatiquement</strong> avec un compte provisoire.
@@ -378,7 +378,7 @@ export default function ImportCAYABASE() {
           <button
             onClick={handleReset}
             disabled={step === 'importing'}
-            className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-40"
+            className="px-4 py-2 text-sm font-medium text-slate-600 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-40"
           >
             Annuler
           </button>
@@ -386,9 +386,9 @@ export default function ImportCAYABASE() {
             onClick={handleConfirmImport}
             disabled={step === 'importing' || !importLabel.trim() || (parsed.criticalErrors && parsed.criticalErrors.length > 0)}
             className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-lg
-                       bg-gradient-to-r from-indigo-600 to-violet-600
-                       hover:from-indigo-700 hover:to-violet-700
-                       shadow-md shadow-indigo-200
+                       bg-gradient-to-r from-primary-600 to-primary-600
+                       hover:from-primary-700 hover:to-primary-700
+                       shadow-md shadow-primary-200
                        transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {step === 'importing' ? (
@@ -421,8 +421,8 @@ export default function ImportCAYABASE() {
           relative cursor-pointer rounded-2xl border-2 border-dashed transition-all duration-200
           flex flex-col items-center justify-center text-center p-10 gap-4 select-none
           ${isDraggingOver
-            ? 'border-indigo-500 bg-indigo-50 scale-[1.01] shadow-lg shadow-indigo-100'
-            : 'border-emerald-300 bg-gradient-to-br from-emerald-50/60 to-teal-50/60 hover:border-emerald-400 hover:bg-emerald-50'
+            ? 'border-primary-500 bg-primary-50 scale-[1.01] shadow-lg shadow-primary-100'
+            : 'border-emerald-300 bg-gradient-to-br from-emerald-50/60 to-primary-50/60 hover:border-emerald-400 hover:bg-emerald-50'
           }
           ${step === 'parsing' ? 'pointer-events-none opacity-70' : ''}
         `}
@@ -437,28 +437,28 @@ export default function ImportCAYABASE() {
 
         {step === 'parsing' ? (
           <>
-            <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+            <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 text-primary-600 animate-spin" />
             </div>
             <div>
-              <p className="font-semibold text-indigo-800 text-base">Lecture du fichier…</p>
-              <p className="text-sm text-indigo-500 mt-1">Analyse des feuilles Excel en cours</p>
+              <p className="font-semibold text-primary-800 text-base">Lecture du fichier…</p>
+              <p className="text-sm text-primary-500 mt-1">Analyse des feuilles Excel en cours</p>
             </div>
           </>
         ) : (
           <>
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-transform duration-200 ${isDraggingOver ? 'bg-indigo-100 scale-110' : 'bg-emerald-100'}`}>
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-transform duration-200 ${isDraggingOver ? 'bg-primary-100 scale-110' : 'bg-emerald-100'}`}>
               {isDraggingOver
-                ? <ArrowRight className="h-8 w-8 text-indigo-600 rotate-90" />
+                ? <ArrowRight className="h-8 w-8 text-primary-600 rotate-90" />
                 : <Upload className="h-8 w-8 text-emerald-600" strokeWidth={1.5} />
               }
             </div>
             <div>
-              <p className="font-bold text-gray-800 text-base">
+              <p className="font-bold text-slate-800 text-base">
                 {isDraggingOver ? 'Relâchez pour importer' : 'Glissez votre fichier CAYABASE ici'}
               </p>
-              <p className="text-sm text-gray-500 mt-1">ou cliquez pour parcourir vos fichiers</p>
-              <p className="text-xs text-gray-400 mt-2 font-mono bg-gray-100 rounded-full px-3 py-0.5 inline-block">.xlsx uniquement</p>
+              <p className="text-sm text-slate-500 mt-1">ou cliquez pour parcourir vos fichiers</p>
+              <p className="text-xs text-slate-400 mt-2 font-mono bg-slate-100 rounded-full px-3 py-0.5 inline-block">.xlsx uniquement</p>
             </div>
           </>
         )}
@@ -476,8 +476,8 @@ export default function ImportCAYABASE() {
       )}
 
       {/* Checklist des feuilles attendues */}
-      <div className="rounded-xl bg-white border border-gray-200 p-4">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+      <div className="rounded-xl bg-white border border-slate-200 p-4">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
           Feuilles attendues dans le fichier CAYABASE
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -489,18 +489,18 @@ export default function ImportCAYABASE() {
             { name: 'insc+sec', desc: 'Inscription + Secours', required: true },
             { name: 'Oct.25 …', desc: 'Feuilles session mensuelle', required: false },
           ].map((sheet) => (
-            <div key={sheet.name} className="flex items-start gap-2 text-xs p-2.5 rounded-lg bg-gray-50">
-              <span className={`mt-0.5 font-bold ${sheet.required ? 'text-emerald-600' : 'text-gray-400'}`}>
+            <div key={sheet.name} className="flex items-start gap-2 text-xs p-2.5 rounded-lg bg-slate-50">
+              <span className={`mt-0.5 font-bold ${sheet.required ? 'text-emerald-600' : 'text-slate-400'}`}>
                 {sheet.required ? '✓' : '○'}
               </span>
               <div>
-                <p className={`font-mono font-semibold ${sheet.required ? 'text-gray-800' : 'text-gray-500'}`}>{sheet.name}</p>
-                <p className="text-gray-400">{sheet.desc}</p>
+                <p className={`font-mono font-semibold ${sheet.required ? 'text-slate-800' : 'text-slate-500'}`}>{sheet.name}</p>
+                <p className="text-slate-400">{sheet.desc}</p>
               </div>
             </div>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-3">
+        <p className="text-xs text-slate-400 mt-3">
           <span className="text-emerald-600 font-semibold">✓ Obligatoire</span> — les autres feuilles enrichissent l&apos;import mais ne sont pas bloquantes.
         </p>
       </div>

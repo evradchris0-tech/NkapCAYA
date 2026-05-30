@@ -32,10 +32,10 @@ export function InfoTooltip({ content, position = 'top' }: InfoTooltipProps) {
   };
 
   const arrowClasses: Record<string, string> = {
-    top:    'top-full left-1/2 -translate-x-1/2 border-t-gray-700 border-4 border-transparent',
-    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-gray-700 border-4 border-transparent',
-    left:   'left-full top-1/2 -translate-y-1/2 border-l-gray-700 border-4 border-transparent',
-    right:  'right-full top-1/2 -translate-y-1/2 border-r-gray-700 border-4 border-transparent',
+    top:    'top-full left-1/2 -translate-x-1/2 border-t-slate-700 border-4 border-transparent',
+    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-slate-700 border-4 border-transparent',
+    left:   'left-full top-1/2 -translate-y-1/2 border-l-slate-700 border-4 border-transparent',
+    right:  'right-full top-1/2 -translate-y-1/2 border-r-slate-700 border-4 border-transparent',
   };
 
   return (
@@ -46,7 +46,7 @@ export function InfoTooltip({ content, position = 'top' }: InfoTooltipProps) {
         onMouseEnter={() => setVisible(true)}
         onMouseLeave={() => setVisible(false)}
         onClick={() => setVisible((v) => !v)}
-        className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 text-gray-500 hover:bg-blue-100 hover:text-blue-600 transition-colors flex-shrink-0"
+        className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-200 text-slate-500 hover:bg-primary-100 hover:text-primary-600 transition-colors flex-shrink-0"
       >
         <Info className="h-2.5 w-2.5" />
       </button>
@@ -56,7 +56,7 @@ export function InfoTooltip({ content, position = 'top' }: InfoTooltipProps) {
           role="tooltip"
           className={`absolute z-50 ${positionClasses[position]} w-max max-w-[220px]`}
         >
-          <div className="bg-gray-800 text-white text-xs rounded-lg px-3 py-2 leading-relaxed shadow-lg whitespace-normal">
+          <div className="bg-slate-800 text-white text-xs rounded-lg px-3 py-2 leading-relaxed shadow-lg whitespace-normal">
             {content}
           </div>
           <span className={`absolute ${arrowClasses[position]}`} />

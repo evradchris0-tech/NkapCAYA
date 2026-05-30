@@ -17,10 +17,10 @@ const SESSION_STATUS_LABELS: Record<string, string> = {
 };
 
 const SESSION_STATUS_COLORS: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-500',
-  OPEN: 'bg-green-100 text-green-700',
+  DRAFT: 'bg-slate-100 text-slate-500',
+  OPEN: 'bg-emerald-100 text-emerald-700',
   REVIEWING: 'bg-yellow-100 text-yellow-700',
-  CLOSED: 'bg-blue-100 text-blue-700',
+  CLOSED: 'bg-primary-100 text-primary-700',
 };
 
 const FY_STATUS_PRIORITY: FiscalYearStatus[] = ['ACTIVE', 'CASSATION', 'PENDING', 'CLOSED', 'ARCHIVED'];
@@ -39,29 +39,29 @@ function SessionRow({ session, index }: { session: MonthlySession; index: number
   ].reduce((sum, v) => sum + parseFloat(v || '0'), 0);
 
   return (
-    <tr className="hover:bg-gray-50 transition">
-      <td className="px-6 py-3 text-gray-400 text-xs tabular-nums w-10">{index + 1}</td>
-      <td className="px-6 py-3 font-medium text-gray-900">
+    <tr className="hover:bg-slate-50 transition">
+      <td className="px-6 py-3 text-slate-400 text-xs tabular-nums w-10">{index + 1}</td>
+      <td className="px-6 py-3 font-medium text-slate-900">
         Session #{session.sessionNumber}
       </td>
-      <td className="px-6 py-3 text-gray-600">
+      <td className="px-6 py-3 text-slate-600">
         {new Date(session.meetingDate).toLocaleDateString('fr-FR', {
           month: 'long',
           year: 'numeric',
         })}
       </td>
       <td className="px-6 py-3">
-        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${SESSION_STATUS_COLORS[session.status] ?? 'bg-gray-100 text-gray-500'}`}>
+        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${SESSION_STATUS_COLORS[session.status] ?? 'bg-slate-100 text-slate-500'}`}>
           {SESSION_STATUS_LABELS[session.status] ?? session.status}
         </span>
       </td>
-      <td className="px-6 py-3 text-right text-gray-700 tabular-nums">
+      <td className="px-6 py-3 text-right text-slate-700 tabular-nums">
         {total > 0 ? total.toLocaleString('fr-FR') + ' XAF' : '—'}
       </td>
       <td className="px-6 py-3 text-right">
         <Link
           href={`/sessions/${session.id}`}
-          className="text-blue-600 hover:text-blue-800 font-medium text-xs"
+          className="text-primary-600 hover:text-primary-800 font-medium text-xs"
         >
           Voir →
         </Link>
@@ -109,47 +109,47 @@ export default function SessionsPage() {
       )}
 
       {!activeFyId ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-500 text-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500 text-sm">
           Aucun exercice fiscal trouvé. Créez et activez un exercice d&apos;abord.
         </div>
       ) : isLoading ? (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[560px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600 w-10">#</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Session</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Date prévue</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Statut</th>
-                  <th className="text-right px-6 py-3 font-medium text-gray-600">Total collecté</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600 w-10">#</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Session</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Date prévue</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Statut</th>
+                  <th className="text-right px-6 py-3 font-medium text-slate-600">Total collecté</th>
                   <th className="px-6 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100">
                 {Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} cols={6} />)}
               </tbody>
             </table>
           </div>
         </div>
       ) : !sessions || sessions.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-500 text-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500 text-sm">
           Aucune session. Activez l&apos;exercice fiscal pour générer les 12 sessions.
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[560px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Session</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Date prévue</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-600">Statut</th>
-                  <th className="text-right px-6 py-3 font-medium text-gray-600">Total collecté</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Session</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Date prévue</th>
+                  <th className="text-left px-6 py-3 font-medium text-slate-600">Statut</th>
+                  <th className="text-right px-6 py-3 font-medium text-slate-600">Total collecté</th>
                   <th className="px-6 py-3"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100">
                 {sessions.map((s, i) => (
                   <SessionRow key={s.id} session={s} index={i} />
                 ))}

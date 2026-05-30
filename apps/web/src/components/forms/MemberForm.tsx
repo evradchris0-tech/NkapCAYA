@@ -44,16 +44,16 @@ function CopyRow({ label, value }: { label: string; value: string }) {
   };
 
   return (
-    <div className="flex items-center justify-between gap-4 py-2 px-3 bg-gray-50 rounded-lg border border-gray-200">
+    <div className="flex items-center justify-between gap-4 py-2 px-3 bg-slate-50 rounded-lg border border-slate-200">
       <div className="min-w-0">
-        <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">{label}</p>
-        <p className="text-sm font-mono font-semibold text-gray-900 mt-0.5 break-all">{value}</p>
+        <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">{label}</p>
+        <p className="text-sm font-mono font-semibold text-slate-900 mt-0.5 break-all">{value}</p>
       </div>
       <button
         type="button"
         onClick={handleCopy}
         title="Copier"
-        className="shrink-0 p-1.5 rounded-md text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+        className="shrink-0 p-1.5 rounded-md text-slate-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
       >
         {copied ? <CheckCheck className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
       </button>
@@ -83,8 +83,8 @@ function CredentialsModal({
             <UserCheck className="h-5 w-5 text-emerald-600" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-gray-900">Membre créé</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{fullName}</p>
+            <h2 className="text-base font-semibold text-slate-900">Membre créé</h2>
+            <p className="text-xs text-slate-500 mt-0.5">{fullName}</p>
           </div>
         </div>
 
@@ -101,7 +101,7 @@ function CredentialsModal({
           <CopyRow label="Mot de passe temporaire" value={`Caya@${result.profile.memberCode}`} />
         </div>
 
-        <p className="text-[11px] text-gray-400 text-center">
+        <p className="text-[11px] text-slate-400 text-center">
           Un SMS a été envoyé au <span className="font-medium">{result.profile.phone1}</span> avec ces informations.
         </p>
 

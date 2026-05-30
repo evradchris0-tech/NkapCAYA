@@ -34,7 +34,7 @@ export default function ConfirmDialog({
       ? 'bg-red-100 text-red-600'
       : variant === 'warning'
       ? 'bg-amber-100 text-amber-600'
-      : 'bg-blue-100 text-blue-600';
+      : 'bg-primary-100 text-primary-600';
 
   const confirmVariant =
     variant === 'danger' ? 'danger' : 'primary';
@@ -65,7 +65,7 @@ export default function ConfirmDialog({
         <span className={`flex items-center justify-center w-10 h-10 rounded-full shrink-0 ${iconBg}`}>
           <IconComponent className="h-5 w-5" strokeWidth={2} />
         </span>
-        <p className="text-sm text-gray-600 leading-relaxed pt-2">{message}</p>
+        <p className="text-sm text-slate-600 leading-relaxed pt-2">{message}</p>
       </div>
     </Modal>
   );

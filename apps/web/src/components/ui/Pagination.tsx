@@ -34,21 +34,21 @@ export default function Pagination({
   }
 
   return (
-    <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-      <p className="text-sm text-gray-500">
+    <div className="flex items-center justify-between border-t border-slate-200 pt-4">
+      <p className="text-sm text-slate-500">
         {from}–{to} sur {total} membres
       </p>
       <nav className="flex items-center gap-1">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page === 1}
-          className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          className="px-3 py-1.5 text-sm rounded-md border border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
         >
           ←
         </button>
         {pages.map((p, i) =>
           p === '...' ? (
-            <span key={`ellipsis-${i}`} className="px-2 text-gray-400">
+            <span key={`ellipsis-${i}`} className="px-2 text-slate-400">
               …
             </span>
           ) : (
@@ -57,8 +57,8 @@ export default function Pagination({
               onClick={() => onPageChange(p as number)}
               className={`px-3 py-1.5 text-sm rounded-md border transition ${
                 p === page
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'border-gray-300 hover:bg-gray-50 text-gray-700'
+                  ? 'bg-primary-600 text-white border-primary-600'
+                  : 'border-slate-300 hover:bg-slate-50 text-slate-700'
               }`}
             >
               {p}
@@ -68,7 +68,7 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page === totalPages}
-          className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          className="px-3 py-1.5 text-sm rounded-md border border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
         >
           →
         </button>

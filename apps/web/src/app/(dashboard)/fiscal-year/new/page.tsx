@@ -73,7 +73,7 @@ export default function NewFiscalYearPage() {
         ]}
       />
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <Input
             label="Libellé (ex: 2025-2026)"
@@ -112,18 +112,18 @@ export default function NewFiscalYearPage() {
             />
           </div>
 
-          <div className="bg-blue-50 rounded-lg px-4 py-3 text-xs text-blue-700">
+          <div className="bg-primary-50 rounded-lg px-4 py-3 text-xs text-primary-700">
             Contrainte : Début &lt; Limite prêts &lt; Cassation ≤ Fin
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">
+            <label className="text-sm font-medium text-slate-700 block mb-1">
               Notes (optionnel)
             </label>
             <textarea
               {...register('notes')}
               rows={3}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="Remarques sur cet exercice..."
             />
           </div>
