@@ -1,0 +1,8 @@
+# Caddy — reverse proxy + HTTPS automatique (Let's Encrypt).
+# Prérequis : l'enregistrement DNS A de api.nkapzen.com pointe vers l'IP du VPS,
+# et les ports 80 + 443 sont ouverts.
+
+api.nkapzen.com {
+    encode gzip
+    reverse_proxy api:3000
+}
