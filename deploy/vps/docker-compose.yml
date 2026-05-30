@@ -1,0 +1,63 @@
+name: nkapzen
+
+# Stack de production pour VPS (Docker).
+# API NestJS + MySQL + Caddy (reverse proxy + HTTPS automatique Let's Encrypt).
+# Le web reste sur Vercel — ici on ne déploie que l'API et la base.
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?defini dans .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-nkapzen}
+      MYSQL_USER: ${MYSQL_USER:-nkapzen}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?defini dans .env}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: ../..          # racine du repo (le Dockerfile y est)
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
+      PORT: "3000"
+      NODE_ENV: production
+      APP_URL: ${APP_URL:-https://api.nkapzen.com}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://yaca.nkapzen.com}
+    # Applique les migrations Prisma au démarrage, puis lance l'API.
+    command: sh -c "pnpm exec prisma migrate deploy --schema=database/schema.prisma && node apps/api/dist/main.js"
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
+volumes:
+  mysql_data:
+  caddy_data:
+  caddy_config:
