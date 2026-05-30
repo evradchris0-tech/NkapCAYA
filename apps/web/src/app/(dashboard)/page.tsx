@@ -64,17 +64,17 @@ interface KpiCardProps {
 
 function KpiCard({ icon: Icon, iconBg, iconColor, borderColor, label, value, isLoading, description }: KpiCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-card hover:shadow-card-hover transition-shadow p-5">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-card hover:shadow-card-hover transition-shadow p-6">
       <div className="flex items-center justify-between mb-3">
-        <Icon className={`h-5 w-5 ${iconColor}`} strokeWidth={1.5} />
+        <Icon className={`h-6 w-6 ${iconColor}`} strokeWidth={1.6} />
         <span title={description} className="cursor-help">
           <Info className="h-4 w-4 text-slate-300 hover:text-slate-500 transition-colors" />
         </span>
       </div>
-      <div className="text-2xl font-bold text-slate-900 tabular-nums font-heading tracking-tight">
-        {isLoading ? <Skeleton className="h-7 w-20" /> : value}
+      <div className="text-3xl font-bold text-slate-900 tabular-nums font-heading tracking-tight">
+        {isLoading ? <Skeleton className="h-8 w-24" /> : value}
       </div>
-      <p className="text-xs font-medium text-slate-500 mt-1">{label}</p>
+      <p className="text-sm font-medium text-slate-600 mt-1.5">{label}</p>
     </div>
   );
 }

@@ -8,6 +8,8 @@ const SIZES = {
   lg: 80,
   xl: 120,
   '2xl': 160,
+  '3xl': 220,
+  '4xl': 280,
 } as const;
 
 interface LogoProps {

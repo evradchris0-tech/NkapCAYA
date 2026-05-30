@@ -55,18 +55,18 @@ export default function LoginPage() {
         {/* Centre */}
         <div className="relative z-10">
           {/* Logo large */}
-          <div className="mb-8">
-            <Logo size="2xl" className="rounded-2xl shadow-2xl shadow-primary-900/40" />
+          <div className="mb-6 -ml-3">
+            <Logo size="4xl" />
           </div>
-          <h2 className="text-3xl font-bold text-white leading-snug mb-2">NkapZen</h2>
-          <p className="text-accent-300 text-sm font-medium mb-8">Gestion de tontine — épargne, prêts &amp; secours</p>
-          <ul className="space-y-3">
+          <h2 className="text-5xl font-extrabold text-white leading-tight mb-3 tracking-tight">NkapZen</h2>
+          <p className="text-accent-300 text-lg font-medium mb-10">Gestion de tontine — épargne, prêts &amp; secours</p>
+          <ul className="space-y-4">
             {FEATURES.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
-                  <Icon className="h-3.5 w-3.5 text-white" strokeWidth={2} />
+              <li key={text} className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-white/10 ring-1 ring-white/15 flex items-center justify-center shrink-0">
+                  <Icon className="h-5 w-5 text-accent-300" strokeWidth={1.8} />
                 </div>
-                <span className="text-primary-100 text-sm">{text}</span>
+                <span className="text-primary-100 text-base">{text}</span>
               </li>
             ))}
           </ul>
@@ -82,13 +82,14 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center bg-slate-50 p-6">
         <div className="w-full max-w-sm animate-fade-in">
           {/* Logo — visible sur tous les écrans */}
-          <div className="flex justify-center mb-8">
-            <Logo size="xl" className="rounded-2xl shadow-md" />
+          <div className="flex justify-center mb-6">
+            <Logo size="2xl" />
           </div>
 
           {/* En-tête */}
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-slate-900">Connexion</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Connexion</h1>
+            <p className="text-sm text-slate-500 mt-1.5">Accédez à votre espace de gestion</p>
           </div>
 
           {/* Message d'erreur global */}

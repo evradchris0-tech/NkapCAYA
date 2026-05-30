@@ -5,7 +5,7 @@
 /* ── Base : fond neutre clair + texte marine foncé ── */
 @layer base {
   body {
-    @apply bg-surface-secondary text-slate-800 antialiased;
+    @apply bg-slate-100 text-slate-800 antialiased;
   }
   h1, h2, h3, h4 {
     @apply text-primary-900;
