@@ -10,11 +10,15 @@ export const reportsApi = {
       })
       .then((r) => r.data),
 
-  importFiscalYear: (data: ImportFiscalYearDto) =>
+  importFiscalYear: (data: ImportFiscalYearDto & { keepOpen?: boolean }) =>
     longTimeoutClient
-      .post<{ fiscalYearId: string; membersCreated: number; membersMatched: number; sessionsCreated: number }>(
-        '/reports/import-fiscal-year',
-        data,
-      )
+      .post<{
+        fiscalYearId: string;
+        membersCreated: number;
+        membersMatched: number;
+        sessionsCreated: number;
+        status: 'ACTIVE' | 'CLOSED';
+        openMonth: number | null;
+      }>('/reports/import-fiscal-year', data)
       .then((r) => r.data),
 };

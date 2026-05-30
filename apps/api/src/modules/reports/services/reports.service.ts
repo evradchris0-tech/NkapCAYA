@@ -5,6 +5,8 @@ import { ImportFiscalYearDto } from '../dto/import-fiscal-year.dto';
 import {
   classifySpecialAccount,
   reconstructLoanTimeline,
+  computeLastRecordedMonth,
+  sessionStatusForOngoing,
   SPECIAL_POOL_LABELS,
   type SpecialAccountKind,
 } from './import.helpers';
@@ -96,6 +98,21 @@ export class ReportsService {
     for (const sa of dto.specialAccounts ?? []) {
       specialAmounts[sa.kind] = (specialAmounts[sa.kind] ?? 0) + num(sa.totalDeposit);
     }
+
+    // Mode d'import : archivé (CLÔTURÉ) par défaut, ou "en cours" (ACTIF) si demandé.
+    const keepOpen = dto.keepOpen === true;
+    if (keepOpen) {
+      const activeFy = await this.prisma.fiscalYear.findFirst({
+        where: { status: 'ACTIVE', deletedAt: null },
+      });
+      if (activeFy) {
+        throw new BadRequestException(
+          `Import "en cours" impossible : l'exercice "${activeFy.label}" est déjà ACTIF. Clôturez-le d'abord.`,
+        );
+      }
+    }
+    // Dernier mois réellement saisi → détermine où reprendre la saisie (mode "en cours").
+    const lastRecorded = computeLastRecordedMonth(dto);
 
     // Read current tontine config (for snapshot)
     const tontineConfig = await this.prisma.tontineConfig.findUnique({ where: { id: 'caya' } });
@@ -191,12 +208,12 @@ export class ReportsService {
             endDate,
             cassationDate,
             loanDueDate,
-            status: 'CLOSED',
+            status: keepOpen ? 'ACTIVE' : 'CLOSED',
             isImported: true,
             openedAt: now,
             openedById: actorId,
-            closedAt: now,
-            closedById: actorId,
+            closedAt: keepOpen ? null : now,
+            closedById: keepOpen ? null : actorId,
           },
         });
 
@@ -219,21 +236,26 @@ export class ReportsService {
         });
 
         // 2d. Create 12 MonthlySession
+        // Archive : toutes CLOSED. "En cours" : mois ≤ dernier saisi CLOSED,
+        // le mois suivant OPEN (reprise de la saisie), le reste DRAFT.
         const sessionMap = new Map<number, string>(); // sessionNumber → sessionId
         for (let m = 1; m <= 12; m++) {
           const sessionId = randomUUID();
           const meetingDate = monthDate(startDate, m - 1);
+          const sessStatus = keepOpen ? sessionStatusForOngoing(m, lastRecorded) : 'CLOSED';
+          const isClosed = sessStatus === 'CLOSED';
+          const isDraft = sessStatus === 'DRAFT';
           await tx.monthlySession.create({
             data: {
               id: sessionId,
               fiscalYearId: fyId,
               sessionNumber: m,
               meetingDate,
-              status: 'CLOSED',
-              openedAt: now,
-              openedById: actorId,
-              closedAt: now,
-              closedById: actorId,
+              status: sessStatus,
+              openedAt: isDraft ? null : now,
+              openedById: isDraft ? null : actorId,
+              closedAt: isClosed ? now : null,
+              closedById: isClosed ? actorId : null,
             },
           });
           sessionMap.set(m, sessionId);
@@ -658,6 +680,8 @@ export class ReportsService {
           membersCreated: membersToCreate.length,
           membersMatched: memberNames.length - membersToCreate.length,
           sessionsCreated: 12,
+          status: keepOpen ? ('ACTIVE' as const) : ('CLOSED' as const),
+          openMonth: keepOpen && lastRecorded < 12 ? lastRecorded + 1 : null,
         };
       },
       { timeout: 120_000 },

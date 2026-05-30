@@ -7,6 +7,7 @@ import {
   ValidateNested,
   IsObject,
   IsIn,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -218,4 +219,14 @@ export class ImportFiscalYearDto {
   @ValidateNested({ each: true })
   @Type(() => ImportSpecialAccountRow)
   specialAccounts?: ImportSpecialAccountRow[];
+
+  @ApiPropertyOptional({
+    description:
+      "Importer l'exercice comme EN COURS (statut ACTIF) au lieu d'archivé/clôturé. " +
+      'Les mois passés restent CLOSED, le mois suivant le dernier saisi passe OPEN pour reprendre la saisie.',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  keepOpen?: boolean;
 }

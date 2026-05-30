@@ -118,3 +118,58 @@ export function reconstructLoanTimeline(input: LoanTimelineInput): LoanTimelineM
 
   return timeline;
 }
+
+/* ── Import "exercice en cours" : dernier mois saisi & statut des sessions ── */
+
+export interface MonthlyDataSource {
+  savings?: { deposits?: Record<number, number>; interests?: Record<number, number> }[];
+  loans?: { disbursements?: Record<number, number> }[];
+  repayments?: { repayments?: Record<number, number> }[];
+  interests?: { interests?: Record<number, number> }[];
+  rescueFund?: { contributions?: Record<number, number> }[];
+  sessions?: { sessionNumber: number; entries?: unknown[] }[];
+}
+
+/**
+ * Dernier mois (1-12) effectivement saisi, tous flux confondus
+ * (épargne, prêts, remboursements, intérêts, secours, séances).
+ * Renvoie 0 si aucune donnée → un exercice "en cours" démarrera au mois 1.
+ */
+export function computeLastRecordedMonth(d: MonthlyDataSource): number {
+  let max = 0;
+  const scan = (rec?: Record<number, number>): void => {
+    if (!rec) return;
+    for (const [m, v] of Object.entries(rec)) {
+      const mm = Number(m);
+      if (Number.isFinite(mm) && mm >= 1 && mm <= 12 && n(v) > 0) max = Math.max(max, mm);
+    }
+  };
+  for (const s of d.savings ?? []) {
+    scan(s.deposits);
+    scan(s.interests);
+  }
+  for (const l of d.loans ?? []) scan(l.disbursements);
+  for (const r of d.repayments ?? []) scan(r.repayments);
+  for (const i of d.interests ?? []) scan(i.interests);
+  for (const rf of d.rescueFund ?? []) scan(rf.contributions);
+  for (const sess of d.sessions ?? []) {
+    if ((sess.entries?.length ?? 0) > 0 && sess.sessionNumber >= 1 && sess.sessionNumber <= 12) {
+      max = Math.max(max, sess.sessionNumber);
+    }
+  }
+  return max;
+}
+
+export type OngoingSessionStatus = 'CLOSED' | 'OPEN' | 'DRAFT';
+
+/**
+ * Statut d'une session pour un import "en cours" :
+ *  - mois ≤ dernier saisi  → CLOSED (historique figé)
+ *  - mois juste après      → OPEN   (reprise de la saisie ; un seul OPEN autorisé)
+ *  - mois suivants         → DRAFT  (à venir)
+ */
+export function sessionStatusForOngoing(month: number, lastRecorded: number): OngoingSessionStatus {
+  if (month <= lastRecorded) return 'CLOSED';
+  if (month === lastRecorded + 1 && lastRecorded < 12) return 'OPEN';
+  return 'DRAFT';
+}
