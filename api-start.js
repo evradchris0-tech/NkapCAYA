@@ -3,13 +3,14 @@
 const path = require('path');
 const fs   = require('fs');
 
-// ── Capturer les erreurs asynchrones non catchées (crash NestJS au bootstrap)
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('[CAYA API] ✗ FATAL — unhandledRejection:', reason);
+// ── Rejet de promesse non catché : on LOG mais on NE TUE PAS le process.
+// Un hoquet transitoire (ex. moteur Prisma sur hébergement contraint) ne doit
+// pas couper tout le serveur et déclencher un crash-loop de redémarrages.
+process.on('unhandledRejection', (reason) => {
+  console.error('[CAYA API] ⚠ unhandledRejection (non fatal):', reason instanceof Error ? reason.message : reason);
   if (reason instanceof Error) {
     console.error('[CAYA API] stack:', reason.stack);
   }
-  process.exit(1);
 });
 
 process.on('uncaughtException', (err) => {
