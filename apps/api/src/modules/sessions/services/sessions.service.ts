@@ -56,6 +56,34 @@ export class SessionsService {
     return session;
   }
 
+  async getSessionEntries(sessionId: string, page = 1, limit = 50) {
+    const p = Math.max(1, Number(page));
+    const l = Math.max(1, Math.min(100, Number(limit)));
+    
+    const [totalCount, data] = await this.sessionsRepository.findEntriesPaginated(sessionId, p, l);
+    
+    return {
+      data,
+      meta: {
+        total: totalCount,
+        page: p,
+        limit: l,
+        totalPages: Math.ceil(totalCount / l),
+      },
+    };
+  }
+
+  async getSessionStats(sessionId: string) {
+    const entries = await this.sessionsRepository.findStats(sessionId);
+    
+    const participantIds = Array.from(new Set(entries.map(e => e.membershipId)));
+    const cotisantIds = Array.from(new Set(
+      entries.filter(e => e.type === TransactionType.COTISATION).map(e => e.membershipId)
+    ));
+
+    return { participantIds, cotisantIds, entriesStats: entries };
+  }
+
   async getSessionsByFiscalYear(fiscalYearId: string) {
     return this.sessionsRepository.findByFiscalYear(fiscalYearId);
   }
@@ -451,7 +479,7 @@ export class SessionsService {
   }
 
   /** OPEN → REVIEWING */
-  async closeForReview(sessionId: string, actorId: string) {
+  async closeForReview(sessionId: string, _actorId: string) {
     const session = await this.sessionsRepository.findById(sessionId);
     if (!session) throw new NotFoundException(`Session ${sessionId} not found`);
 

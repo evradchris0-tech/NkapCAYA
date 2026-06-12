@@ -18,6 +18,7 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  Download,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -477,17 +478,27 @@ export default function ImportCAYABASE() {
 
       {/* Checklist des feuilles attendues */}
       <div className="rounded-xl bg-white border border-slate-200 p-4">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-          Feuilles attendues dans le fichier CAYABASE
-        </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            Format attendu du fichier
+          </p>
+          <a
+            href="/templates/caya_import_template.xlsx"
+            download="Modele_Import_CAYABASE.xlsx"
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Télécharger le Modèle
+          </a>
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {[
+            { name: 'membres_infos', desc: 'Téléphones (Obligatoire)', required: true },
             { name: 'ep+int', desc: 'Épargne + intérêts', required: true },
+            { name: 'insc+sec', desc: 'Inscription + Secours', required: true },
             { name: 'prets', desc: 'Prêts accordés', required: false },
             { name: 'Rem', desc: 'Remboursements', required: false },
             { name: 'intérêts', desc: 'Intérêts sur prêts', required: false },
-            { name: 'insc+sec', desc: 'Inscription + Secours', required: true },
-            { name: 'Oct.25 …', desc: 'Feuilles session mensuelle', required: false },
           ].map((sheet) => (
             <div key={sheet.name} className="flex items-start gap-2 text-xs p-2.5 rounded-lg bg-slate-50">
               <span className={`mt-0.5 font-bold ${sheet.required ? 'text-emerald-600' : 'text-slate-400'}`}>
@@ -500,8 +511,9 @@ export default function ImportCAYABASE() {
             </div>
           ))}
         </div>
-        <p className="text-xs text-slate-400 mt-3">
-          <span className="text-emerald-600 font-semibold">✓ Obligatoire</span> — les autres feuilles enrichissent l&apos;import mais ne sont pas bloquantes.
+        <p className="text-xs text-slate-500 mt-3 flex flex-col gap-1">
+          <span><span className="text-emerald-600 font-semibold">✓ Obligatoire</span> — les autres feuilles enrichissent l&apos;import mais ne sont pas bloquantes.</span>
+          <span className="text-amber-600 font-medium mt-1 bg-amber-50 inline-block px-2 py-1 rounded">⚠️ Attention : Sans l'onglet "membres_infos" correctement rempli avec les numéros de téléphone, l'import sera bloqué.</span>
         </p>
       </div>
     </div>

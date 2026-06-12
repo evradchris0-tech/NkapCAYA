@@ -60,8 +60,12 @@ export default function ProfilePage() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      // Invalider le cache me pour forcer rechargement
-      queryClient.invalidateQueries({ queryKey: ['me'] });
+      // Déconnecter l'utilisateur (le refresh token a été révoqué côté serveur)
+      setTimeout(() => {
+        localStorage.removeItem('caya_access_token');
+        localStorage.removeItem('caya_refresh_token');
+        window.location.href = '/login';
+      }, 2000);
     } catch {
       setPwError('Mot de passe actuel incorrect ou erreur serveur.');
     } finally {
@@ -184,7 +188,7 @@ export default function ProfilePage() {
           )}
           {pwSuccess && (
             <p className="text-sm text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg">
-              Mot de passe modifié avec succès.
+              Mot de passe modifié avec succès. Vous allez être déconnecté...
             </p>
           )}
 

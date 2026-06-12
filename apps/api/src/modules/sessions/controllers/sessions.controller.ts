@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -28,9 +29,25 @@ export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
   @Get(':id')
-  @ApiOperation({ summary: 'Détail d\'une session + entries' })
+  @ApiOperation({ summary: 'Détail d\'une session (sans les entrées)' })
   getSession(@Param('id') id: string) {
     return this.sessionsService.getSession(id);
+  }
+
+  @Get(':id/entries')
+  @ApiOperation({ summary: 'Liste paginée des entrées d\'une session' })
+  getSessionEntries(
+    @Param('id') id: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.sessionsService.getSessionEntries(id, page ? parseInt(page) : 1, limit ? parseInt(limit) : 50);
+  }
+
+  @Get(':id/stats')
+  @ApiOperation({ summary: 'Statistiques minimales de la session' })
+  getSessionStats(@Param('id') id: string) {
+    return this.sessionsService.getSessionStats(id);
   }
 
   @Post(':id/open')

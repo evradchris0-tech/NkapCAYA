@@ -62,8 +62,10 @@ export default function RescueFundPage() {
       await recordEvent.mutateAsync(data);
       reset();
       setShowForm(false);
-    } catch {
-      setError('root', { message: 'Erreur lors de l\'enregistrement du décaissement.' });
+    } catch (error: any) {
+      const errRes = error?.response?.data?.message;
+      const msg = Array.isArray(errRes) ? errRes[0] : errRes;
+      setError('root', { message: msg || 'Erreur lors de l\'enregistrement du décaissement.' });
     }
   };
 

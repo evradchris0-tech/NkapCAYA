@@ -61,15 +61,12 @@ export class RescueFundService {
         );
       }
 
-      // Edge case : si la caisse est insuffisante, on donne tout ce qui reste
-      const actualAmount = Decimal.min(configuredAmount, currentBalance);
-
       const event = await this.rescueFundRepository.createEvent(
         {
           ledgerId: ledger.id,
           beneficiaryId: dto.beneficiaryMembershipId,
           eventType: dto.eventType,
-          amount: actualAmount.toFixed(2),
+          amount: configuredAmount.toFixed(2),
           authorizedById: actorId,
           eventDate: new Date(dto.eventDate),
           description: dto.description ?? null,
@@ -89,7 +86,7 @@ export class RescueFundService {
         tx,
       );
       if (position) {
-        const newPositionBalance = new Decimal(position.balance.toString()).minus(actualAmount);
+        const newPositionBalance = new Decimal(position.balance.toString()).minus(configuredAmount);
         const targetPerMember = new Decimal(ledger.targetPerMember.toString());
         const refillDebt = Decimal.max(
           new Decimal(0),

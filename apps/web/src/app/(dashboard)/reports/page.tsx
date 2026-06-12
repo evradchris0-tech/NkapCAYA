@@ -37,6 +37,7 @@ const REPORT_CONFIG: Record<ReportType, { label: string; desc: string; color: st
 export default function ReportsPage() {
   const { selectedFyId, selectedFy, fiscalYears, setSelectedFyId } = useFiscalYearContext();
   const [loading, setLoading] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
 
   const { data: savingsData }       = useFiscalYearSavings(selectedFyId);
   const { data: sessionsData }      = useSessionsByFiscalYear(selectedFyId);
@@ -129,126 +130,184 @@ export default function ReportsPage() {
         breadcrumbs={[{ label: 'Accueil', href: '/' }, { label: 'Rapports' }]}
       />
 
-      {/* Sélecteur d'exercice */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-card">
-        <label className="block text-sm font-medium text-slate-700 mb-2">
-          Exercice fiscal cible
-        </label>
-        <Select
-          value={selectedFyId}
-          onChange={(e) => setSelectedFyId(e.target.value)}
-          className="w-full max-w-xs"
+      {/* TABS */}
+      <div className="flex gap-6 border-b border-slate-200">
+        <button
+          onClick={() => setActiveTab('export')}
+          className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${
+            activeTab === 'export'
+              ? 'border-primary-600 text-primary-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+          }`}
         >
-          {fiscalYears?.map((fy) => (
-            <option key={fy.id} value={fy.id}>
-              {fy.label} — {fy.status}
-            </option>
-          ))}
-        </Select>
-        {selectedFy && (
-          <p className="text-xs text-slate-400 mt-1.5">
-            {new Date(selectedFy.startDate).toLocaleDateString('fr-FR')} →{' '}
-            {new Date(selectedFy.endDate).toLocaleDateString('fr-FR')}
-          </p>
-        )}
+          Exports & Rapports
+        </button>
+        <button
+          onClick={() => setActiveTab('import')}
+          className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${
+            activeTab === 'import'
+              ? 'border-primary-600 text-primary-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+          }`}
+        >
+          Modèle & Importation
+        </button>
       </div>
 
-      {/* Cards d'export */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {(Object.keys(REPORT_CONFIG) as ReportType[]).map((type) => {
-          const cfg = REPORT_CONFIG[type];
-          const available = dataAvailability[type];
+      {activeTab === 'export' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Sélecteur d'exercice */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-card">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Exercice fiscal cible
+            </label>
+            <Select
+              value={selectedFyId}
+              onChange={(e) => setSelectedFyId(e.target.value)}
+              className="w-full max-w-xs"
+            >
+              {fiscalYears?.map((fy) => (
+                <option key={fy.id} value={fy.id}>
+                  {fy.label} — {fy.status}
+                </option>
+              ))}
+            </Select>
+            {selectedFy && (
+              <p className="text-xs text-slate-400 mt-1.5">
+                {new Date(selectedFy.startDate).toLocaleDateString('fr-FR')} →{' '}
+                {new Date(selectedFy.endDate).toLocaleDateString('fr-FR')}
+              </p>
+            )}
+          </div>
 
-          return (
-            <div key={type} className="bg-white rounded-xl border border-slate-200 shadow-card p-5 flex flex-col gap-4">
-              <div className="flex items-start gap-3">
-                <div className={`p-2.5 rounded-xl bg-${cfg.color}-50 shrink-0`}>
-                  <Download className={`h-5 w-5 text-${cfg.color}-600`} strokeWidth={2} />
+          {/* Cards d'export */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(Object.keys(REPORT_CONFIG) as ReportType[]).map((type) => {
+              const cfg = REPORT_CONFIG[type];
+              const available = dataAvailability[type];
+
+              return (
+                <div key={type} className="bg-white rounded-xl border border-slate-200 shadow-card p-5 flex flex-col gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2.5 rounded-xl bg-${cfg.color}-50 shrink-0`}>
+                      <Download className={`h-5 w-5 text-${cfg.color}-600`} strokeWidth={2} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-800">{cfg.label}</h3>
+                      <p className="text-xs text-slate-400 mt-0.5">{cfg.desc}</p>
+                    </div>
+                  </div>
+
+                  {/* Disponibilité des données */}
+                  <div className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg ${available ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-400'}`}>
+                    {available ? <Check className="h-3.5 w-3.5" /> : <span className="w-3.5 h-3.5" />}
+                    {available ? 'Données disponibles' : 'Aucune donnée pour cet exercice'}
+                  </div>
+
+                  <div className="flex gap-2 mt-auto">
+                    {!cfg.pdfOnly && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="flex-1 flex items-center justify-center gap-1.5"
+                        isLoading={loading === `${type}-excel`}
+                        onClick={() => handleExport(type, 'excel')}
+                      >
+                        <FileSpreadsheet className="h-3.5 w-3.5" />
+                        Excel
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className={`flex items-center justify-center gap-1.5 ${cfg.pdfOnly ? 'flex-1' : ''}`}
+                      isLoading={loading === `${type}-pdf`}
+                      onClick={() => handleExport(type, 'pdf')}
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      PDF
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-slate-800">{cfg.label}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">{cfg.desc}</p>
-                </div>
-              </div>
+              );
+            })}
+          </div>
 
-              {/* Disponibilité des données */}
-              <div className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg ${available ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-400'}`}>
-                {available ? <Check className="h-3.5 w-3.5" /> : <span className="w-3.5 h-3.5" />}
-                {available ? 'Données disponibles' : 'Aucune donnée pour cet exercice'}
+          {/* Export CAYABASE complet */}
+          <div className="bg-gradient-to-br from-primary-50 to-primary-50 rounded-xl border-2 border-primary-200 shadow-card p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-primary-100 shrink-0">
+                <BookOpen className="h-6 w-6 text-primary-600" strokeWidth={2} />
               </div>
-
-              <div className="flex gap-2 mt-auto">
-                {!cfg.pdfOnly && (
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-primary-900">Export exercice complet — CAYABASE</h3>
+                <p className="text-sm text-primary-600 mt-1">
+                  Génère un fichier Excel multi-feuilles au format CAYABASE : épargne + intérêts, prêts,
+                  remboursements, intérêts sur prêts, inscriptions + secours, et le détail de chaque session mensuelle.
+                </p>
+                <div className="flex items-center gap-3 mt-4">
                   <Button
-                    size="sm"
-                    variant="secondary"
-                    className="flex-1 flex items-center justify-center gap-1.5"
-                    isLoading={loading === `${type}-excel`}
-                    onClick={() => handleExport(type, 'excel')}
+                    variant="primary"
+                    className="flex items-center gap-2"
+                    isLoading={loading === 'cayabase'}
+                    onClick={handleExportCAYABASE}
                   >
-                    <FileSpreadsheet className="h-3.5 w-3.5" />
-                    Excel
+                    <FileSpreadsheet className="h-4 w-4" />
+                    Exporter l&apos;exercice complet
                   </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className={`flex items-center justify-center gap-1.5 ${cfg.pdfOnly ? 'flex-1' : ''}`}
-                  isLoading={loading === `${type}-pdf`}
-                  onClick={() => handleExport(type, 'pdf')}
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                  PDF
-                </Button>
+                  {selectedFy && (
+                    <span className="text-xs text-primary-500">
+                      {selectedFy.label} — {(memberships?.length ?? 0)} membres inscrits
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Export CAYABASE complet */}
-      <div className="bg-gradient-to-br from-primary-50 to-primary-50 rounded-xl border-2 border-primary-200 shadow-card p-6">
-        <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-primary-100 shrink-0">
-            <BookOpen className="h-6 w-6 text-primary-600" strokeWidth={2} />
           </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-primary-900">Export exercice complet — CAYABASE</h3>
-            <p className="text-sm text-primary-600 mt-1">
-              Génère un fichier Excel multi-feuilles au format CAYABASE : épargne + intérêts, prêts,
-              remboursements, intérêts sur prêts, inscriptions + secours, et le détail de chaque session mensuelle.
-            </p>
-            <div className="flex items-center gap-3 mt-4">
-              <Button
-                variant="primary"
-                className="flex items-center gap-2"
-                isLoading={loading === 'cayabase'}
-                onClick={handleExportCAYABASE}
-              >
-                <FileSpreadsheet className="h-4 w-4" />
-                Exporter l&apos;exercice complet
-              </Button>
-              {selectedFy && (
-                <span className="text-xs text-primary-500">
-                  {selectedFy.label} — {(memberships?.length ?? 0)} membres inscrits
-                </span>
-              )}
+          
+          <div className="bg-primary-50 border border-primary-100 rounded-xl p-4 text-sm text-primary-700">
+            Les exports contiennent toutes les données de l&apos;exercice sélectionné. Les fichiers sont générés directement dans votre navigateur — aucune donnée n&apos;est envoyée vers un serveur externe.
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'import' && (
+        <div className="space-y-6 animate-fade-in">
+          
+          {/* Card Modèle Vierge */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-card p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-indigo-50 shrink-0">
+                <FileSpreadsheet className="h-6 w-6 text-indigo-600" strokeWidth={2} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-slate-800">Télécharger le Modèle CAYABASE vierge</h3>
+                <p className="text-sm text-slate-500 mt-1 mb-4">
+                  Ce modèle Excel contient toutes les feuilles nécessaires pour la tenue comptable (Épargne, Prêts, Remboursements, Intérêts) et une nouvelle feuille <strong>membres_infos</strong> pour y saisir les informations de contact.
+                </p>
+                <a href="/CAYABASE_TEMPLATE.xlsx" download>
+                  <Button variant="outline" className="flex items-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                    <Download className="h-4 w-4" />
+                    Télécharger le modèle (.xlsx)
+                  </Button>
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Import CAYABASE — composant dédié */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-base font-bold text-slate-800">Importer un exercice depuis l&apos;historique papier</h2>
-        </div>
-        <ImportCAYABASE />
-      </div>
+          {/* Import CAYABASE */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-base font-bold text-slate-800">Importer un exercice (CAYABASE rempli)</h2>
+            </div>
+            <ImportCAYABASE />
+          </div>
 
-      <div className="bg-primary-50 border border-primary-100 rounded-xl p-4 text-sm text-primary-700">
-        Les exports contiennent toutes les données de l&apos;exercice sélectionné. Les fichiers sont générés directement dans votre navigateur — aucune donnée n&apos;est envoyée vers un serveur externe.
-      </div>
+          <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-amber-700">
+            L&apos;importation remplacera et initialisera de nouveaux membres et leurs profils si ceux-ci n&apos;existent pas. Assurez-vous d&apos;avoir bien rempli l&apos;onglet <strong>membres_infos</strong> pour capturer leurs contacts.
+          </div>
+        </div>
+      )}
     </div>
   );
 }

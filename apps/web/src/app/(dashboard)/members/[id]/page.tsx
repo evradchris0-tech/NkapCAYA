@@ -79,7 +79,7 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
 
   // Trouver le membership de l'exercice actif
   const activeMembership = Array.isArray(memberships)
-    ? memberships.find((m: any) => m.fiscalYearId === activeFy?.id)
+    ? memberships.find((m) => m.fiscalYearId === activeFy?.id)
     : undefined;
 
   // Épargne + prêts du membership actif
@@ -118,7 +118,7 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
 
   const handleExportPdf = () => {
     if (!member) return;
-    const activeLoan = loans?.find((l: any) => l.status === 'ACTIVE' || l.status === 'PARTIALLY_REPAID');
+    const activeLoan = loans?.find((l) => l.status === 'ACTIVE' || l.status === 'PARTIALLY_REPAID');
     const enrollments = Array.isArray(memberships)
       ? (memberships as any[]).map((m) => {
           const fy = fiscalYears?.find((f) => f.id === m.fiscalYearId);
@@ -230,13 +230,13 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
             {
               label: 'Prêts actifs',
               value: (() => {
-                const active = loans?.find((l: any) => l.status === 'ACTIVE' || l.status === 'PARTIALLY_REPAID');
+                const active = loans?.find((l) => l.status === 'ACTIVE' || l.status === 'PARTIALLY_REPAID');
                 return active
                   ? `${parseFloat(active.outstandingBalance).toLocaleString('fr-FR')} XAF`
                   : '—';
               })(),
               sub: (() => {
-                const active = loans?.find((l: any) => l.status === 'ACTIVE' || l.status === 'PARTIALLY_REPAID');
+                const active = loans?.find((l) => l.status === 'ACTIVE' || l.status === 'PARTIALLY_REPAID');
                 return active ? `sur ${parseFloat(active.principalAmount).toLocaleString('fr-FR')} XAF` : '';
               })(),
               color: 'text-emerald-700',
@@ -361,7 +361,7 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
             <p className="text-sm text-slate-400">Aucun prêt pour cet exercice.</p>
           ) : (
             <div className="space-y-2">
-              {loans.map((loan: any) => {
+              {loans.map((loan) => {
                 const pct = parseFloat(loan.principalAmount) > 0
                   ? Math.min((parseFloat(loan.totalRepaid) / parseFloat(loan.principalAmount)) * 100, 100)
                   : 0;

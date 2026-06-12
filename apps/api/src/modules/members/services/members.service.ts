@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '@database/prisma.service';
@@ -12,6 +13,7 @@ import { EmergencyContactDto } from '../dto/emergency-contact.dto';
 import { NotificationsService } from '../../notifications/services/notifications.service';
 import { FilterMembersDto } from '../dto/filter-members.dto';
 import { PaginatedResult, paginate } from '@common/interfaces/paginated-result.interface';
+import { BureauRole } from '@prisma/client';
 
 
 export interface CreateMemberResult {
@@ -255,10 +257,13 @@ export class MembersService {
   }
 
   async changeRole(id: string, role: string): Promise<void> {
+    if (!Object.values(BureauRole).includes(role as BureauRole)) {
+      throw new BadRequestException(`Rôle invalide : ${role}`);
+    }
     const profile = await this.findById(id);
     await this.prisma.user.update({
       where: { id: profile.user.id },
-      data: { role: role as import('@prisma/client').BureauRole },
+      data: { role: role as BureauRole },
     });
   }
 

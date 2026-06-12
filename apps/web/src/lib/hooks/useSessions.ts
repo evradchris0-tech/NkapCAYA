@@ -31,6 +31,24 @@ export function useSession(id: string) {
   });
 }
 
+export function useSessionEntries(id: string, page: number, limit: number) {
+  return useQuery({
+    queryKey: [...SESSIONS_KEY, id, 'entries', page, limit],
+    queryFn: () => sessionsApi.getEntries(id, page, limit),
+    enabled: Boolean(id),
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useSessionStats(id: string) {
+  return useQuery({
+    queryKey: [...SESSIONS_KEY, id, 'stats'],
+    queryFn: () => sessionsApi.getStats(id),
+    enabled: Boolean(id),
+    staleTime: 30 * 1000,
+  });
+}
+
 export function useOpenSession() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -44,6 +44,7 @@ describe('AuthService', () => {
             findByIdentifier: jest.fn(),
             findById: jest.fn(),
             updateLastLogin: jest.fn(),
+            updatePassword: jest.fn(),
             exists: jest.fn(),
           },
         },
@@ -254,6 +255,38 @@ describe('AuthService', () => {
       userRepo.findById.mockResolvedValue(null);
 
       await expect(service.getMe('unknown')).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  // ── T11 — Change Password ───────────────────────────────
+
+  describe('T11 — changePassword', () => {
+    it('should update password and revoke all tokens if current password is valid', async () => {
+      userRepo.findById.mockResolvedValue(mockUser as unknown as User);
+      jest.spyOn(bcrypt, 'compare').mockImplementation(async () => true);
+      jest.spyOn(bcrypt, 'hash').mockImplementation(async () => 'new-hashed-pwd');
+      userRepo.updatePassword.mockResolvedValue(undefined as any);
+      refreshTokenRepo.revokeAllForUser.mockResolvedValue(undefined);
+
+      await service.changePassword(mockUser.id, {
+        currentPassword: 'old-password',
+        newPassword: 'new-password123',
+      });
+
+      expect(bcrypt.compare).toHaveBeenCalledWith('old-password', mockUser.passwordHash);
+      expect(bcrypt.hash).toHaveBeenCalledWith('new-password123', 12);
+      expect(userRepo.updatePassword).toHaveBeenCalledWith(mockUser.id, 'new-hashed-pwd');
+      expect(refreshTokenRepo.revokeAllForUser).toHaveBeenCalledWith(mockUser.id);
+    });
+
+    it('should throw UnauthorizedException if current password is wrong', async () => {
+      userRepo.findById.mockResolvedValue(mockUser as unknown as User);
+      jest.spyOn(bcrypt, 'compare').mockImplementation(async () => false);
+
+      await expect(service.changePassword(mockUser.id, {
+        currentPassword: 'wrong-password',
+        newPassword: 'new-password123',
+      })).rejects.toThrow(UnauthorizedException);
     });
   });
 });

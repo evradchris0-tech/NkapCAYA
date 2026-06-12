@@ -130,6 +130,9 @@ export class AuthService {
     }
     const newHash = await bcrypt.hash(dto.newPassword, 12);
     await this.userRepo.updatePassword(userId, newHash);
+
+    // Révoquer tous les refresh tokens pour déconnecter les autres appareils
+    await this.refreshTokenRepo.revokeAllForUser(userId);
   }
 
   private async generateTokens(user: User): Promise<{ access: string; refresh: string }> {

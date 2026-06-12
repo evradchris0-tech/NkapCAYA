@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MemberProfile, EmergencyContact, Membership, Prisma } from '@prisma/client';
+import { MemberProfile, EmergencyContact, Membership, Prisma, BureauRole } from '@prisma/client';
 import { PrismaService } from '@database/prisma.service';
 
 export type MemberProfileWithUser = MemberProfile & {
@@ -35,9 +35,8 @@ export class MembersRepository {
       ];
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userFilters: any = {};
-    if (role) userFilters.role = role;
+    const userFilters: Prisma.UserWhereInput = {};
+    if (role) userFilters.role = role as BureauRole;
     if (isActive !== undefined) userFilters.isActive = isActive;
 
     if (Object.keys(userFilters).length > 0) where.user = userFilters;
