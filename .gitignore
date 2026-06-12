@@ -61,3 +61,8 @@ desktop.ini
 
 .vercel
 .env*.local
+
+# ── Local Deploy / Exports ───────────────────────────────────────────────────
+_deploy/
+*.xlsx
+!apps/web/public/*.xlsx
