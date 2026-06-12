@@ -12,6 +12,19 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/* ── Nouveaux membres (Template) ── */
+
+export class ImportNewMemberInfo {
+  @ApiProperty() @IsString()
+  originalName: string;
+
+  @ApiPropertyOptional() @IsOptional() @IsString()
+  phone?: string;
+
+  @ApiPropertyOptional() @IsOptional() @IsString()
+  neighborhood?: string;
+}
+
 /* ── Per-member row in a session sheet ── */
 
 export class ImportSessionEntryRow {
@@ -219,6 +232,13 @@ export class ImportFiscalYearDto {
   @ValidateNested({ each: true })
   @Type(() => ImportSpecialAccountRow)
   specialAccounts?: ImportSpecialAccountRow[];
+
+  @ApiPropertyOptional({ type: [ImportNewMemberInfo] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ImportNewMemberInfo)
+  membersInfo?: ImportNewMemberInfo[];
 
   @ApiPropertyOptional({
     description:

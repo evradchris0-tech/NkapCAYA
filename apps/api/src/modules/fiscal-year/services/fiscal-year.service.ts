@@ -12,7 +12,7 @@ import { CreateFiscalYearDto } from '../dto/create-fiscal-year.dto';
 import { UpdateFiscalYearDto } from '../dto/update-fiscal-year.dto';
 import { AddMemberDto } from '../dto/add-member.dto';
 import { UpdateMembershipDto } from '../dto/update-membership.dto';
-import { FiscalYearStatus, EnrollmentType } from '@prisma/client';
+import { FiscalYearStatus, EnrollmentType, SessionStatus } from '@prisma/client';
 import { Decimal } from 'decimal.js';
 import * as dayjs from 'dayjs';
 import { randomUUID } from 'crypto';
@@ -169,7 +169,7 @@ export class FiscalYearService {
 
     // Vérifier que toutes les sessions sont clôturées
     const openSessions = await this.prisma.monthlySession.count({
-      where: { fiscalYearId: id, status: { in: ['OPEN', 'REVIEWING'] as any } },
+      where: { fiscalYearId: id, status: { in: [SessionStatus.OPEN, SessionStatus.REVIEWING] } },
     });
     if (openSessions > 0) {
       throw new ConflictException(

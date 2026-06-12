@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
+import { Prisma } from '@prisma/client';
 import { ReportsRepository } from '../repositories/reports.repository';
 import { ImportFiscalYearDto } from '../dto/import-fiscal-year.dto';
 import {
@@ -155,43 +156,58 @@ export class ReportsService {
       async (tx) => {
         // 2a. Create missing members
         let seqCounter = 0;
+        const usersData: Prisma.UserCreateManyInput[] = [];
+        const profilesData: Prisma.MemberProfileCreateManyInput[] = [];
+
         for (const name of membersToCreate) {
           seqCounter++;
           const parts = name.trim().split(/\s+/);
           const lastName = parts[0] || 'INCONNU';
           const firstName = parts.slice(1).join(' ') || 'IMPORT';
 
-          // Identifiants uniques : timestamp + index + random pour éviter les collisions
-          const uniqueSuffix = `${Date.now()}${seqCounter}${Math.random().toString(36).slice(2, 6)}`;
-          const phone = `+2376IMP${uniqueSuffix.slice(-8).padStart(8, '0')}`;
-          const passwordHash = await bcrypt.hash(`Caya@Import${uniqueSuffix}`, 10);
-          const memberCode = `IMP${uniqueSuffix.slice(-6).toUpperCase()}`;
+          // 1. Recherche des infos dans le DTO `membersInfo`
+          const normName = norm(name);
+          const info = dto.membersInfo?.find(m => norm(m.originalName) === normName);
 
-          const user = await tx.user.create({
-            data: {
-              id: randomUUID(),
-              username: phone,
-              phone,
-              passwordHash,
-              role: 'MEMBRE',
-              isActive: true,
-            },
+          if (!info || !info.phone) {
+            throw new BadRequestException(`Impossible d'importer: Le numéro de téléphone est manquant pour le membre "${name}". Veuillez le renseigner dans la feuille 'membres_infos' du modèle.`);
+          }
+
+          const phone = info.phone;
+          const neighborhood = info.neighborhood || 'Non défini';
+          
+          const passwordHash = await bcrypt.hash(`Caya2026!`, 10);
+          const memberCode = `IMP${Date.now().toString().slice(-6)}${seqCounter}`;
+
+          const userId = randomUUID();
+          const profileId = randomUUID();
+
+          usersData.push({
+            id: userId,
+            username: phone,
+            phone,
+            passwordHash,
+            role: 'MEMBRE',
+            isActive: true,
           });
 
-          const profile = await tx.memberProfile.create({
-            data: {
-              id: randomUUID(),
-              userId: user.id,
-              memberCode,
-              firstName,
-              lastName,
-              phone1: phone,
-              neighborhood: 'Importé',
-            },
+          profilesData.push({
+            id: profileId,
+            userId,
+            memberCode,
+            firstName,
+            lastName,
+            phone1: phone,
+            neighborhood,
           });
 
           const key = norm(name);
-          resolvedMembers.set(key, { profileId: profile.id, userId: user.id });
+          resolvedMembers.set(key, { profileId, userId });
+        }
+
+        if (usersData.length > 0) {
+          await tx.user.createMany({ data: usersData });
+          await tx.memberProfile.createMany({ data: profilesData });
         }
 
         // 2b. Create FiscalYear
@@ -239,31 +255,35 @@ export class ReportsService {
         // Archive : toutes CLOSED. "En cours" : mois ≤ dernier saisi CLOSED,
         // le mois suivant OPEN (reprise de la saisie), le reste DRAFT.
         const sessionMap = new Map<number, string>(); // sessionNumber → sessionId
+        const sessionsData: Prisma.MonthlySessionCreateManyInput[] = [];
         for (let m = 1; m <= 12; m++) {
           const sessionId = randomUUID();
           const meetingDate = monthDate(startDate, m - 1);
           const sessStatus = keepOpen ? sessionStatusForOngoing(m, lastRecorded) : 'CLOSED';
           const isClosed = sessStatus === 'CLOSED';
           const isDraft = sessStatus === 'DRAFT';
-          await tx.monthlySession.create({
-            data: {
-              id: sessionId,
-              fiscalYearId: fyId,
-              sessionNumber: m,
-              meetingDate,
-              status: sessStatus,
-              openedAt: isDraft ? null : now,
-              openedById: isDraft ? null : actorId,
-              closedAt: isClosed ? now : null,
-              closedById: isClosed ? actorId : null,
-            },
+          
+          sessionsData.push({
+            id: sessionId,
+            fiscalYearId: fyId,
+            sessionNumber: m,
+            meetingDate,
+            status: sessStatus,
+            openedAt: isDraft ? null : now,
+            openedById: isDraft ? null : actorId,
+            closedAt: isClosed ? now : null,
+            closedById: isClosed ? actorId : null,
           });
           sessionMap.set(m, sessionId);
         }
+        await tx.monthlySession.createMany({ data: sessionsData });
 
         // 2e. Create Memberships + ShareCommitments
         const shareUnit = Number(tontineConfig.shareUnitAmount);
         const membershipMap = new Map<string, string>(); // normName → membershipId
+
+        const membershipsData: Prisma.MembershipCreateManyInput[] = [];
+        const shareCommitmentsData: Prisma.ShareCommitmentCreateManyInput[] = [];
 
         for (const name of memberNames) {
           const key = norm(name);
@@ -290,40 +310,44 @@ export class ReportsService {
             }
           }
 
-          await tx.membership.create({
-            data: {
-              id: membershipId,
-              profileId: resolved.profileId,
-              fiscalYearId: fyId,
-              status: 'ACTIVE',
-              joinedAt: startDate,
-              joinedAtMonth: 1,
-              enrollmentType: 'NEW',
-              registrationFeePaid: true,
-              rescueContribPaid: true,
-              initialSavingsPaid: true,
-            },
+          membershipsData.push({
+            id: membershipId,
+            profileId: resolved.profileId,
+            fiscalYearId: fyId,
+            status: 'ACTIVE',
+            joinedAt: startDate,
+            joinedAtMonth: 1,
+            enrollmentType: 'NEW',
+            registrationFeePaid: true,
+            rescueContribPaid: true,
+            initialSavingsPaid: true,
           });
 
-          await tx.shareCommitment.create({
-            data: {
-              id: randomUUID(),
-              membershipId,
-              sharesCount,
-              monthlyAmount: sharesCount * shareUnit,
-              isLocked: true,
-              lockedAt: now,
-              lockedById: actorId,
-            },
+          shareCommitmentsData.push({
+            id: randomUUID(),
+            membershipId,
+            sharesCount,
+            monthlyAmount: sharesCount * shareUnit,
+            isLocked: true,
+            lockedAt: now,
+            lockedById: actorId,
           });
 
           membershipMap.set(key, membershipId);
+        }
+
+        if (membershipsData.length > 0) {
+          await tx.membership.createMany({ data: membershipsData });
+          await tx.shareCommitment.createMany({ data: shareCommitmentsData });
         }
 
         // Helper: get membershipId by name
         const getMsId = (name: string): string | undefined => membershipMap.get(norm(name));
 
         // 2f. Create SavingsLedger + SavingsEntry per member
+        const savingsLedgersData: Prisma.SavingsLedgerCreateManyInput[] = [];
+        const savingsEntriesData: Prisma.SavingsEntryCreateManyInput[] = [];
+        
         for (const sav of dto.savings) {
           const msId = getMsId(sav.memberName);
           if (!msId) continue;
@@ -332,14 +356,12 @@ export class ReportsService {
           const totalDep = num(sav.totalDeposit);
           const totalInt = num(sav.totalInterest);
 
-          await tx.savingsLedger.create({
-            data: {
-              id: ledgerId,
-              membershipId: msId,
-              balance: totalDep + totalInt,
-              principalBalance: totalDep,
-              totalInterestReceived: totalInt,
-            },
+          savingsLedgersData.push({
+            id: ledgerId,
+            membershipId: msId,
+            balance: totalDep + totalInt,
+            principalBalance: totalDep,
+            totalInterestReceived: totalInt,
           });
 
           // Deposit entries — triées par mois pour garantir la cohérence de balanceAfter
@@ -351,16 +373,14 @@ export class ReportsService {
             const amt = num(amount);
             if (amt <= 0) continue;
             runningBalance += amt;
-            await tx.savingsEntry.create({
-              data: {
-                id: randomUUID(),
-                ledgerId,
-                sessionId: sessionMap.get(m),
-                month: m,
-                amount: amt,
-                type: 'DEPOSIT',
-                balanceAfter: runningBalance,
-              },
+            savingsEntriesData.push({
+              id: randomUUID(),
+              ledgerId,
+              sessionId: sessionMap.get(m) as string,
+              month: m,
+              amount: amt,
+              type: 'DEPOSIT',
+              balanceAfter: runningBalance,
             });
           }
 
@@ -372,18 +392,21 @@ export class ReportsService {
             const amt = num(amount);
             if (amt <= 0) continue;
             runningBalance += amt;
-            await tx.savingsEntry.create({
-              data: {
-                id: randomUUID(),
-                ledgerId,
-                sessionId: sessionMap.get(m),
-                month: m,
-                amount: amt,
-                type: 'INTEREST_CREDIT',
-                balanceAfter: runningBalance,
-              },
+            savingsEntriesData.push({
+              id: randomUUID(),
+              ledgerId,
+              sessionId: sessionMap.get(m) as string,
+              month: m,
+              amount: amt,
+              type: 'INTEREST_CREDIT',
+              balanceAfter: runningBalance,
             });
           }
+        }
+
+        if (savingsLedgersData.length > 0) {
+          await tx.savingsLedger.createMany({ data: savingsLedgersData });
+          await tx.savingsEntry.createMany({ data: savingsEntriesData });
         }
 
         // 2g. Create RescueFundLedger + Positions
@@ -404,6 +427,8 @@ export class ReportsService {
           },
         });
 
+        const rescuePositionsData: Prisma.RescueFundPositionCreateManyInput[] = [];
+
         for (const rf of rescueData) {
           const msId = getMsId(rf.memberName);
           if (!msId) continue;
@@ -412,15 +437,17 @@ export class ReportsService {
           const paidAmount = num(rf.inscription) + totalContrib;
           rescueTotalBalance += paidAmount;
 
-          await tx.rescueFundPosition.create({
-            data: {
-              id: randomUUID(),
-              membershipId: msId,
-              ledgerId: rescueLedgerId,
-              paidAmount,
-              balance: paidAmount,
-            },
+          rescuePositionsData.push({
+            id: randomUUID(),
+            membershipId: msId,
+            ledgerId: rescueLedgerId,
+            paidAmount,
+            balance: paidAmount,
           });
+        }
+        
+        if (rescuePositionsData.length > 0) {
+          await tx.rescueFundPosition.createMany({ data: rescuePositionsData });
         }
 
         // Update ledger total
@@ -459,6 +486,8 @@ export class ReportsService {
             totalEpargne: 0, totalProjet: 0, totalAutres: 0,
           });
         }
+
+        const sessionEntriesData: Prisma.SessionEntryCreateManyInput[] = [];
 
         for (const sess of dto.sessions) {
           const sessionId = sessionMap.get(sess.sessionNumber);
@@ -499,17 +528,15 @@ export class ReportsService {
             for (const col of cols) {
               if (col.amount <= 0) continue;
 
-              await tx.sessionEntry.create({
-                data: {
-                  id: randomUUID(),
-                  reference: makeRef(fyLbl, sess.sessionNumber, col.txType, nextSeq(col.txType, sess.sessionNumber)),
-                  sessionId,
-                  membershipId: msId,
-                  type: col.type as any,
-                  amount: col.amount,
-                  isImported: true,
-                  recordedById: actorId,
-                },
+              sessionEntriesData.push({
+                id: randomUUID(),
+                reference: makeRef(fyLbl, sess.sessionNumber, col.txType, nextSeq(col.txType, sess.sessionNumber)),
+                sessionId,
+                membershipId: msId,
+                type: col.type as any,
+                amount: col.amount,
+                isImported: true,
+                recordedById: actorId,
               });
 
               // Accumulate totals
@@ -521,7 +548,12 @@ export class ReportsService {
           }
         }
 
+        if (sessionEntriesData.length > 0) {
+          await tx.sessionEntry.createMany({ data: sessionEntriesData });
+        }
+
         // Update session totals
+        // We still need to loop for update, but it's only 12 queries.
         for (const [sessionId, totals] of sessionTotals) {
           await tx.monthlySession.update({
             where: { id: sessionId },
@@ -541,6 +573,10 @@ export class ReportsService {
 
         // 2i. Create LoanAccount per loan detected
         // Group disbursements by member and month
+        const loanAccountsData: Prisma.LoanAccountCreateManyInput[] = [];
+        const loanAccrualsData: Prisma.MonthlyLoanAccrualCreateManyInput[] = [];
+        const loanRepaymentsData: Prisma.LoanRepaymentCreateManyInput[] = [];
+
         for (const loanRow of dto.loans) {
           const msId = getMsId(loanRow.memberName);
           if (!msId) continue;
@@ -558,25 +594,22 @@ export class ReportsService {
           const firstMonth = Math.min(...disbursementMonths.map((d) => d.month));
           const outstanding = num(loanRow.outstanding);
 
-          await tx.loanAccount.create({
-            data: {
-              id: loanId,
-              membershipId: msId,
-              fiscalYearId: fyId,
-              principalAmount: totalDisbursed,
-              monthlyRate: tontineConfig.loanMonthlyRate,
-              disbursedAt: monthDate(startDate, firstMonth - 1),
-              disbursedById: actorId,
-              dueBeforeDate: loanDueDate,
-              status: outstanding <= 0 ? 'CLOSED' : 'ACTIVE',
-              outstandingBalance: outstanding,
-              totalInterestAccrued: num(loanRow.totalInterest),
-              totalRepaid: num(loanRow.totalRepaid),
-            },
+          loanAccountsData.push({
+            id: loanId,
+            membershipId: msId,
+            fiscalYearId: fyId,
+            principalAmount: totalDisbursed,
+            monthlyRate: tontineConfig.loanMonthlyRate,
+            disbursedAt: monthDate(startDate, firstMonth - 1),
+            disbursedById: actorId,
+            dueBeforeDate: loanDueDate,
+            status: outstanding <= 0 ? 'CLOSED' : 'ACTIVE',
+            outstandingBalance: outstanding,
+            totalInterestAccrued: num(loanRow.totalInterest),
+            totalRepaid: num(loanRow.totalRepaid),
           });
 
           // 2j + 2k. Reconstitue l'évolution mensuelle du prêt (accruals + remboursements)
-          // avec des soldes courants cohérents, au lieu des anciens placeholders à 0.
           const intRow = dto.interests.find((i) => norm(i.memberName) === norm(loanRow.memberName));
           const repRow = dto.repayments.find((r) => norm(r.memberName) === norm(loanRow.memberName));
 
@@ -590,33 +623,37 @@ export class ReportsService {
             const sessionId = sessionMap.get(t.month);
             if (!sessionId) continue;
 
-            await tx.monthlyLoanAccrual.create({
-              data: {
-                id: randomUUID(),
-                loanId,
-                sessionId,
-                month: t.month,
-                balanceAtMonthStart: t.balanceAtMonthStart,
-                interestAccrued: t.interestAccrued,
-                balanceWithInterest: t.balanceWithInterest,
-                repaymentReceived: t.repaymentReceived,
-                balanceAtMonthEnd: t.balanceAtMonthEnd,
-              },
+            loanAccrualsData.push({
+              id: randomUUID(),
+              loanId,
+              sessionId,
+              month: t.month,
+              balanceAtMonthStart: t.balanceAtMonthStart,
+              interestAccrued: t.interestAccrued,
+              balanceWithInterest: t.balanceWithInterest,
+              repaymentReceived: t.repaymentReceived,
+              balanceAtMonthEnd: t.balanceAtMonthEnd,
             });
 
             if (t.repaymentReceived > 0) {
-              await tx.loanRepayment.create({
-                data: {
-                  id: randomUUID(),
-                  loanId,
-                  sessionId,
-                  amount: t.repaymentReceived,
-                  principalPart: t.principalPart,
-                  interestPart: t.interestPart,
-                  balanceAfter: t.balanceAtMonthEnd,
-                },
+              loanRepaymentsData.push({
+                id: randomUUID(),
+                loanId,
+                sessionId,
+                amount: t.repaymentReceived,
+                principalPart: t.principalPart,
+                interestPart: t.interestPart,
+                balanceAfter: t.balanceAtMonthEnd,
               });
             }
+          }
+        }
+
+        if (loanAccountsData.length > 0) {
+          await tx.loanAccount.createMany({ data: loanAccountsData });
+          await tx.monthlyLoanAccrual.createMany({ data: loanAccrualsData });
+          if (loanRepaymentsData.length > 0) {
+            await tx.loanRepayment.createMany({ data: loanRepaymentsData });
           }
         }
 
@@ -626,19 +663,20 @@ export class ReportsService {
           data: { id: scheduleId, fiscalYearId: fyId },
         });
 
+        const beneficiarySlotsData: Prisma.BeneficiarySlotCreateManyInput[] = [];
+
         for (let m = 1; m <= 12; m++) {
           const sessionId = sessionMap.get(m)!;
-          await tx.beneficiarySlot.create({
-            data: {
-              id: randomUUID(),
-              scheduleId,
-              sessionId,
-              month: m,
-              slotIndex: 0,
-              status: 'UNASSIGNED',
-            },
+          beneficiarySlotsData.push({
+            id: randomUUID(),
+            scheduleId,
+            sessionId,
+            month: m,
+            slotIndex: 0,
+            status: 'UNASSIGNED',
           });
         }
+        await tx.beneficiarySlot.createMany({ data: beneficiarySlotsData });
 
         // 2m. Create PoolParticipants (incl. comptes spéciaux du modèle CAYABASE)
         // initialBalance = épargne du poste (ligne ep+int : SECOURS/CAYA, BUREAU, AUTRES/FETE).

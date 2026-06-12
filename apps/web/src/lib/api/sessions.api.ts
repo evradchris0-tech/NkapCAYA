@@ -26,6 +26,12 @@ export const sessionsApi = {
   getById: (id: string) =>
     apiClient.get<MonthlySession>(`/sessions/${id}`).then((r) => r.data),
 
+  getEntries: (id: string, page = 1, limit = 50) =>
+    apiClient.get<{ data: SessionEntry[], meta: { total: number, page: number, limit: number, totalPages: number } }>(`/sessions/${id}/entries`, { params: { page, limit } }).then((r) => r.data),
+
+  getStats: (id: string) =>
+    apiClient.get<{ participantIds: string[], cotisantIds: string[], entriesStats: { membershipId: string, type: string }[] }>(`/sessions/${id}/stats`).then((r) => r.data),
+
   open: (id: string) =>
     apiClient.post<MonthlySession>(`/sessions/${id}/open`).then((r) => r.data),
 

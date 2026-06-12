@@ -104,15 +104,17 @@ function CustomTooltip({ active, payload, label }: TooltipProps) {
 
 // ── Badge statut session ──────────────────────────────────────────────────────
 const SESSION_STATUS_LABELS: Record<string, string> = {
-  OPEN:              'Ouverte',
-  CLOSED_FOR_REVIEW: 'En révision',
-  CLOSED:            'Clôturée',
+  DRAFT:     'Brouillon',
+  OPEN:      'Ouverte',
+  REVIEWING: 'En révision',
+  CLOSED:    'Clôturée',
 };
 
 const SESSION_STATUS_COLORS: Record<string, string> = {
-  OPEN:              'bg-emerald-100 text-emerald-700',
-  CLOSED_FOR_REVIEW: 'bg-amber-100 text-amber-700',
-  CLOSED:            'bg-slate-100 text-slate-500',
+  DRAFT:     'bg-slate-100 text-slate-400',
+  OPEN:      'bg-emerald-100 text-emerald-700',
+  REVIEWING: 'bg-amber-100 text-amber-700',
+  CLOSED:    'bg-slate-100 text-slate-500',
 };
 
 function SessionBadge({ status }: { status: string }) {

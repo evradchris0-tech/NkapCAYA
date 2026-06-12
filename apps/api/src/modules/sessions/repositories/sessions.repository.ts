@@ -11,16 +11,36 @@ export class SessionsRepository {
       where: { id },
       include: {
         fiscalYear: { include: { config: true } },
-        entries: {
-          orderBy: { recordedAt: 'asc' },
-          include: {
-            membership: {
-              include: {
-                profile: { select: { firstName: true, lastName: true, memberCode: true } },
-              },
+      },
+    });
+  }
+
+  findEntriesPaginated(sessionId: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    return this.prisma.$transaction([
+      this.prisma.sessionEntry.count({ where: { sessionId } }),
+      this.prisma.sessionEntry.findMany({
+        where: { sessionId },
+        orderBy: { recordedAt: 'asc' },
+        skip,
+        take: limit,
+        include: {
+          membership: {
+            include: {
+              profile: { select: { firstName: true, lastName: true, memberCode: true } },
             },
           },
         },
+      }),
+    ]);
+  }
+
+  findStats(sessionId: string) {
+    return this.prisma.sessionEntry.findMany({
+      where: { sessionId },
+      select: {
+        membershipId: true,
+        type: true,
       },
     });
   }

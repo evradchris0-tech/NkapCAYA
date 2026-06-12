@@ -85,6 +85,12 @@ export interface ImportSpecialAccountRow {
   totalInterest: number;
 }
 
+export interface ImportNewMemberInfo {
+  originalName: string;
+  phone?: string;
+  neighborhood?: string;
+}
+
 export interface ImportFiscalYearDto {
   label: string;
   startDate: string;
@@ -97,6 +103,7 @@ export interface ImportFiscalYearDto {
   rescueFund: ImportRescueFundRow[];
   sessions: ImportSessionData[];
   specialAccounts: ImportSpecialAccountRow[];
+  membersInfo?: ImportNewMemberInfo[];
 }
 
 export interface ParseResult {
@@ -402,6 +409,51 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
   const members = Array.from(memberSet.values());
   if (members.length === 0) {
     criticalErrors.push('Aucun membre détecté dans le fichier.');
+  }
+
+  // 3.5 Parse membres_infos sheet (new template feature)
+  const membersInfo: ImportNewMemberInfo[] = [];
+  const membresInfosSheet = wb.getWorksheet('membres_infos');
+  if (membresInfosSheet) {
+    // Find column indexes
+    let nomCol = -1;
+    let telCol = -1;
+    let quartierCol = -1;
+    
+    const headerRow = membresInfosSheet.getRow(1);
+    headerRow.eachCell((cell, colNum) => {
+      const val = normStr(str(cell.value));
+      if (val.includes('nom')) nomCol = colNum;
+      if (val.includes('tel') || val.includes('tél')) telCol = colNum;
+      if (val.includes('quart')) quartierCol = colNum;
+    });
+
+    if (nomCol > 0 && telCol > 0) {
+      membresInfosSheet.eachRow({ includeEmpty: false }, (row, rowNum) => {
+        if (rowNum <= 1) return;
+        const nom = str(row.getCell(nomCol).value);
+        if (!nom) return;
+        
+        let tel = str(row.getCell(telCol).value);
+        // Nettoyage rapide du téléphone
+        if (tel && !tel.startsWith('+') && !tel.startsWith('00')) {
+          tel = tel.replace(/[\s\-.]/g, '');
+          if (tel.length === 9) tel = `+237${tel}`;
+        }
+        
+        const quartier = quartierCol > 0 ? str(row.getCell(quartierCol).value) : '';
+        
+        if (tel) {
+          membersInfo.push({
+            originalName: nom,
+            phone: tel,
+            neighborhood: quartier || 'Non défini',
+          });
+        }
+      });
+    } else {
+      warnings.push('La feuille "membres_infos" est présente mais les colonnes (Nom, Téléphone) sont introuvables.');
+    }
   }
 
   // Vérification de la qualité des noms
@@ -767,6 +819,7 @@ export async function parseCAYABASE(buffer: ArrayBuffer): Promise<ParseResult> {
       rescueFund,
       sessions,
       specialAccounts,
+      membersInfo: membersInfo.length > 0 ? membersInfo : undefined,
     },
     warnings,
     criticalErrors,

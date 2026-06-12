@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '@database/prisma.service';
 import { CassationRepository } from '../repositories/cassation.repository';
 import { NotificationsService } from '../../notifications/services/notifications.service';
-import { FiscalYearStatus, TransactionType, LoanStatus } from '@prisma/client';
+import { FiscalYearStatus, TransactionType, LoanStatus, BureauRole } from '@prisma/client';
 import Decimal from 'decimal.js';
 import * as dayjs from 'dayjs';
 
@@ -270,13 +270,12 @@ export class CassationService {
   private async sendCassationNotifications(_fiscalYearId: string, _actorId: string) {
     const bureauUsers = await this.prisma.user.findMany({
       where: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        role: { in: ['PRESIDENT', 'TRESORIER', 'SECRETAIRE_GENERAL'] as any },
+        role: { in: [BureauRole.PRESIDENT, BureauRole.TRESORIER, BureauRole.SECRETAIRE_GENERAL] },
         isActive: true,
       },
     });
 
-    const message = `CAYA — La cassation de l'exercice a été exécutée avec succès. Les redistribution sont disponibles dans l'application.`;
+    const message = `CAYA — La cassation de l'exercice a été exécutée avec succès. Les redistributions sont disponibles dans l'application.`;
 
     for (const user of bureauUsers) {
       await this.notificationsService.sendSMS(user.phone, message);

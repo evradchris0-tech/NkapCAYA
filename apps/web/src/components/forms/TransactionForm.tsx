@@ -37,7 +37,7 @@ interface TransactionFormProps {
   sessionId: string;
   memberships: Membership[];
   config?: FiscalYearConfig;
-  existingEntries?: SessionEntry[];
+  entriesStats?: { membershipId: string, type: string }[];
   onSuccess?: () => void;
   onDirtyChange?: (dirty: boolean) => void;
 }
@@ -46,7 +46,7 @@ export default function TransactionForm({
   sessionId,
   memberships,
   config,
-  existingEntries = [],
+  entriesStats = [],
   onSuccess,
   onDirtyChange,
 }: TransactionFormProps) {
@@ -80,7 +80,7 @@ export default function TransactionForm({
 
   // Types déjà utilisés par ce membre dans cette session (non répétables)
   const usedTypes = new Set(
-    existingEntries
+    entriesStats
       .filter((e) => e.membershipId === selectedMembershipId)
       .filter((e) => !REPEATABLE_TYPES.has(e.type as TransactionType))
       .map((e) => e.type as TransactionType),

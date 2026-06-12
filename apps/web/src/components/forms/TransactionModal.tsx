@@ -12,7 +12,7 @@ interface TransactionModalProps {
   sessionId: string;
   memberships: Membership[];
   config?: FiscalYearConfig;
-  entries?: SessionEntry[];
+  entriesStats?: { membershipId: string, type: string }[];
 }
 
 export default function TransactionModal({
@@ -21,7 +21,7 @@ export default function TransactionModal({
   sessionId,
   memberships,
   config,
-  entries = [],
+  entriesStats = [],
 }: TransactionModalProps) {
   const [isDirty, setIsDirty] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
@@ -57,7 +57,7 @@ export default function TransactionModal({
           sessionId={sessionId}
           memberships={memberships}
           config={config}
-          existingEntries={entries}
+          entriesStats={entriesStats}
           onSuccess={handleSuccess}
           onDirtyChange={setIsDirty}
         />

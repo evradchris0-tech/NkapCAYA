@@ -23,7 +23,7 @@ interface Props {
   sessionId: string;
   memberships: Membership[];
   config?: FiscalYearConfig;
-  entries?: SessionEntry[];
+  entriesStats?: { membershipId: string, type: string }[];
 }
 
 const ALL_TYPES: TransactionType[] = [
@@ -73,7 +73,7 @@ export default function BatchTransactionModal({
   sessionId,
   memberships,
   config,
-  entries = [],
+  entriesStats = [],
 }: Props) {
   const [membershipId, setMembershipId] = useState('');
   const [rows, setRows] = useState<BatchRow[]>([]);
@@ -100,11 +100,11 @@ export default function BatchTransactionModal({
   const usedTypes = useMemo(
     () =>
       new Set(
-        entries
+        entriesStats
           .filter((e) => e.membershipId === membershipId && !REPEATABLE.has(e.type as TransactionType))
           .map((e) => e.type as TransactionType),
       ),
-    [entries, membershipId],
+    [entriesStats, membershipId],
   );
 
   // Recalcul des lignes quand le membre change

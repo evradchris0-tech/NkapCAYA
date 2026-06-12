@@ -18,7 +18,7 @@ import {
   CheckCircle2, Clock, Circle, Gift, AlertTriangle,
   Pencil, Trash2, Download,
 } from 'lucide-react';
-import { useSession, useOpenSession, useCloseForReview, useValidateAndClose, useUpdateEntry, useDeleteEntry } from '@lib/hooks/useSessions';
+import { useSession, useSessionEntries, useSessionStats, useOpenSession, useCloseForReview, useValidateAndClose, useUpdateEntry, useDeleteEntry } from '@lib/hooks/useSessions';
 import { exportSessionDetailToPdf } from '@lib/export/exportPdf';
 import { useFiscalYearMemberships } from '@lib/hooks/useFiscalYear';
 import {
@@ -79,6 +79,11 @@ const STATUS_ORDER: Record<string, number> = { DRAFT: 0, OPEN: 1, REVIEWING: 2, 
 
 export default function SessionDetailPage({ params }: Props) {
   const { data: session, isLoading, isError } = useSession(params.id);
+  const [page, setPage] = useState(1);
+  const limit = 50;
+  const { data: stats } = useSessionStats(params.id);
+  const { data: entriesPage, isLoading: isLoadingEntries } = useSessionEntries(params.id, page, limit);
+
   const { data: currentUser } = useCurrentUser();
   const openSession = useOpenSession();
   const closeForReview = useCloseForReview();
@@ -122,8 +127,6 @@ export default function SessionDetailPage({ params }: Props) {
   const derived = useMemo(() => {
     if (!session) return null;
 
-    const entries = session.entries ?? [];
-
     // Total général
     const totalGeneral = [
       session.totalCotisation, session.totalPot, session.totalInscription,
@@ -132,12 +135,10 @@ export default function SessionDetailPage({ params }: Props) {
     ].reduce((sum, v) => sum + parseFloat(v || '0'), 0);
 
     // Participants ayant au moins 1 transaction
-    const participantIds = new Set(entries.map((e) => e.membershipId));
+    const participantIds = new Set(stats?.participantIds ?? []);
 
     // Membres ayant payé leur cotisation
-    const cotisantIds = new Set(
-      entries.filter((e) => e.type === TransactionType.COTISATION).map((e) => e.membershipId),
-    );
+    const cotisantIds = new Set(stats?.cotisantIds ?? []);
 
     // Membres inscrits sans cotisation
     const absentMembers = (memberships ?? []).filter(
@@ -167,7 +168,7 @@ export default function SessionDetailPage({ params }: Props) {
     ].filter((d) => d.value > 0);
 
     return { totalGeneral, participantIds, cotisantIds, absentMembers, totalRbt, pct, pieData };
-  }, [session, memberships]);
+  }, [session, memberships, stats]);
 
   // Bénéficiaires de cette session (plusieurs slots possibles)
   const beneficiarySlots: BeneficiarySlot[] = useMemo(() => {
@@ -553,24 +554,22 @@ export default function SessionDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* ── Modal transaction simple ── */}
       <TransactionModal
         open={showTransactionModal}
         onClose={() => setShowTransactionModal(false)}
         sessionId={params.id}
         memberships={memberships ?? []}
         config={session.fiscalYear?.config}
-        entries={session.entries ?? []}
+        entriesStats={stats?.entriesStats}
       />
 
-      {/* ── Modal saisie batch ── */}
       <BatchTransactionModal
         open={showBatchModal}
         onClose={() => setShowBatchModal(false)}
         sessionId={params.id}
         memberships={memberships ?? []}
         config={session.fiscalYear?.config}
-        entries={session.entries ?? []}
+        entriesStats={stats?.entriesStats}
       />
 
       {/* ── Totaux + Charts ── */}
@@ -760,11 +759,11 @@ export default function SessionDetailPage({ params }: Props) {
       )}
 
       {/* ── Tableau des transactions ── */}
-      {session.entries && session.entries.length > 0 && (
+      {entriesPage?.data && entriesPage.data.length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-800">
-              Transactions ({session.entries.length})
+              Transactions ({entriesPage.meta.total})
             </h2>
           </div>
           <div className="overflow-x-auto">
@@ -782,7 +781,7 @@ export default function SessionDetailPage({ params }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {session.entries.map((entry) => (
+              {entriesPage.data.map((entry) => (
                 <tr key={entry.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-3 font-mono text-xs text-slate-400">{entry.reference}</td>
                   <td className="px-6 py-3 text-slate-700">
@@ -830,7 +829,7 @@ export default function SessionDetailPage({ params }: Props) {
             </tbody>
             <tfoot className="border-t border-slate-200 bg-slate-50">
               <tr>
-                <td colSpan={3} className="px-6 py-3 text-sm font-semibold text-slate-700">Total</td>
+                <td colSpan={3} className="px-6 py-3 text-sm font-semibold text-slate-700">Total Général</td>
                 <td className="px-6 py-3 text-right text-sm font-bold text-slate-900 tabular-nums">
                   {derived.totalGeneral.toLocaleString('fr-FR')} XAF
                 </td>
@@ -840,6 +839,31 @@ export default function SessionDetailPage({ params }: Props) {
             </tfoot>
           </table>
           </div>
+          {entriesPage.meta.totalPages > 1 && (
+            <div className="px-6 py-3 flex items-center justify-between border-t border-slate-100 bg-white">
+              <span className="text-xs text-slate-500">
+                Page {entriesPage.meta.page} sur {entriesPage.meta.totalPages}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={entriesPage.meta.page <= 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                >
+                  Précédent
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={entriesPage.meta.page >= entriesPage.meta.totalPages}
+                  onClick={() => setPage(p => p + 1)}
+                >
+                  Suivant
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
