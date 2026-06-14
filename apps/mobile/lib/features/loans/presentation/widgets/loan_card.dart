@@ -104,6 +104,7 @@ class LoanCard extends StatelessWidget {
   Color _statusColor(LoanStatus status) {
     switch (status) {
       case LoanStatus.active:
+      case LoanStatus.partiallyRepaid:
         return AppColors.cayaBlue;
       case LoanStatus.pending:
         return AppColors.warning;
@@ -144,6 +145,8 @@ class _StatusBadge extends StatelessWidget {
         return 'En attente';
       case LoanStatus.active:
         return 'En cours';
+      case LoanStatus.partiallyRepaid:
+        return 'Partiel';
       case LoanStatus.closed:
         return 'Soldé';
     }

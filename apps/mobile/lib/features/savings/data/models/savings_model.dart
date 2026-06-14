@@ -20,7 +20,12 @@ class SavingsModel extends SavingsEntity {
       totalInterestReceived:
           double.tryParse(json['totalInterestReceived']?.toString() ?? '0') ??
               0,
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      // L'API renvoie `lastUpdatedAt` (champ Prisma) ; on tolère `updatedAt`
+      // et on évite un crash si la date est absente.
+      updatedAt: DateTime.tryParse(
+            (json['lastUpdatedAt'] ?? json['updatedAt'])?.toString() ?? '',
+          ) ??
+          DateTime.now(),
     );
   }
 }

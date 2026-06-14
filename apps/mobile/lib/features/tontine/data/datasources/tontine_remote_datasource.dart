@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../domain/entities/tontine_entity.dart';
 
 /// Datasource public — aucune authentification requise.
@@ -29,8 +30,7 @@ class TontineRemoteDataSourceImpl implements TontineRemoteDataSource {
 
   @override
   Future<List<TontineEntity>> fetchAvailableTontines() async {
-    final discoveryUrl =
-        dotenv.env['API_BASE_URL'] ?? 'http://192.168.1.33:3000/api/v1';
+    final discoveryUrl = dotenv.env['API_BASE_URL'] ?? AppConstants.prodBaseUrl;
     final dio = _buildPublicDio(discoveryUrl);
 
     final response =

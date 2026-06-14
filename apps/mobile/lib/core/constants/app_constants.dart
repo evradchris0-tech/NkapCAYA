@@ -7,6 +7,10 @@ class AppConstants {
   static const String currency = 'XAF';
   static const String currencyLocale = 'fr_CM';
 
+  // API — URL de production (Hostinger). Source de vérité unique de l'URL prod ;
+  // surchargeable via API_BASE_URL (.env). Plus aucune URL en dur ailleurs.
+  static const String prodBaseUrl = 'https://api.nkapzen.com/api/v1';
+
   // Tontine rules
   static const int minContributionAmount = 10000;
   static const int maxLoanMultiplier = 3;

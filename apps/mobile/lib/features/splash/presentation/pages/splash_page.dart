@@ -157,7 +157,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Caisse Autonome des Yaourtiers Associés',
+                        'Club des Amis de Yaoundé',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.65),
                           fontSize: 12,

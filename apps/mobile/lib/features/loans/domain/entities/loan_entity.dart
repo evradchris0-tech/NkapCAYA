@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum LoanStatus { pending, active, closed }
+enum LoanStatus { pending, active, partiallyRepaid, closed }
 
 class LoanEntity extends Equatable {
   final String id;
@@ -33,8 +33,12 @@ class LoanEntity extends Equatable {
     this.requestNotes,
   });
 
-  bool get isActive => status == LoanStatus.active;
+  // Un prêt partiellement remboursé reste « en cours » : encours et progression
+  // doivent s'afficher comme pour un prêt actif.
+  bool get isActive =>
+      status == LoanStatus.active || status == LoanStatus.partiallyRepaid;
   bool get isPending => status == LoanStatus.pending;
+  bool get isPartiallyRepaid => status == LoanStatus.partiallyRepaid;
   bool get isClosed => status == LoanStatus.closed;
 
   LoanEntity copyWith({
