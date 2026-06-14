@@ -7,12 +7,14 @@ extension LoanStatusX on LoanStatus {
   String get label => switch (this) {
         LoanStatus.pending => 'En attente',
         LoanStatus.active => 'En cours',
+        LoanStatus.partiallyRepaid => 'Partiellement remboursé',
         LoanStatus.closed => 'Remboursé',
       };
 
   Color get color => switch (this) {
         LoanStatus.pending => AppColors.warning,
         LoanStatus.active => AppColors.info,
+        LoanStatus.partiallyRepaid => AppColors.info,
         LoanStatus.closed => AppColors.success,
       };
 
@@ -21,6 +23,7 @@ extension LoanStatusX on LoanStatus {
   IconData get icon => switch (this) {
         LoanStatus.pending => Icons.schedule_rounded,
         LoanStatus.active => Icons.account_balance_wallet_outlined,
+        LoanStatus.partiallyRepaid => Icons.donut_large_outlined,
         LoanStatus.closed => Icons.check_circle_outline_rounded,
       };
 }

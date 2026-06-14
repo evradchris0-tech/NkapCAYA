@@ -44,6 +44,8 @@ class LoanModel extends LoanEntity {
     switch (value.toUpperCase()) {
       case 'ACTIVE':
         return LoanStatus.active;
+      case 'PARTIALLY_REPAID':
+        return LoanStatus.partiallyRepaid;
       case 'CLOSED':
         return LoanStatus.closed;
       case 'PENDING':

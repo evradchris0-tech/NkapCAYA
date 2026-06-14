@@ -62,7 +62,7 @@ class LoginPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        'Caisse Autonome des Yaourtiers Associés',
+                        'Club des Amis de Yaoundé',
                         style: GoogleFonts.lato(
                           color: AppColors.cayaGoldLight.withValues(alpha: 0.9),
                           fontSize: 11.5,

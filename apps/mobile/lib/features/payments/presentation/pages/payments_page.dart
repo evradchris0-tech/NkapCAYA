@@ -108,21 +108,10 @@ class _MobileMoneyTabState extends State<_MobileMoneyTab> {
   final _referenceController = TextEditingController();
   bool _isLoading = false;
 
-  // Historique fictif pour la V1 UI
-  final List<_PaymentHistoryItem> _history = [
-    _PaymentHistoryItem(
-      amount: 15000,
-      reference: 'CM2024001',
-      date: DateTime(2024, 3, 19),
-      status: 'Réussi',
-    ),
-    _PaymentHistoryItem(
-      amount: 10000,
-      reference: 'CM2024002',
-      date: DateTime(2024, 3, 5),
-      status: 'Réussi',
-    ),
-  ];
+  // Pas d'historique tant que l'intégration Mobile Money n'est pas branchée
+  // côté API : on n'affiche aucune donnée fictive (l'UI montre alors l'état
+  // vide « Aucun paiement enregistré »).
+  final List<_PaymentHistoryItem> _history = [];
 
   @override
   void dispose() {

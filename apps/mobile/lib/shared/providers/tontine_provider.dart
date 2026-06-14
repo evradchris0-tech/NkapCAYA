@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/constants/app_constants.dart';
 import '../../features/tontine/domain/entities/tontine_entity.dart';
 import '../../features/tontine/data/datasources/tontine_remote_datasource.dart';
 
@@ -26,10 +27,10 @@ List<TontineEntity> get kKnownTontines {
       ),
     const TontineEntity(
       id: 'caya',
-      name: 'Caisse Autonome des Yaourtiers Associés',
+      name: AppConstants.appFullName,
       code: 'CAYA',
       city: 'Yaoundé',
-      baseUrl: 'https://nkapcaya-prod.up.railway.app/api/v1',
+      baseUrl: AppConstants.prodBaseUrl,
       activeMembersCount: null,
     ),
   ];

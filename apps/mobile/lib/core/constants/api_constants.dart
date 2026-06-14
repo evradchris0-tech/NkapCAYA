@@ -24,11 +24,12 @@ class ApiConstants {
   // Savings endpoints
   static String savings(String membershipId) => '/savings/$membershipId';
 
-  // Loans endpoints
+  // Loans endpoints — consultation seule.
   static const String loans = '/loans'; // GET ?membershipId=X
-  static const String loanRequest = '/loans/request';
-  static String loanRepay(String loanId) => '/loans/$loanId/repay';
-  static String loanDisburse(String loanId) => '/loans/$loanId/disburse';
+  // NB : les actions d'écriture (demande, remboursement, approbation de prêt)
+  // ne sont pas exposées dans l'app membre. Les routes correspondantes
+  // (ex. /loans/request, /loans/:id/repay, /loans/:id/approve) seront
+  // ajoutées le jour où ces actions seront implémentées côté mobile.
 
   // Rescue fund endpoints — préfixés par fiscalYearId (obligatoire côté backend)
   static String rescueFundLedger(String fyId) =>

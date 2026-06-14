@@ -13,15 +13,25 @@ class MembershipModel extends MembershipEntity {
   });
 
   factory MembershipModel.fromJson(Map<String, dynamic> json) {
+    // L'API renvoie `profileId` (champ Prisma) ; on tolère `memberProfileId`.
+    final shareCommitment = json['shareCommitment'] as Map<String, dynamic>?;
     return MembershipModel(
       id: json['id'] as String,
       fiscalYearId: json['fiscalYearId'] as String,
-      memberProfileId: json['memberProfileId'] as String,
+      memberProfileId:
+          (json['profileId'] ?? json['memberProfileId']) as String? ?? '',
       status: _parseStatus(json['status'] as String? ?? 'ACTIVE'),
-      enrollmentType: json['enrollmentType'] as String? ?? 'REGULAR',
+      enrollmentType: json['enrollmentType'] as String? ?? 'NEW',
       joinedAt: DateTime.parse(json['joinedAt'] as String),
       joinedAtMonth: json['joinedAtMonth'] as int? ?? 1,
-      sharesCount: double.tryParse(json['sharesCount']?.toString() ?? '1') ?? 1,
+      // `sharesCount` provient de la relation ShareCommitment (objet imbriqué),
+      // avec repli sur une clé à plat au cas où l'API l'aplatirait.
+      sharesCount: double.tryParse(
+            (shareCommitment?['sharesCount'] ?? json['sharesCount'])
+                    ?.toString() ??
+                '1',
+          ) ??
+          1,
     );
   }
 
